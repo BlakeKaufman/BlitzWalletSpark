@@ -258,6 +258,7 @@ export default async function initializeUserSettingsFromHistory({
     tempObject['enabledLNURL'] = enabledLNURL;
     tempObject['useTrampoline'] = useTrampoline;
     tempObject['offlineReceiveAddresses'] = offlineReceiveAddresses;
+    tempObject['lnurlPubKey'] = lnurlPubKey;
 
     // store in contacts context
     tempObject['contacts'] = contacts;
