@@ -14,11 +14,10 @@ import processLNUrlWithdraw from './processLNUrlWithdrawl';
 import processLiquidAddress from './processLiquidAddress';
 import getLiquidAddressFromSwap from '../../../../../functions/boltz/magicRoutingHints';
 import {crashlyticsLogReport} from '../../../../../functions/crashlyticsLogs';
-import processBolt12Offer from './processBolt12Offer';
+// import processBolt12Offer from './processBolt12Offer';
 
 export default async function decodeSendAddress(props) {
   let {
-    nodeInformation,
     btcAdress,
     goBackFunction,
     setPaymentInfo,
@@ -33,6 +32,7 @@ export default async function decodeSendAddress(props) {
     setLoadingMessage,
     paymentInfo,
     parsedInvoice,
+    fiatStats,
   } = props;
 
   try {
@@ -66,8 +66,8 @@ export default async function decodeSendAddress(props) {
           goBackFunction(
             `Cannot send more than ${displayCorrectDenomination({
               amount: maxZeroConf,
-              nodeInformation,
               masterInfoObject,
+              fiatStats,
             })} to a merchant`,
           );
           return;
@@ -103,7 +103,7 @@ export default async function decodeSendAddress(props) {
     }
 
     const processedPaymentInfo = await processInputType(input, {
-      nodeInformation,
+      fiatStats,
       liquidNodeInformation,
       masterInfoObject,
       navigate,
@@ -154,8 +154,8 @@ async function processInputType(input, context) {
     case LiquidTypeVarient.LIQUID_ADDRESS:
       return processLiquidAddress(input, context);
 
-    case LiquidTypeVarient.BOLT12_OFFER:
-      return processBolt12Offer(input, context);
+    // case LiquidTypeVarient.BOLT12_OFFER:
+    //   return processBolt12Offer(input, context);
     default:
       goBackFunction('Not a valid address type');
       return null;

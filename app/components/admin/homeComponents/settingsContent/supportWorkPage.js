@@ -3,12 +3,7 @@ import {CENTER} from '../../../../constants';
 import {INSET_WINDOW_WIDTH} from '../../../../constants/theme';
 import SettingsItemWithSlider from '../../../../functions/CustomElements/settings/settingsItemWithSlider';
 import {useGlobalContextProvider} from '../../../../../context-store/context';
-import displayCorrectDenomination from '../../../../functions/displayCorrectDenomination';
-import {
-  BLITZ_FEE_PERCET,
-  BLITZ_FEE_SATS,
-  SATSPERBITCOIN,
-} from '../../../../constants/math';
+import {SATSPERBITCOIN} from '../../../../constants/math';
 import {useNodeContext} from '../../../../../context-store/nodeContext';
 import {
   CustomKeyboardAvoidingView,
@@ -22,7 +17,7 @@ import CustomSettingsTopBar from '../../../../functions/CustomElements/settingsT
 
 export default function SupportWorkPage() {
   const {toggleMasterInfoObject, masterInfoObject} = useGlobalContextProvider();
-  const {nodeInformation} = useNodeContext();
+  const {fiatStats} = useNodeContext();
   const navigate = useNavigation();
 
   const developerSupportObject = masterInfoObject.enabledDeveloperSupport;
@@ -34,12 +29,7 @@ export default function SupportWorkPage() {
     android: ANDROIDSAFEAREA,
   });
 
-  console.log(
-    developerSupportObject,
-    'TSET',
-    balanceDenomination,
-    nodeInformation.fiatStats,
-  );
+  console.log(developerSupportObject, 'TSET', balanceDenomination, fiatStats);
   const handleBaseFeeSettings = useCallback(
     (value, resetFunction) => {
       const parseValue = Number(value);
@@ -65,7 +55,7 @@ export default function SupportWorkPage() {
       if (balanceDenomination !== 'fiat') {
         newFee = parseValue;
       } else {
-        const fiatPrice = nodeInformation.fiatStats.value || 50_000;
+        const fiatPrice = fiatStats.value || 50_000;
 
         const fiatConversion = Math.round(
           (SATSPERBITCOIN / fiatPrice) * parseValue,
@@ -88,7 +78,7 @@ export default function SupportWorkPage() {
     if (balanceDenomination !== 'fiat') {
       return developerSupportObject?.baseFee;
     } else {
-      const fiatPrice = nodeInformation.fiatStats.value || 50_000;
+      const fiatPrice = fiatStats.value || 50_000;
       console.log(
         fiatPrice,
         fiatPrice / SATSPERBITCOIN,
@@ -162,9 +152,7 @@ export default function SupportWorkPage() {
         />
         <TextInputSettingsItem
           settingInputTitle={`Base Transaction Fee (${
-            balanceDenomination !== 'fiat'
-              ? 'sats'
-              : nodeInformation.fiatStats.coin
+            balanceDenomination !== 'fiat' ? 'sats' : fiatStats.coin
           })`}
           keyboardType="decimal-pad"
           settingDescription={`This is the base fee that will be added to each transaction. It will be included as part of the total transaction fee every time you send a payment.`}

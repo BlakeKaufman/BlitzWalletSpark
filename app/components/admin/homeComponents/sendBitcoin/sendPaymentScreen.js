@@ -69,7 +69,7 @@ export default function SendPaymentScreen(props) {
   } = props.route.params;
 
   const {masterInfoObject, toggleMasterInfoObject} = useGlobalContextProvider();
-  const {nodeInformation, liquidNodeInformation} = useNodeContext();
+  const {nodeInformation, liquidNodeInformation, fiatStats} = useNodeContext();
   const {minMaxLiquidSwapAmounts} = useAppStatus();
   const {theme, darkModeType} = useGlobalThemeContext();
   const {ecashWalletInformation} = useGlobaleCash();
@@ -95,10 +95,7 @@ export default function SendPaymentScreen(props) {
   const canEditPaymentAmount = paymentInfo?.canEditPayment;
   const convertedSendAmount = isBTCdenominated
     ? Math.round(Number(sendingAmount))
-    : Math.round(
-        (SATSPERBITCOIN / nodeInformation.fiatStats?.value) *
-          Number(sendingAmount),
-      );
+    : Math.round((SATSPERBITCOIN / fiatStats?.value) * Number(sendingAmount));
   const swapFee = calculateBoltzFeeNew(
     Number(convertedSendAmount),
     paymentInfo.type === 'liquid' ? 'ln-liquid' : 'liquid-ln',
@@ -186,7 +183,7 @@ export default function SendPaymentScreen(props) {
       }
       crashlyticsLogReport('Starting decode address');
       await decodeSendAddress({
-        nodeInformation,
+        fiatStats,
         btcAdress,
         goBackFunction: errorMessageNavigation,
         setPaymentInfo,
@@ -360,6 +357,7 @@ export default function SendPaymentScreen(props) {
               paymentInfo={paymentInfo}
               setPaymentInfo={setPaymentInfo}
               nodeInformation={nodeInformation}
+              fiatStats={fiatStats}
             />
           )}
           {isAmountFocused && (

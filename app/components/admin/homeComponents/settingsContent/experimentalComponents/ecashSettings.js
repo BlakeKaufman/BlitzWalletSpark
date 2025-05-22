@@ -19,7 +19,7 @@ import {INSET_WINDOW_WIDTH} from '../../../../../constants/theme';
 
 export default function EcashSettings() {
   const navigate = useNavigation();
-  const {nodeInformation} = useNodeContext();
+  const {fiatStats} = useNodeContext();
   const {masterInfoObject, toggleMasterInfoObject} = useGlobalContextProvider();
   useHandleBackPressNew();
   const ecashWalletSettings = masterInfoObject.ecashWalletSettings;
@@ -86,7 +86,7 @@ export default function EcashSettings() {
           defaultTextInputValue={ecashWalletSettings.maxReceiveAmountSat}
           settingInputTitle="Max receive (sats)"
           settingDescription={`This is the maximum receive limit for eCash transactions. If a payment exceeds the set limit, it will automatically be directed to a different network. The highest limit you can set for this feature is ${displayCorrectDenomination(
-            {amount: MAX_ECASH_RECEIVE, nodeInformation, masterInfoObject},
+            {amount: MAX_ECASH_RECEIVE, masterInfoObject, fiatStats},
           )}.`}
           handleSubmit={handleMaxReceive}
         />
@@ -94,7 +94,7 @@ export default function EcashSettings() {
           defaultTextInputValue={ecashWalletSettings.maxEcashBalance}
           settingInputTitle="Max balance (sats)"
           settingDescription={`This is the maximum balance limit for eCash. If your exceeds the set limit, you will no longer be able to receive to eCash. The highest limit you can set for this feature is ${displayCorrectDenomination(
-            {amount: MAX_ECASH_BALANCE, nodeInformation, masterInfoObject},
+            {amount: MAX_ECASH_BALANCE, masterInfoObject, fiatStats},
           )}.`}
           handleSubmit={handleMaxBalance}
         />

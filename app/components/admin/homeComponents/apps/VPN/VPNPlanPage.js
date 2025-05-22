@@ -30,7 +30,7 @@ import {parse} from '@breeztech/react-native-breez-sdk-liquid';
 export default function VPNPlanPage({countryList}) {
   const [searchInput, setSearchInput] = useState('');
   const {contactsPrivateKey, publicKey} = useKeysContext();
-  const {nodeInformation, liquidNodeInformation} = useNodeContext();
+  const {nodeInformation, liquidNodeInformation, fiatStats} = useNodeContext();
   const {decodedVPNS, toggleGlobalAppDataInformation} = useGlobalAppData();
   const {masterInfoObject} = useGlobalContextProvider();
   const {minMaxLiquidSwapAmounts} = useAppStatus();
@@ -131,7 +131,7 @@ export default function VPNPlanPage({countryList}) {
                   const [{cc, country}] = didAddLocation;
 
                   const cost = Math.round(
-                    (SATSPERBITCOIN / nodeInformation.fiatStats.value) *
+                    (SATSPERBITCOIN / fiatStats.value) *
                       (selectedDuration === 'week'
                         ? 1.5
                         : selectedDuration === 'month'

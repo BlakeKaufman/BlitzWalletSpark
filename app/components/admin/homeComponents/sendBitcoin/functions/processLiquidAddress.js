@@ -7,10 +7,10 @@ import {
 export default function processLiquidAddress(input, context) {
   const {
     liquidNodeInformation,
-    nodeInformation,
     masterInfoObject,
     comingFromAccept,
     enteredPaymentInfo,
+    fiatStats,
   } = context;
   try {
     crashlyticsLogReport('Handling decode liquid address');
@@ -33,8 +33,7 @@ export default function processLiquidAddress(input, context) {
 
     const amountSat = addressInfo.amount;
     const fiatValue =
-      Number(amountSat) /
-      (SATSPERBITCOIN / (nodeInformation.fiatStats?.value || 65000));
+      Number(amountSat) / (SATSPERBITCOIN / (fiatStats?.value || 65000));
 
     return {
       data: addressInfo,

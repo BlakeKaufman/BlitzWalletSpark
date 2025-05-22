@@ -6,12 +6,7 @@ import {
 } from '../../../../../functions/crashlyticsLogs';
 
 export default async function processLNUrlPay(input, context) {
-  const {
-    nodeInformation,
-    masterInfoObject,
-    comingFromAccept,
-    enteredPaymentInfo,
-  } = context;
+  const {masterInfoObject, comingFromAccept, enteredPaymentInfo} = context;
   try {
     crashlyticsLogReport('Beiging decode LNURL pay');
     const amountMsat = comingFromAccept
@@ -19,9 +14,8 @@ export default async function processLNUrlPay(input, context) {
       : input.data.minSendable;
     const fiatValue =
       Number(amountMsat / 1000) /
-      (SATSPERBITCOIN / (nodeInformation.fiatStats?.value || 65000));
+      (SATSPERBITCOIN / (fiatStats?.value || 65000));
 
-    console.log(fiatValue, 'FIAT VALUE');
     return {
       data: comingFromAccept
         ? {...input.data, message: enteredPaymentInfo.description}

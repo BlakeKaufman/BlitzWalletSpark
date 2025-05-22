@@ -7,12 +7,11 @@ import {
 
 export default function processBolt11Invoice(input, context) {
   const {
-    nodeInformation,
     masterInfoObject,
-    navigate,
     goBackFunction,
     comingFromAccept,
     enteredPaymentInfo,
+    fiatStats,
   } = context;
   try {
     crashlyticsLogReport('Handling decode bolt11 invoices');
@@ -30,7 +29,7 @@ export default function processBolt11Invoice(input, context) {
     const fiatValue =
       !!amountMsat &&
       Number(amountMsat / 1000) /
-        (SATSPERBITCOIN / (nodeInformation.fiatStats?.value || 65000));
+        (SATSPERBITCOIN / (fiatStats?.value || 65000));
 
     return {
       data: input,

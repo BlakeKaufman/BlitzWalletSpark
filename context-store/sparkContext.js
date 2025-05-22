@@ -81,12 +81,12 @@ const SparkWalletProvider = ({children}) => {
   };
 
   const handleIncomingPayment = async transferId => {
-    const balance = (await getSparkBalance()) || 0;
+    const balance = (await getSparkBalance()) || {balance: 0};
     const storedTransaction = await handleTransactionUpdate(transferId);
     setSparkInformation(prev => {
       return {
         ...prev,
-        balance: balance,
+        balance: balance.balance,
         transactions: storedTransaction ? storedTransaction : prev.transactions,
       };
     });
@@ -119,12 +119,12 @@ const SparkWalletProvider = ({children}) => {
 
     async function handleUpdate(updateType) {
       try {
-        const balance = (await getSparkBalance()) || 0;
+        const balance = (await getSparkBalance()) || {balance: 0};
         const txs = await getAllSparkTransactions();
         setSparkInformation(prev => {
           return {
             ...prev,
-            balance: balance,
+            balance: balance.balance,
             transactions: txs ? txs : prev.transactions,
           };
         });

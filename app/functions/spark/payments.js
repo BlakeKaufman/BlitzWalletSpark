@@ -142,6 +142,7 @@ export const sparkReceivePaymentWrapper = async ({
       const invoice = await sparkWallet.createLightningInvoice({
         amountSats,
         memo,
+        expirySeconds: 1000 * 60 * 60 * 24, //Add 24 hours validity to invoice
       });
       // SAVE TEMP TX TO DATABASE HERE
       const tempTransaction = {

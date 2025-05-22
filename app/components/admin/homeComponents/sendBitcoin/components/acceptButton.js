@@ -25,7 +25,7 @@ export default function AcceptButtonSendPage({
   maxSendAmount,
 }) {
   const {masterInfoObject} = useGlobalContextProvider();
-  const {nodeInformation, liquidNodeInformation} = useNodeContext();
+  const {liquidNodeInformation, fiatStats} = useNodeContext();
   const {minMaxLiquidSwapAmounts} = useAppStatus();
 
   const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
@@ -81,8 +81,8 @@ export default function AcceptButtonSendPage({
                 ? 'minSat'
                 : 'maxSat'
             ],
-          nodeInformation,
           masterInfoObject,
+          fiatStats,
         })}`,
       });
       return;
@@ -109,8 +109,8 @@ export default function AcceptButtonSendPage({
             paymentInfo?.sendAmount < minSendAmount
               ? minSendAmount
               : maxSendAmount,
-          nodeInformation,
           masterInfoObject,
+          fiatStats,
         })}`,
       });
       return;
@@ -133,11 +133,10 @@ export default function AcceptButtonSendPage({
     setIsGeneratingInvoice(true);
     try {
       await decodeSendAddress({
-        nodeInformation,
+        fiatStats,
         btcAdress: btcAdress,
         goBackFunction: errorMessageNavigation,
         setPaymentInfo,
-
         liquidNodeInformation,
         masterInfoObject,
         navigate,

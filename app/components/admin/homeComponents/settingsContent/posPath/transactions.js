@@ -20,7 +20,7 @@ export default function ViewPOSTransactions() {
   const {groupedTxs} = usePOSTransactions();
   const [employeeName, setEmployeeName] = useState('');
   const {masterInfoObject} = useGlobalContextProvider();
-  const {nodeInformation} = useNodeContext();
+  const {fiatStats} = useNodeContext();
   const navigate = useNavigation();
 
   const insets = useSafeAreaInsets();
@@ -55,7 +55,7 @@ export default function ViewPOSTransactions() {
             content={`Unpaid tips: ${displayCorrectDenomination({
               amount: totalTipAmount,
               masterInfoObject,
-              nodeInformation,
+              fiatStats,
             })}`}
             CustomNumberOfLines={1}
           />

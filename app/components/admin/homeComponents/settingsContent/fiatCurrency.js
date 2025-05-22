@@ -21,7 +21,7 @@ import CheckMarkCircle from '../../../../functions/CustomElements/checkMarkCircl
 
 export default function FiatCurrencyPage() {
   const {masterInfoObject, toggleMasterInfoObject} = useGlobalContextProvider();
-  const {toggleNodeInformation} = useNodeContext();
+  const {toggleFiatStats} = useNodeContext();
   const {theme, darkModeType} = useGlobalThemeContext();
   const currencies = masterInfoObject.fiatCurrenciesList || [];
   const [textInput, setTextInput] = useState('');
@@ -166,7 +166,7 @@ export default function FiatCurrencyPage() {
       const [fiatRate] = fiat.filter(rate => {
         return rate.coin.toLowerCase() === selectedCurrency.toLowerCase();
       });
-      toggleNodeInformation({fiatStats: fiatRate});
+      toggleFiatStats({fiatStats: fiatRate});
 
       if (fiatRate) {
         navigate.goBack();

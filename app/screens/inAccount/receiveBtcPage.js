@@ -23,7 +23,6 @@ export default function ReceivePaymentHome(props) {
   const navigate = useNavigation();
   const {masterInfoObject} = useGlobalContextProvider();
   const {minMaxLiquidSwapAmounts} = useAppStatus();
-  const {nodeInformation, liquidNodeInformation} = useNodeContext();
   const {ecashWalletInformation} = useGlobaleCash();
   const currentMintURL = ecashWalletInformation.mintURL;
   const eCashBalance = ecashWalletInformation.balance;
@@ -54,7 +53,6 @@ export default function ReceivePaymentHome(props) {
   useEffect(() => {
     crashlyticsLogReport('Begining adddress initialization');
     initializeAddressProcess({
-      nodeInformation,
       userBalanceDenomination: masterInfoObject.userBalanceDenomination,
       receivingAmount: initialSendAmount,
       description: paymentDescription,

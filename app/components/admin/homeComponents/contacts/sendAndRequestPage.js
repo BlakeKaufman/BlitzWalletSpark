@@ -48,7 +48,7 @@ export default function SendAndRequestPage(props) {
   const {masterInfoObject} = useGlobalContextProvider();
   const {contactsPrivateKey} = useKeysContext();
   const {isConnectedToTheInternet} = useAppStatus();
-  const {nodeInformation, liquidNodeInformation} = useNodeContext();
+  const {nodeInformation, liquidNodeInformation, fiatStats} = useNodeContext();
   const {minMaxLiquidSwapAmounts} = useAppStatus();
   const {theme, darkModeType} = useGlobalThemeContext();
   const {textColor, backgroundOffset} = GetThemeColors();
@@ -73,10 +73,8 @@ export default function SendAndRequestPage(props) {
     () =>
       (isBTCdenominated
         ? Math.round(amountValue)
-        : Math.round(
-            (SATSPERBITCOIN / nodeInformation?.fiatStats?.value) * amountValue,
-          )) || 0,
-    [amountValue, nodeInformation, isBTCdenominated],
+        : Math.round((SATSPERBITCOIN / fiatStats?.value) * amountValue)) || 0,
+    [amountValue, fiatStats, isBTCdenominated],
   );
 
   const boltzFee = useMemo(() => {
@@ -403,7 +401,7 @@ export default function SendAndRequestPage(props) {
               setAmountValue(
                 convertTextInputValue(
                   amountValue,
-                  nodeInformation,
+                  fiatStats,
                   inputDenomination,
                 ),
               );

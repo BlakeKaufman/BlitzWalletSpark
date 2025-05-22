@@ -64,8 +64,7 @@ export default function TotalTipsScreen(props) {
 
   const {theme, darkModeType} = useGlobalThemeContext();
   const {contactsPrivateKey} = useKeysContext();
-  const {liquidNodeInformation, nodeInformation} = useNodeContext();
-  const {ecashWalletInformation} = useGlobaleCash();
+  const {fiatStats} = useNodeContext();
   const {sparkInformation} = useSparkWallet();
   const {minMaxLiquidSwapAmounts} = useAppStatus();
   const {masterInfoObject} = useGlobalContextProvider();
@@ -89,8 +88,8 @@ export default function TotalTipsScreen(props) {
         navigate.navigate('ErrorScreen', {
           errorMessage: `Must have over ${displayCorrectDenomination({
             amount: minMaxLiquidSwapAmounts.min,
-            nodeInformation,
             masterInfoObject,
+            fiatStats,
           })} in order payout tips.`,
         });
         return;
@@ -209,11 +208,11 @@ export default function TotalTipsScreen(props) {
         <TipsTXItem
           item={item}
           masterInfoObject={masterInfoObject}
-          nodeInformation={nodeInformation}
+          fiatStats={fiatStats}
         />
       );
     },
-    [masterInfoObject, nodeInformation],
+    [masterInfoObject, fiatStats],
   );
 
   const viewHeight = useMemo(() => height * 0.5, [height]);
@@ -328,7 +327,7 @@ export default function TotalTipsScreen(props) {
                   content={`${displayCorrectDenomination({
                     amount: totalTipAmount,
                     masterInfoObject,
-                    nodeInformation,
+                    fiatStats,
                   })}`}
                 />
               </View>

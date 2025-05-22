@@ -5,13 +5,7 @@ import {
 } from '../../../../../functions/crashlyticsLogs';
 
 export default async function processLNUrlWithdraw(input, context) {
-  const {
-    nodeInformation,
-    masterInfoObject,
-    navigate,
-    goBackFunction,
-    setLoadingMessage,
-  } = context;
+  const {goBackFunction, setLoadingMessage} = context;
   crashlyticsLogReport('Begining LNURL withdrawl process');
   setLoadingMessage('Starting LNURL withdrawl');
 

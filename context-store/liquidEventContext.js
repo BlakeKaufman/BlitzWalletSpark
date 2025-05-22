@@ -31,6 +31,9 @@ export function LiquidEventProvider({children}) {
   const receivedPayments = useRef([]);
   const isInitialSync = useRef(true);
   const syncRunCounter = useRef(1);
+
+  useEffect(() => {}, []);
+
   // Add debug logging
   useEffect(() => {
     console.log('liquidEvent changed:', liquidEvent);

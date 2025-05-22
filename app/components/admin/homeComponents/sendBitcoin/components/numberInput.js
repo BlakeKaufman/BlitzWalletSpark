@@ -6,6 +6,7 @@ export default function NumberInputSendPage({
   setPaymentInfo,
   paymentInfo,
   nodeInformation,
+  fiatStats,
 }) {
   const {masterInfoObject} = useGlobalContextProvider();
   const [amount, setAmount] = useState(paymentInfo?.sendAmount);

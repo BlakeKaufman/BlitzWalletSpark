@@ -40,7 +40,7 @@ export default function EditReceivePaymentInformation(props) {
   const navigate = useNavigation();
   const {masterInfoObject} = useGlobalContextProvider();
   // const {ecashWalletInformation} = useGlobaleCash();
-  const {nodeInformation} = useNodeContext();
+  const {nodeInformation, fiatStats} = useNodeContext();
   // const {minMaxLiquidSwapAmounts} = useAppStatus();
   const [amountValue, setAmountValue] = useState('');
   const [isKeyboardFocused, setIsKeyboardFocused] = useState(false);
@@ -60,9 +60,7 @@ export default function EditReceivePaymentInformation(props) {
   const localSatAmount =
     inputDenomination === 'sats'
       ? Number(amountValue)
-      : Math.round(
-          SATSPERBITCOIN / (nodeInformation.fiatStats?.value || 65000),
-        ) * amountValue;
+      : Math.round(SATSPERBITCOIN / (fiatStats?.value || 65000)) * amountValue;
 
   // const isOverInboundLiquidity =
   // nodeInformation.inboundLiquidityMsat / 1000 < localSatAmount;
@@ -91,13 +89,13 @@ export default function EditReceivePaymentInformation(props) {
       : inputDenomination === 'fiat'
       ? String(
           Math.round(
-            (SATSPERBITCOIN / (nodeInformation.fiatStats?.value || 65000)) *
+            (SATSPERBITCOIN / (fiatStats?.value || 65000)) *
               Number(amountValue),
           ),
         )
       : String(
           (
-            ((nodeInformation.fiatStats?.value || 65000) / SATSPERBITCOIN) *
+            ((fiatStats?.value || 65000) / SATSPERBITCOIN) *
             Number(amountValue)
           ).toFixed(2),
         );
