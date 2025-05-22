@@ -5,127 +5,409 @@
  * @format
  */
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
+import {DefaultTheme, NavigationContainer} from '@react-navigation/native';
+import './pollyfills';
+import './i18n'; // for translation option
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {registerRootComponent} from 'expo';
 import {
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+  getLocalStorageItem,
+  retrieveData,
+  setLocalStorageItem,
+} from './app/functions';
 
 import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+  AdminLogin,
+  ConnectingToNodeLoadingScreen,
+} from './app/screens/inAccount';
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+import {GlobalContextProvider} from './context-store/context';
 
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+import {WebViewProvider} from './context-store/webViewContext';
+import {Linking, Platform} from 'react-native';
+
+import SplashScreen from './app/screens/splashScreen';
+import {GlobalContactsList} from './context-store/globalContacts';
+
+import {GlobaleCashVariables} from './context-store/eCash';
+import {CreateAccountHome} from './app/screens/createAccount';
+import {GlobalAppDataProvider} from './context-store/appData';
+import PushNotificationManager, {
+  registerBackgroundNotificationTask,
+} from './context-store/notificationManager';
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import GetThemeColors from './app/hooks/themeColors';
+import {COLORS, LOGIN_SECUITY_MODE_KEY} from './app/constants';
+import {LiquidEventProvider} from './context-store/liquidEventContext';
+import {
+  EcashNavigationListener,
+  LightningNavigationListener,
+  LiquidNavigationListener,
+} from './context-store/SDKNavigation';
+// import {LightningEventProvider} from './context-store/lightningEventContext';
+import {
+  GlobalThemeProvider,
+  useGlobalThemeContext,
+} from './context-store/theme';
+import {GLobalNodeContextProider} from './context-store/nodeContext';
+import {AppStatusProvider, useAppStatus} from './context-store/appStatus';
+import {KeysContextProvider, useKeysContext} from './context-store/keys';
+import {POSTransactionsProvider} from './context-store/pos';
+import {
+  FADE_SCREENS,
+  FADE_TRANSPARENT_MODAL_SCREENS,
+  SLIDE_FROM_BOTTOM_SCREENS,
+  SLIDE_FROM_RIGHT_SCREENS,
+} from './navigation/screens';
+import getDeepLinkUser from './app/components/admin/homeComponents/contacts/internalComponents/getDeepLinkUser';
+import {navigationRef} from './navigation/navigationService';
+import {GlobalConbinedTxContextProvider} from './context-store/combinedTransactionsContext';
+// import BreezTest from './app/screens/breezTest';
+import {ImageCacheProvider} from './context-store/imageCache';
+import {SparkWalletProvider} from './context-store/sparkContext';
+
+const Stack = createNativeStackNavigator();
+
+function App(): JSX.Element {
   return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
+    <GestureHandlerRootView>
+      <KeysContextProvider>
+        <GlobalContextProvider>
+          <AppStatusProvider>
+            <GlobalThemeProvider>
+              <GlobaleCashVariables>
+                <SparkWalletProvider>
+                  <GLobalNodeContextProider>
+                    <GlobalConbinedTxContextProvider>
+                      <GlobalAppDataProvider>
+                        <POSTransactionsProvider>
+                          <WebViewProvider>
+                            <GlobalContactsList>
+                              <PushNotificationManager>
+                                <LiquidEventProvider>
+                                  <ImageCacheProvider>
+                                    {/* <Suspense
+                    fallback={<FullLoadingScreen text={'Loading Page'} />}> */}
+                                    <ResetStack />
+                                    {/* </Suspense> */}
+                                  </ImageCacheProvider>
+                                </LiquidEventProvider>
+                              </PushNotificationManager>
+                            </GlobalContactsList>
+                          </WebViewProvider>
+                        </POSTransactionsProvider>
+                      </GlobalAppDataProvider>
+                      {/* <BreezTest /> */}
+                    </GlobalConbinedTxContextProvider>
+                  </GLobalNodeContextProider>
+                </SparkWalletProvider>
+              </GlobaleCashVariables>
+            </GlobalThemeProvider>
+          </AppStatusProvider>
+        </GlobalContextProvider>
+      </KeysContextProvider>
+    </GestureHandlerRootView>
   );
 }
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+function ResetStack(): JSX.Element | null {
+  const [initSettings, setInitSettings] = useState<{
+    isLoggedIn: boolean | null;
+    hasSecurityEnabled: boolean | null;
+    isLoaded: boolean | null;
+  }>({
+    isLoggedIn: null,
+    hasSecurityEnabled: null,
+    isLoaded: null,
+  });
+  const [pendingLinkData, setPendingLinkData] = useState<{
+    url: string;
+    timestamp: number | null;
+  }>({
+    url: '',
+    timestamp: null,
+  });
+  const {theme, darkModeType} = useGlobalThemeContext();
+  const {didGetToHomepage} = useAppStatus();
+  const {publicKey} = useKeysContext();
+  const {backgroundColor} = GetThemeColors();
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  // Memoize handleDeepLink
+  const handleDeepLink = useCallback(
+    (event: {url: string}) => {
+      console.log('TEST');
+      const {url} = event;
+      console.log('Deep link URL:', url);
+
+      setPendingLinkData({
+        url: event.url,
+        timestamp: Date.now(),
+      });
+    },
+    [didGetToHomepage],
+  );
+
+  const clearDeepLink = useCallback(() => {
+    setPendingLinkData({
+      url: '',
+      timestamp: null,
+    });
+  }, []);
+
+  const getInitialURL = useCallback(async () => {
+    const url = await Linking.getInitialURL();
+    if (url) {
+      handleDeepLink({url});
+      console.log('Initial deep link stored:', url);
+    }
+  }, []);
+
+  useEffect(() => {
+    async function handleDeeplink() {
+      const {url, timestamp} = pendingLinkData;
+      if (!url) return;
+      console.log(
+        'Processing link:',
+        url,
+        'at timestamp:',
+        timestamp,
+        'conditions:',
+        {
+          didGetToHomepage,
+          hasNavigationRef: !!navigationRef.current,
+          hasPublicKey: !!publicKey,
+        },
+      );
+
+      if (didGetToHomepage && navigationRef.current && publicKey) {
+        try {
+          if (url.startsWith('lightning')) {
+            navigationRef.current.navigate('ConfirmPaymentScreen', {
+              btcAdress: url,
+            });
+          } else if (url.includes('blitz')) {
+            const deepLinkContact = await getDeepLinkUser({
+              deepLinkContent: url,
+              userProfile: {uuid: publicKey},
+            });
+
+            if (deepLinkContact.didWork) {
+              navigationRef.current.navigate('ExpandedAddContactsPage', {
+                newContact: deepLinkContact.data,
+              });
+            } else {
+              navigationRef.current.navigate('ErrorScreen', {
+                errorMessage: deepLinkContact.reason,
+              });
+            }
+          }
+
+          // Clear the pending link after processing
+          clearDeepLink();
+        } catch (error: any) {
+          console.error('Error processing deep link:', error);
+          navigationRef.current.navigate('ErrorScreen', {
+            errorMessage: `Failed to process link: ${
+              error.message || 'Unknown error'
+            }`,
+          });
+
+          // Clear the pending link even if there was an error
+          clearDeepLink();
+        }
+      }
+    }
+    handleDeeplink();
+  }, [pendingLinkData, didGetToHomepage, publicKey]);
+
+  useEffect(() => {
+    async function initWallet() {
+      const [initialURL, registerBackground, pin, mnemonic, securitySettings] =
+        await Promise.all([
+          getInitialURL(),
+          registerBackgroundNotificationTask(),
+          retrieveData('pin'),
+          retrieveData('mnemonic'),
+          getLocalStorageItem(LOGIN_SECUITY_MODE_KEY),
+        ]);
+
+      const storedSettings = JSON.parse(securitySettings);
+      const parsedSettings = storedSettings ?? {
+        isSecurityEnabled: true,
+        isPinEnabled: true,
+        isBiometricEnabled: false,
+      };
+      if (!storedSettings)
+        setLocalStorageItem(
+          LOGIN_SECUITY_MODE_KEY,
+          JSON.stringify(parsedSettings),
+        );
+
+      setInitSettings(prev => {
+        return {
+          ...prev,
+          isLoggedIn: pin && mnemonic,
+          hasSecurityEnabled: parsedSettings.isSecurityEnabled,
+        };
+      });
+    }
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+    initWallet();
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
+  const handleAnimationFinish = () => {
+    setInitSettings(prev => {
+      return {...prev, isLoaded: true};
+    });
   };
+  const navigationTheme = useMemo(
+    () => ({
+      ...DefaultTheme,
+      dark: theme,
+      colors: {
+        ...DefaultTheme.colors,
+        primary: '#1E1E1E',
+        background: backgroundColor,
+        card: '#1E1E1E',
+        text: '#1E1E1E',
+        border: '#1E1E1E',
+        notification: '#1E1E1E',
+      },
+    }),
+    [theme, backgroundColor],
+  );
 
-  /*
-   * To keep the template simple and small we're adding padding to prevent view
-   * from rendering under the System UI.
-   * For bigger apps the recommendation is to use `react-native-safe-area-context`:
-   * https://github.com/AppAndFlow/react-native-safe-area-context
-   *
-   * You can read more about it here:
-   * https://github.com/react-native-community/discussions-and-proposals/discussions/827
-   */
-  const safePadding = '5%';
+  const screenOptions = useMemo(() => {
+    return {
+      headerShown: false,
+      statusBarBackgroundColor:
+        Platform.OS === 'android' ? backgroundColor : undefined,
+      statusBarStyle:
+        Platform.OS === 'android'
+          ? ((theme ? 'light' : 'dark') as
+              | 'light'
+              | 'dark'
+              | 'inverted'
+              | 'auto'
+              | undefined)
+          : undefined,
+      statusBarAnimation:
+        Platform.OS === 'android'
+          ? ('fade' as 'fade' | 'none' | 'slide' | undefined)
+          : undefined,
+      navigationBarColor: backgroundColor,
+    };
+  }, [backgroundColor, theme]);
+
+  const HomeComponent = useMemo(() => {
+    if (initSettings.isLoggedIn) {
+      return initSettings.hasSecurityEnabled
+        ? AdminLogin
+        : ConnectingToNodeLoadingScreen;
+    }
+    return CreateAccountHome;
+  }, [initSettings.isLoggedIn, initSettings.hasSecurityEnabled]);
+
+  if (!initSettings.isLoaded || theme === null || darkModeType === null) {
+    return <SplashScreen onAnimationFinish={handleAnimationFinish} />;
+  }
 
   return (
-    <View style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        style={backgroundStyle}>
-        <View style={{paddingRight: safePadding}}>
-          <Header/>
-        </View>
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-            paddingHorizontal: safePadding,
-            paddingBottom: safePadding,
+    <NavigationContainer theme={navigationTheme} ref={navigationRef}>
+      <LiquidNavigationListener />
+      <EcashNavigationListener />
+      <Stack.Navigator screenOptions={screenOptions}>
+        <Stack.Screen
+          name="Home"
+          component={HomeComponent}
+          options={{
+            animation: 'fade',
+            gestureEnabled: false,
+            contentStyle: {
+              backgroundColor: backgroundColor,
+              backfaceVisibility: 'hidden',
+            },
+          }}
+        />
+        <Stack.Screen
+          name="ConnectingToNodeLoadingScreen"
+          component={ConnectingToNodeLoadingScreen}
+          options={{
+            gestureEnabled: false,
+            animation: 'fade',
+            contentStyle: {
+              backgroundColor: backgroundColor,
+              backfaceVisibility: 'hidden',
+            },
+          }}
+        />
+
+        <Stack.Group
+          screenOptions={{
+            presentation: 'containedTransparentModal',
+            animation: 'slide_from_bottom',
           }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </View>
+          {SLIDE_FROM_BOTTOM_SCREENS.map(({name, component: Component}) => (
+            <Stack.Screen
+              key={name}
+              name={name}
+              component={Component as React.ComponentType<any>}
+            />
+          ))}
+        </Stack.Group>
+        <Stack.Group
+          screenOptions={{
+            animation: 'slide_from_right',
+          }}>
+          {SLIDE_FROM_RIGHT_SCREENS.map(
+            ({name, component: Component, options = {}}) => (
+              <Stack.Screen
+                key={name}
+                name={name}
+                component={Component as React.ComponentType<any>}
+                options={{...options}}
+              />
+            ),
+          )}
+        </Stack.Group>
+        <Stack.Group
+          screenOptions={{
+            animation: 'fade',
+            presentation: 'containedTransparentModal',
+          }}>
+          {FADE_SCREENS.map(({name, component: Component, options = {}}) => (
+            <Stack.Screen
+              key={name}
+              name={name}
+              options={{...options}}
+              component={Component as React.ComponentType<any>}
+            />
+          ))}
+        </Stack.Group>
+        <Stack.Group
+          screenOptions={{
+            animation: 'fade',
+            presentation: 'transparentModal',
+          }}>
+          {FADE_TRANSPARENT_MODAL_SCREENS.map(
+            ({name, component: Component}) => (
+              <Stack.Screen
+                key={name}
+                name={name}
+                component={Component as React.ComponentType<any>}
+              />
+            ),
+          )}
+        </Stack.Group>
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
 
 export default App;
+registerRootComponent(App);
