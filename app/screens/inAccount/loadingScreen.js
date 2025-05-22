@@ -350,7 +350,7 @@ export default function ConnectingToNodeLoadingScreen({
       const [balance, transactions, sparkAddress] = await Promise.all([
         getSparkBalance(),
         getCachedSparkTransactions(),
-        masterInfoObject.sparkAddress
+        globalContactsInformation.myProfile.sparkAddress
           ? Promise.resolve(null)
           : getSparkAddress(),
       ]);
@@ -359,9 +359,15 @@ export default function ConnectingToNodeLoadingScreen({
         throw new Error('Unable to initialize spark from history');
 
       if (sparkAddress) {
-        toggleMasterInfoObject({
-          sparkAddress: sparkAddress,
-        });
+        toggleGlobalContactsInformation(
+          {
+            myProfile: {
+              ...globalContactsInformation.myProfile,
+              sparkAddress: sparkAddress,
+            },
+          },
+          true,
+        );
       }
       const storageObject = {
         balance: balance.balance,

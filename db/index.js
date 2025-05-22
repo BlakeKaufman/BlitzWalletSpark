@@ -100,6 +100,56 @@ export async function getDataFromCollection(collectionName, uuid) {
     return null;
   }
 }
+export async function getLnurlPayments(uuid) {
+  try {
+    if (!uuid) throw Error('User ID missing');
+
+    const paymentsRef = collection(
+      db,
+      'blitzWalletUsers',
+      uuid,
+      'lnurlPayments',
+    );
+
+    const querySnapshot = await getDocs(paymentsRef);
+
+    const payments = [];
+    querySnapshot.forEach(doc => {
+      payments.push({id: doc.id, ...doc.data()});
+    });
+
+    return payments;
+  } catch (err) {
+    console.error('Error fetching LNURL payments:', err);
+    return [];
+  }
+}
+export async function batchDeleteLnurlPayments(uuid, paymentIds) {
+  try {
+    if (!uuid) throw Error('User ID missing');
+    if (!paymentIds?.length) throw Error('No payment IDs provided');
+
+    const batch = writeBatch(db);
+
+    paymentIds.forEach(paymentId => {
+      const paymentRef = doc(
+        db,
+        'blitzWalletUsers',
+        uuid,
+        'lnurlPayments',
+        paymentId,
+      );
+      batch.delete(paymentRef);
+    });
+
+    await batch.commit();
+
+    return {success: true, count: paymentIds.length};
+  } catch (err) {
+    console.error('Error batch deleting payments:', err);
+    return {success: false, message: err.message};
+  }
+}
 
 export async function isValidUniqueName(
   collectionName = 'blitzWalletUsers',

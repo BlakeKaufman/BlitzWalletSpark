@@ -14,6 +14,7 @@ import {fetchLocalStorageItems} from './initializeUserSettingsHelpers';
 import {crashlyticsLogReport} from './crashlyticsLogs';
 import {getLocalStorageItem, setLocalStorageItem} from './localStorage';
 import fetchBackend from '../../db/handleBackend';
+import {getBitcoinKeyPair} from './lnurl';
 
 export default async function initializeUserSettingsFromHistory({
   setContactsPrivateKey,
@@ -150,6 +151,8 @@ export default async function initializeUserSettingsFromHistory({
       addresses: [],
     };
 
+    let lnurlPubKey = blitzStoredData.lnurlPubKey;
+
     //added here for legecy people
     liquidWalletSettings.regulatedChannelOpenSize =
       liquidWalletSettings.regulatedChannelOpenSize < MIN_CHANNEL_OPEN_FEE
@@ -208,6 +211,10 @@ export default async function initializeUserSettingsFromHistory({
         maxReceiveAmountSat: 10_000,
         maxEcashBalance: 25_000,
       };
+      needsToUpdate = true;
+    }
+    if (!lnurlPubKey) {
+      lnurlPubKey = getBitcoinKeyPair(mnemonic).publicKey;
       needsToUpdate = true;
     }
 
