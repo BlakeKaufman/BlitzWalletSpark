@@ -37,6 +37,7 @@ import {
   getCachedSparkTransactions,
   getSparkAddress,
   getSparkBalance,
+  getSparkIdentityPubKey,
   initializeSparkWallet,
 } from '../../functions/spark';
 import {useSparkWallet} from '../../../context-store/sparkContext';
@@ -347,18 +348,18 @@ export default function ConnectingToNodeLoadingScreen({
   }
   async function initializeSparkSession() {
     try {
-      const [balance, transactions, sparkAddress] = await Promise.all([
-        getSparkBalance(),
-        getCachedSparkTransactions(),
-        globalContactsInformation.myProfile.sparkAddress
-          ? Promise.resolve(null)
-          : getSparkAddress(),
-      ]);
+      const [balance, transactions, sparkAddress, identityPubKey] =
+        await Promise.all([
+          getSparkBalance(),
+          getCachedSparkTransactions(),
+          getSparkAddress(),
+          getSparkIdentityPubKey(),
+        ]);
 
       if (balance === undefined || transactions === undefined)
         throw new Error('Unable to initialize spark from history');
 
-      if (sparkAddress) {
+      if (!globalContactsInformation.myProfile.sparkAddress) {
         toggleGlobalContactsInformation(
           {
             myProfile: {
@@ -372,8 +373,11 @@ export default function ConnectingToNodeLoadingScreen({
       const storageObject = {
         balance: balance.balance,
         transactions: transactions,
+        identityPubKey,
+        sparkAddress,
         didConnect: true,
       };
+      console.log('Spark storage object', storageObject);
       setSparkInformation(storageObject);
       return storageObject;
     } catch (err) {

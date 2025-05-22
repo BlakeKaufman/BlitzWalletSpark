@@ -30,6 +30,15 @@ export const initializeSparkWallet = async () => {
     return {isConnected: false}; //make sure to switch back to false
   }
 };
+
+export const getSparkIdentityPubKey = async () => {
+  try {
+    if (!sparkWallet) throw new Error('sparkWallet not initialized');
+    return await sparkWallet.getIdentityPublicKey();
+  } catch (err) {
+    console.log('Get spark balance error', err);
+  }
+};
 export const initializeTempSparkWallet = async mnemoinc => {
   try {
     const {wallet: w} = await SparkWallet.initialize({
@@ -171,6 +180,14 @@ export const receiveSparkLightningPayment = async ({amountSats, memo}) => {
     return await sparkWallet.createLightningInvoice({amountSats, memo});
   } catch (err) {
     console.log('Receive lightning payment error', err);
+  }
+};
+export const getSparkLightningSendRequest = async id => {
+  try {
+    if (!sparkWallet) throw new Error('sparkWallet not initialized');
+    return await sparkWallet.getLightningSendRequest(id);
+  } catch (err) {
+    console.log('Get spark lightning send request error', err);
   }
 };
 

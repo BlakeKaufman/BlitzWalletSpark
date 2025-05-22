@@ -19,13 +19,14 @@ if (!sqlLiteDB) {
 
 export const initializeSparkDatabase = async () => {
   try {
+    // Payment status: pending, completed, failed
     await sqlLiteDB.execAsync(`
       PRAGMA journal_mode = WAL;
 
       CREATE TABLE IF NOT EXISTS ${SPARK_TRANSACTIONS_TABLE_NAME} (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         sparkID TEXT NOT NULL,
-        paymentStatus TEXT NOT NULL,
+        paymentStatus TEXT NOT NULL, 
         paymentType TEXT NOT NULL,
         accountId TEXT NOT NULL,
         details TEXT NOT NULL
@@ -35,7 +36,8 @@ export const initializeSparkDatabase = async () => {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         sparkID TEXT NOT NULL,
         amount INTEGER NOT NULL,
-        expiration INTEGER NOT NULL
+        expiration INTEGER NOT NULL,
+        description TEXT NOT NULL
       );
     `);
 
@@ -81,6 +83,25 @@ export const getAllUnpaidSparkLightningInvoices = async () => {
     console.error('Error fetching transactions:', error);
   }
 };
+export const addSingleUnpaidSparkLightningTransaction = async tx => {
+  if (!tx || !tx.id) {
+    console.error('Invalid transaction object');
+    return false;
+  }
+
+  try {
+    await sqlLiteDB.runAsync(
+      `INSERT INTO ${LIGHTNING_REQUEST_IDS_TABLE_NAME}
+       (sparkID, amount, expiration, description)
+       VALUES (?, ?, ?, ?)`,
+      [tx.id, Number(tx.amount), tx.expiration, tx.description],
+    );
+    return true;
+  } catch (error) {
+    console.error('Error adding spark transaction:', error);
+    return false;
+  }
+};
 
 export const updateSingleSparkTransaction = async (saved_spark_id, updates) => {
   // updates should be an object like { status: 'COMPLETED' }
@@ -117,7 +138,7 @@ export const bulkUpdateSparkTransactions = async transactions => {
         sparkID,
       );
 
-      const newDetails = formatDetailsJSON(tx);
+      const newDetails = tx.details;
 
       if (existingTx) {
         let existingDetails;
@@ -177,14 +198,14 @@ export const addSingleSparkTransaction = async tx => {
   }
 
   try {
-    const newDetails = formatDetailsJSON(tx);
+    const newDetails = tx.details;
     await sqlLiteDB.runAsync(
       `INSERT INTO ${SPARK_TRANSACTIONS_TABLE_NAME}
        (sparkID, paymentStatus, paymentType, accountId, details)
        VALUES (?, ?, ?, ?, ?)`,
       [
         tx.id,
-        tx.status,
+        tx.paymentStatus,
         tx.paymentType ?? 'unknown',
         tx.accountId ?? 'unknown',
         JSON.stringify(newDetails),
@@ -209,7 +230,7 @@ export const deleteSparkTransaction = async sparkID => {
     return false;
   }
 };
-export const deletePendingSparkLightningTransaction = async sparkID => {
+export const deleteUnpaidSparkLightningTransaction = async sparkID => {
   try {
     await sqlLiteDB.runAsync(
       `DELETE FROM ${LIGHTNING_REQUEST_IDS_TABLE_NAME} WHERE sparkID = ?`,
@@ -233,7 +254,7 @@ export const deleteSparkTransactionTable = async () => {
     return false;
   }
 };
-export const deletePendingSparkLightningTransactionTable = async () => {
+export const deleteUnpaidSparkLightningTransactionTable = async () => {
   try {
     await sqlLiteDB.execAsync(
       `DROP TABLE IF EXISTS ${LIGHTNING_REQUEST_IDS_TABLE_NAME}`,

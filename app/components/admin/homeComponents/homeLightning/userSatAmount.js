@@ -9,6 +9,7 @@ import {useNavigation} from '@react-navigation/native';
 import {useNodeContext} from '../../../../../context-store/nodeContext';
 import {useGlobaleCash} from '../../../../../context-store/eCash';
 import {crashlyticsLogReport} from '../../../../functions/crashlyticsLogs';
+import {useSparkWallet} from '../../../../../context-store/sparkContext';
 
 export const UserSatAmount = memo(function UserSatAmount({
   isConnectedToTheInternet,
@@ -16,41 +17,36 @@ export const UserSatAmount = memo(function UserSatAmount({
   darkModeType,
 }) {
   console.log('User sat amount container');
-  const didMount = useRef(null);
-  const {nodeInformation, liquidNodeInformation} = useNodeContext();
-  const {ecashWalletInformation} = useGlobaleCash();
+  const {sparkInformation} = useSparkWallet();
+  // const didMount = useRef(null);
+  // const {nodeInformation, liquidNodeInformation} = useNodeContext();
+  // const {ecashWalletInformation} = useGlobaleCash();
   const {masterInfoObject, toggleMasterInfoObject, setMasterInfoObject} =
     useGlobalContextProvider();
 
-  const eCashBalance = ecashWalletInformation.balance;
+  // const eCashBalance = ecashWalletInformation.balance;
   const saveTimeoutRef = useRef(null);
   const navigate = useNavigation();
-  const [balanceWidth, setBalanceWidth] = useState(0);
+  // const [balanceWidth, setBalanceWidth] = useState(0);
+  const userBalance = sparkInformation.balance;
+  console.log(sparkInformation.transactions[0]);
+  // useEffect(() => {
+  //   didMount.current = true;
+  //   return () => (didMount.current = false);
+  // }, []);
 
-  const userBalance =
-    (masterInfoObject.liquidWalletSettings.isLightningEnabled
-      ? nodeInformation.userBalance
-      : 0) +
-    liquidNodeInformation.userBalance +
-    (masterInfoObject.enabledEcash ? eCashBalance : 0);
-
-  useEffect(() => {
-    didMount.current = true;
-    return () => (didMount.current = false);
-  }, []);
-
-  const handleLayout = useCallback(
-    event => {
-      const {width} = event.nativeEvent.layout;
-      if (!didMount.current) return;
-      setBalanceWidth(width);
-    },
-    [didMount],
-  );
+  // const handleLayout = useCallback(
+  //   event => {
+  //     const {width} = event.nativeEvent.layout;
+  //     if (!didMount.current) return;
+  //     setBalanceWidth(width);
+  //   },
+  //   [didMount],
+  // );
 
   return (
     <TouchableOpacity
-      onLayout={handleLayout}
+      // onLayout={handleLayout}
       style={styles.balanceContainer}
       onPress={() => {
         if (!isConnectedToTheInternet) {
@@ -85,7 +81,7 @@ export const UserSatAmount = memo(function UserSatAmount({
       <View style={styles.valueContainer}>
         <FormattedSatText styles={styles.valueText} balance={userBalance} />
       </View>
-      {(!!liquidNodeInformation.pendingReceive ||
+      {/* {(!!liquidNodeInformation.pendingReceive ||
         !!liquidNodeInformation.pendingSend) && (
         <TouchableOpacity
           onPress={() => {
@@ -117,7 +113,7 @@ export const UserSatAmount = memo(function UserSatAmount({
             name={'pendingTxIcon'}
           />
         </TouchableOpacity>
-      )}
+      )} */}
     </TouchableOpacity>
   );
 });

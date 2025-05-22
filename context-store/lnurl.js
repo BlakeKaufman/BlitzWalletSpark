@@ -15,10 +15,8 @@ import {useSparkWallet} from './sparkContext';
 export default function HandleLNURLPayments() {
   const {setBlockedIdentityPubKeys} = useSparkWallet();
   const {masterInfoObject} = useGlobalContextProvider();
-  const {
-    lnurlPubKey,
-    myProfile: {sparkAddress},
-  } = masterInfoObject;
+  const {lnurlPubKey, contacts} = masterInfoObject;
+  const sparkAddress = contacts?.myProfile?.sparkAddress;
   const loadListener = useRef(null);
   const didRunSavedlNURL = useRef(null);
   const [privateKey, setPrivateKey] = useState(null);

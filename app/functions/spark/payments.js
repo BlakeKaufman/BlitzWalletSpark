@@ -8,6 +8,7 @@ import {
 } from '../../constants/math';
 import {
   addSingleSparkTransaction,
+  addSingleUnpaidSparkLightningTransaction,
   bulkUpdateSparkTransactions,
 } from './transactions';
 
@@ -144,24 +145,14 @@ export const sparkReceivePaymentWrapper = async ({
         memo,
         expirySeconds: 1000 * 60 * 60 * 24, //Add 24 hours validity to invoice
       });
-      // SAVE TEMP TX TO DATABASE HERE
+
       const tempTransaction = {
         id: invoice.id,
-        senderIdentityPublicKey: '',
-        receiverIdentityPublicKey: '',
-        status: invoice.status,
-        createdTime: invoice.invoice.createdAt,
-        updatedTime: invoice.invoice.updatedAt,
-        expiryTime: invoice.invoice.expiresAt,
-        type: 'PREIMAGE_SWAP',
-        transferDirection: 'OUTGOING',
-        totalValue: amountSats,
-        initial_sent: amountSats,
+        amount: amountSats,
+        expiration: invoice.invoice.expiresAt,
         description: memo || '',
-        fee: 0,
-        address: invoice.invoice.encodedInvoice,
       };
-      await addSingleSparkTransaction(tempTransaction);
+      await addSingleUnpaidSparkLightningTransaction(tempTransaction);
       return {
         didWork: true,
         data: invoice,

@@ -9,14 +9,19 @@ import {
 import {
   claimSparkBitcoinL1Transaction,
   getSparkBalance,
+  getSparkLightningPaymentStatus,
   getSparkTransactions,
   getUnusedSparkBitcoinL1Address,
   sparkWallet,
+  useSparkPaymentType,
 } from '../app/functions/spark';
 import {
+  addSingleSparkTransaction,
   bulkUpdateSparkTransactions,
   cleanStalePendingSparkLightningTransactions,
+  deleteUnpaidSparkLightningTransaction,
   getAllSparkTransactions,
+  getAllUnpaidSparkLightningInvoices,
   SPARK_TX_UPDATE_ENVENT_NAME,
   sparkTransactionsEventEmitter,
 } from '../app/functions/spark/transactions';
@@ -30,6 +35,8 @@ const SparkWalletProvider = ({children}) => {
   const [sparkInformation, setSparkInformation] = useState({
     balance: 0,
     transactions: [],
+    identityPubKey: '',
+    sparkAddress: '',
     didConnect: null,
   });
   const depositAddressIntervalRef = useRef(null);
@@ -44,33 +51,104 @@ const SparkWalletProvider = ({children}) => {
       const transactions = await getSparkTransactions(5, undefined);
       if (!transactions)
         throw new Error('Unable to get transactions from spark');
-      const selectedSparkTransaction = transactions.filter(
+
+      const {transfers} = transactions;
+      const selectedSparkTransaction = transfers.find(
         tx => tx.id === recevedTxId,
       );
 
-      // Posibly need to format spark transactions to match DB
-      // {
-      //   id: string;
-      //   senderIdentityPublicKey: string;
-      //   receiverIdentityPublicKey: string;
-      //   status: string;
-      //   createdTime: number | string; // timestamp or ISO string
-      //   updatedTime?: number | string;
-      //   type: string;
-      //   transferDirection: string;
-      //   totalValue: number;
-      //   initial_sent?: number;
-      //   description?: string;
-      //   fee?: number;
-      // }
+      console.log(
+        selectedSparkTransaction,
+        'received transaction from spark tx list',
+      );
+      let paymentObject = {};
+      const paymentType = useSparkPaymentType(selectedSparkTransaction);
 
-      if (!selectedSparkTransaction.length)
+      if (paymentType === 'lightning') {
+        const unpaidInvoices = await getAllUnpaidSparkLightningInvoices();
+        const posibleOptions = unpaidInvoices.filter(
+          unpaidInvoice =>
+            unpaidInvoice.amount == selectedSparkTransaction.totalValue,
+        );
+
+        let matchedUnpaidInvoice = null;
+        let savedInvoice = null;
+        for (const invoice of posibleOptions) {
+          console.log('Checking invoice', invoice);
+
+          let paymentDetials;
+          let attempts = 0;
+
+          // Try up to 5 times with 1 second delay if transfer is undefined
+          while (attempts < 5) {
+            const result = await getSparkLightningPaymentStatus({
+              lightningInvoiceId: invoice.sparkID,
+            });
+
+            // If transfer is defined, assign and break out of while loop
+            if (result.transfer !== undefined) {
+              paymentDetials = result;
+              break;
+            }
+
+            // Wait 1 second before next attempt
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            attempts++;
+          }
+
+          // If paymentDetials is still undefined after 5 tries, continue to next invoice
+          if (!paymentDetials || !paymentDetials.transfer) continue;
+
+          console.log(paymentDetials, 'payment details');
+
+          if (paymentDetials.transfer.sparkId === recevedTxId) {
+            savedInvoice = invoice;
+            matchedUnpaidInvoice = paymentDetials;
+            break;
+          }
+        }
+
+        if (savedInvoice) {
+          // removes invoice from the unpaid list
+          deleteUnpaidSparkLightningTransaction(savedInvoice.sparkID);
+        }
+
+        paymentObject = {
+          id: recevedTxId,
+          paymentStatus: 'completed',
+          paymentType: 'lightning',
+          accountId: selectedSparkTransaction.receiverIdentityPublicKey,
+          details: {
+            fee: 0,
+            amount: selectedSparkTransaction.totalValue,
+            address: matchedUnpaidInvoice?.invoice?.encodedInvoice || '',
+            time: new Date(selectedSparkTransaction.updatedTime).getTime(),
+            direction: 'INCOMING',
+            description: savedInvoice.description || '',
+            preimage: matchedUnpaidInvoice?.paymentPreimage || '',
+          },
+        };
+      } else if (paymentType === 'spark') {
+        paymentObject = {
+          id: recevedTxId,
+          paymentStatus: 'completed',
+          paymentType: 'spark',
+          accountId: selectedSparkTransaction.receiver_identity_pubkey,
+          details: {
+            fee: 0,
+            amount: selectedSparkTransaction.totalValue,
+            address: sparkInformation.sparkAddress,
+            time: new Date(selectedSparkTransaction.updatedTime).getTime(),
+            direction: 'INCOMING',
+            description: '',
+          },
+        };
+      }
+
+      if (!selectedSparkTransaction)
         throw new Error('Not able to get recent transfer');
 
-      // This will update lightning txs to add the reqiured information but save the payumetn description. And this will add spark or bitcoin transactions since no previous information is added
-      const response = await bulkUpdateSparkTransactions(
-        selectedSparkTransaction,
-      );
+      const response = await addSingleSparkTransaction(paymentObject);
 
       if (response) {
         const txs = await getAllSparkTransactions();
@@ -193,6 +271,9 @@ const SparkWalletProvider = ({children}) => {
     if (cleanDBStateRef.current) return;
     cleanDBStateRef.current = true;
     cleanStalePendingSparkLightningTransactions();
+    getAllUnpaidSparkLightningInvoices().then(unpaidInvoices => {
+      console.log('Unpaid invoices', unpaidInvoices);
+    });
   }, [didGetToHomepage]);
 
   const contextValue = useMemo(

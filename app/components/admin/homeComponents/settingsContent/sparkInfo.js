@@ -9,13 +9,10 @@ import {INSET_WINDOW_WIDTH} from '../../../../constants/theme';
 import {useSparkWallet} from '../../../../../context-store/sparkContext';
 
 export default function SparkInfo() {
-  //   const {sparkInformation} = useSparkWallet();
+  const {sparkInformation} = useSparkWallet();
   const {theme, darkModeType} = useGlobalThemeContext();
   const {backgroundOffset} = GetThemeColors();
-  const sparkAddress =
-    'sp1pgssxmwne6jf879cnreq452u24jvauzgxh62rasy6zxcwzafjua3jh4cz35ghj';
-  const publicKey =
-    '036dd3cea493f8b898f20ad15c5564cef04835f4a1f604d08d870ba9973b195eb8';
+  const {sparkAddress, identityPubKey} = sparkInformation;
 
   const navigate = useNavigation();
   return (
@@ -52,13 +49,13 @@ export default function SparkInfo() {
         />
         <TouchableOpacity
           onPress={() => {
-            copyToClipboard(publicKey, navigate);
+            copyToClipboard(identityPubKey, navigate);
           }}>
           <ThemeText
             content={
-              publicKey.slice(0, 6) +
+              identityPubKey.slice(0, 6) +
               '....' +
-              publicKey.slice(publicKey.length - 4)
+              identityPubKey.slice(identityPubKey.length - 4)
             }
           />
         </TouchableOpacity>
