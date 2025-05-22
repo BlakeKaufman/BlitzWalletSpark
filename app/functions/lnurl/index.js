@@ -4,7 +4,6 @@ import * as nobleSecp from '@noble/secp256k1';
 import {bytesToHex, hexToBytes} from '@noble/hashes/utils';
 import {mnemonicToSeedSync, entropyToMnemonic} from '@scure/bip39';
 import {wordlist} from '@scure/bip39/wordlists/english';
-import sha256Hash from '../hash';
 
 export function getBitcoinKeyPair(mnemonic) {
   const seed = mnemonicToSeedSync(mnemonic);

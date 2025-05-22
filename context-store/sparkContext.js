@@ -36,6 +36,7 @@ const SparkWalletProvider = ({children}) => {
   const cleanDBStateRef = useRef(null);
   const sparkReceiveListenerRef = useRef(null);
   const sparkSendListenerRef = useRef(null);
+  const [blockedIdentityPubKeys, setBlockedIdentityPubKeys] = useState([]);
 
   const handleTransactionUpdate = async recevedTxId => {
     try {
@@ -90,6 +91,8 @@ const SparkWalletProvider = ({children}) => {
         transactions: storedTransaction ? storedTransaction : prev.transactions,
       };
     });
+    if (blockedIdentityPubKeys.includes(transferId)) return;
+    // Handle confirm animation here
   };
 
   // Add event listeners to listen for bitcoin and lightning or spark transfers when receiving does not handle sending
@@ -196,8 +199,9 @@ const SparkWalletProvider = ({children}) => {
     () => ({
       sparkInformation,
       setSparkInformation,
+      setBlockedIdentityPubKeys,
     }),
-    [sparkInformation, setSparkInformation],
+    [sparkInformation, setSparkInformation, setBlockedIdentityPubKeys],
   );
 
   return (

@@ -30,6 +30,20 @@ export const initializeSparkWallet = async () => {
     return {isConnected: false}; //make sure to switch back to false
   }
 };
+export const initializeTempSparkWallet = async mnemoinc => {
+  try {
+    const {wallet: w} = await SparkWallet.initialize({
+      signer: new ReactNativeSparkSigner(),
+      mnemonicOrSeed: mnemoinc,
+      options: {network: 'MAINNET'},
+    });
+
+    return w;
+  } catch (err) {
+    console.log('Initialize spark wallet error', err);
+    return {isConnected: false}; //make sure to switch back to false
+  }
+};
 
 export const getSparkBalance = async () => {
   try {
