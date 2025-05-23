@@ -155,17 +155,16 @@ export async function fullRestoreSparkState({sparkAddress}) {
 
     if (newPaymentObjects.length) {
       await bulkUpdateSparkTransactions(newPaymentObjects);
-
-      const [txs, balance] = await Promise.all([
-        getAllSparkTransactions(),
-        getSparkBalance(),
-      ]);
-
-      return {
-        balance: balance?.balance,
-        txs: txs,
-      };
     }
+    const [txs, balance] = await Promise.all([
+      getAllSparkTransactions(),
+      getSparkBalance(),
+    ]);
+
+    return {
+      balance: balance?.balance,
+      txs: txs,
+    };
   } catch (err) {
     console.log('full restore spark state error', err);
     return {
