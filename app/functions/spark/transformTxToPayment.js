@@ -46,7 +46,7 @@ export async function transformTxToPaymentObject(tx, sparkAddress) {
             time: tx.updatedTime
               ? new Date(tx.updatedTime).getTime()
               : new Date().getTime(),
-            direction: 'INCOMING',
+            direction: tx.transferDirection,
             description: invoice.description || '',
             preimage: paymentDetails?.paymentPreimage || '',
           },
@@ -65,7 +65,7 @@ export async function transformTxToPaymentObject(tx, sparkAddress) {
         time: tx.updatedTime
           ? new Date(tx.updatedTime).getTime()
           : new Date().getTime(),
-        direction: 'INCOMING',
+        direction: tx.transferDirection,
         description: '',
         preimage: '',
       },
@@ -85,7 +85,7 @@ export async function transformTxToPaymentObject(tx, sparkAddress) {
         time: tx.updatedTime
           ? new Date(tx.updatedTime).getTime()
           : new Date().getTime(),
-        direction: 'INCOMING',
+        direction: tx.transferDirection,
         senderIdentityPublicKey: tx.senderIdentityPublicKey,
         description: '',
       },
