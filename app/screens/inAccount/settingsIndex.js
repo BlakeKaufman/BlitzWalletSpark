@@ -196,22 +196,22 @@ const SETTINGSOPTIONS = [
   // [...EXPIRIMENTALFEATURES],
 ];
 const DOOMSDAYSETTINGS = [
-  [
-    //   // {
-    //   //   for: 'general',
-    //   //   name: 'On-Chain Funds',
-    //   //   icon: ICONS.settingsBitcoinIcon,
-    //   //   iconWhite: ICONS.settingsBitcoinIconWhite,
-    //   //   arrowIcon: ICONS.leftCheveronIcon,
-    //   // },
-    {
-      for: 'general',
-      name: 'View Liquid Swaps',
-      icon: ICONS.liquidIcon,
-      iconWhite: ICONS.liquidIconWhite,
-      arrowIcon: ICONS.leftCheveronIcon,
-    },
-  ],
+  //   [
+  //     //   // {
+  //     //   //   for: 'general',
+  //     //   //   name: 'On-Chain Funds',
+  //     //   //   icon: ICONS.settingsBitcoinIcon,
+  //     //   //   iconWhite: ICONS.settingsBitcoinIconWhite,
+  //     //   //   arrowIcon: ICONS.leftCheveronIcon,
+  //     //   // },
+  //     // {
+  //     //   for: 'general',
+  //     //   name: 'View Liquid Swaps',
+  //     //   icon: ICONS.liquidIcon,
+  //     //   iconWhite: ICONS.liquidIconWhite,
+  //     //   arrowIcon: ICONS.leftCheveronIcon,
+  //     // },
+  //   ],
   [
     {
       for: 'Security & Customization',
