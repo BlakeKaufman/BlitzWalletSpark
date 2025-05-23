@@ -19,6 +19,10 @@ import {INSET_WINDOW_WIDTH} from '../../../../constants/theme';
 import {removeAllLocalData} from '../../../../functions/localStorage';
 import {useGlobaleCash} from '../../../../../context-store/eCash';
 import {useGlobalContextProvider} from '../../../../../context-store/context';
+import {
+  deleteSparkTransactionTable,
+  deleteUnpaidSparkLightningTransactionTable,
+} from '../../../../functions/spark/transactions';
 
 export default function ResetPage(props) {
   const [selectedOptions, setSelectedOptions] = useState({
@@ -211,11 +215,15 @@ export default function ResetPage(props) {
           didClearMessages,
           didClearEcash,
           didClearPos,
+          didClearTxTable,
+          didClearPendingTxTable,
         ] = await Promise.all([
           removeAllLocalData(),
           deleteTable(),
           deleteEcashDBTables(),
           deletePOSTransactionsTable(),
+          deleteSparkTransactionTable(),
+          deleteUnpaidSparkLightningTransactionTable(),
         ]);
 
         if (!didClearLocalStoreage)
