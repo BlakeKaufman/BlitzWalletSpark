@@ -251,8 +251,7 @@ export const useIsSparkPaymentPending = (tx, transactionPaymentType) => {
     return (
       (transactionPaymentType === 'bitcoin' &&
         tx.status === 'TRANSFER_STATUS_SENDER_KEY_TWEAK_PENDING') ||
-      (transactionPaymentType === 'spark' &&
-        tx.status === 'TRANSFER_STATUS_SENDER_KEY_TWEAKED') ||
+      (transactionPaymentType === 'spark' && false) ||
       (transactionPaymentType === 'lightning' &&
         tx.status === 'LIGHTNING_PAYMENT_INITIATED')
     );
@@ -278,17 +277,13 @@ export const useIsSparkPaymentFailed = (tx, transactionPaymentType) => {
   }
 };
 
-export const isSparkDonationPayment = (currentTx, lastTx) => {
+export const isSparkDonationPayment = (currentTx, currentTxDetails) => {
   try {
-    const currentTxTime = currentTx.created_at_time;
-    const lastTxTime = lastTx.created_at_time;
-    const differnce = Math.abs(currentTxTime - lastTxTime);
-    const isUnmarkedDonation =
-      differnce <= IS_DONTATION_PAYMENT_BUFFER &&
-      tx?.receiverIdentityPublicKey === process.env.BLITZ_SPARK_PUBLICKEY;
     return (
-      isUnmarkedDonation ||
-      currentTx.description === BLITZ_SUPPORT_DEFAULT_PAYMENT_DESCRIPTION
+      currentTxDetails.direction === 'OUTGOING' &&
+      currentTx === 'spark' &&
+      currentTxDetails.address === process.env.BLITZ_SPARK_SUPPORT_ADDRESSS &&
+      currentTxDetails.receiverPubKey === process.env.BLITZ_SPARK_PUBLICKEY
     );
   } catch (err) {
     console.log('Error finding is payment method is pending', err);

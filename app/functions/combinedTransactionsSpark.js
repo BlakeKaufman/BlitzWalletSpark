@@ -13,21 +13,14 @@ import FormattedSatText from './CustomElements/satTextDisplay';
 import {useTranslation} from 'react-i18next';
 import Icon from './CustomElements/Icon';
 import {memo, useMemo} from 'react';
-import {mergeArrays} from './mergeArrays';
 import {crashlyticsLogReport} from './crashlyticsLogs';
-import {
-  isSparkDonationPayment,
-  useIsSparkPaymentPending,
-  useSparkPaymentType,
-} from './spark';
+import {isSparkDonationPayment, useIsSparkPaymentPending} from './spark';
 
 export default function getFormattedHomepageTxsForSpark({
-  // combinedTransactions,
   currentTime,
   sparkInformation,
   homepageTxPreferance = 25,
   navigate,
-  // isBankPage,
   frompage,
   viewAllTxText,
   noTransactionHistoryText,
@@ -72,47 +65,25 @@ export default function getFormattedHomepageTxsForSpark({
     ) {
       try {
         const currentTransaction = sparkTransactions[transactionIndex];
-        const lastTransaction = sparkTransactions[transactionIndex + 1];
-        const transactionPaymentType = useSparkPaymentType(currentTransaction);
+        const transactionPaymentType = currentTransaction.paymentType;
+        const paymentDetials = JSON.parse(currentTransaction.details);
+        console.log(paymentDetials, 'testing');
 
         const isDonation = isSparkDonationPayment(
           currentTransaction,
-          lastTransaction,
+          paymentDetials,
         );
-        // const isLightningPayment = tx.type === 'PREIMAGE_SWAP';
-        // const isBitcoinPayment = tx.type == 'COOPERATIVE_EXIT';
-        // const isSparkPayment = tx.type === 'TRANSFER';
 
-        // const isLiquidPayment = currentTransaction.usesLiquidNode;
-        // const isLightningPayment = currentTransaction.usesLightningNode;
-        // const isEcashPayment = currentTransaction.usesEcash;
-        // const isFailedPayment =
-        //   !(currentTransaction.status === 'complete') &&
-        //   !!currentTransaction?.error;
+        const paymentDate = new Date(paymentDetials.time).getTime();
 
-        const paymentDate = new Date(
-          currentTransaction.updated_at_time,
-        ).getTime();
-        // let paymentDate;
-        // if (isLiquidPayment) {
-        //   paymentDate = currentTransaction.timestamp * 1000;
-        // } else if (isLightningPayment) {
-        //   paymentDate = currentTransaction.paymentTime * 1000; // could also need to be timd by 1000
-        // } else {
-        //   paymentDate = currentTransaction.time;
-        // }
-
-        const uniuqeIDFromTx = currentTransaction.id;
+        const uniuqeIDFromTx = currentTransaction.sparkID;
 
         const styledTx = (
           <UserTransaction
-            tx={currentTransaction}
+            tx={{...currentTransaction, details: paymentDetials}}
             currentTime={currentTime}
             navigate={navigate}
             transactionPaymentType={transactionPaymentType}
-            // isLightningPayment={isLightningPayment}
-            // isBitcoinPayment={isBitcoinPayment}
-            // isSparkPayment={isSparkPayment}
             paymentDate={paymentDate}
             id={uniuqeIDFromTx}
             frompage={frompage}
@@ -120,11 +91,6 @@ export default function getFormattedHomepageTxsForSpark({
             darkModeType={darkModeType}
             userBalanceDenomination={userBalanceDenomination}
             isDonation={isDonation}
-
-            // isLiquidPayment={isLiquidPayment}
-            // isEcashPayment={isEcashPayment}
-            // isFailedPayment={isFailedPayment}
-            // isBankPage={isBankPage}
           />
         );
 
@@ -202,33 +168,21 @@ export const UserTransaction = memo(function UserTransaction({
   currentTime,
   paymentDate,
   transactionPaymentType,
-  // isLightningPayment,
-  // isBitcoinPayment,
-  // isSparkPayment,
   id,
   navigate,
   frompage,
   theme,
   darkModeType,
   userBalanceDenomination,
-  // isLiquidPayment,
-  // isEcashPayment,
-  // isFailedPayment,
-  // isBankPage,
+
+  isDonation,
 }) {
   const {t} = useTranslation();
+
   const endDate = currentTime;
-  //   BITCOIN PENDING = TRANSFER_STATUS_SENDER_KEY_TWEAK_PENDING
-  //   BITCOIN CONFIRMED = TRANSFER_STATUS_SENDER_KEY_TWEAKED
-
-  //   SPARK PENDING = TRANSFER_STATUS_SENDER_KEY_TWEAKED
-  //   SPARK CONFIRMED = TRANSFER_STATUS_COMPLETED
-
-  //   LIGHTING PENDING = LIGHTNING_PAYMENT_INITIATED
-  //   LIGHTNING CONFIRMED = TRANSFER_STATUS_COMPLETED
 
   const timeDifferenceMs = endDate - paymentDate;
-
+  console.log(transaction);
   const timeDifference = useMemo(() => {
     const minutes = timeDifferenceMs / (1000 * 60);
     const hours = minutes / 60;
@@ -247,36 +201,8 @@ export const UserTransaction = memo(function UserTransaction({
     // return darkModeType && theme
     //   ? ICONS.failedTransactionWhite
     //   : ICONS.failedTransaction;
-  }, [
-    transactionPaymentType,
-    // isBitcoinPayment,
-    // isLightningPayment,
-    // isSparkPayment,
-    transaction,
-    darkModeType,
-    theme,
-  ]);
+  }, [transactionPaymentType, transaction, darkModeType, theme]);
 
-  // const paymentImage = useMemo(() => {
-  //   if (
-  //     isLiquidPayment ||
-  //     transaction.status === 'complete' ||
-  //     isEcashPayment
-  //   ) {
-  //     return darkModeType && theme
-  //       ? ICONS.arrow_small_left_white
-  //       : ICONS.smallArrowLeft;
-  //   }
-  //   return darkModeType && theme
-  //     ? ICONS.failedTransactionWhite
-  //     : ICONS.failedTransaction;
-  // }, [
-  //   isLiquidPayment,
-  //   isEcashPayment,
-  //   transaction.status,
-  //   darkModeType,
-  //   theme,
-  // ]);
   const showPendingTransactionStatusIcon = useIsSparkPaymentPending(
     transaction,
     transactionPaymentType,
@@ -300,7 +226,7 @@ export const UserTransaction = memo(function UserTransaction({
 
   const paymentDescription = isDonation
     ? BLITZ_SUPPORT_DEFAULT_PAYMENT_DESCRIPTION
-    : transaction.description;
+    : transaction.details?.description;
   const isDefaultDescription =
     paymentDescription === BLITZ_DEFAULT_PAYMENT_DESCRIPTION;
 
@@ -338,7 +264,7 @@ export const UserTransaction = memo(function UserTransaction({
                   {
                     rotate: showPendingTransactionStatusIcon
                       ? '0deg'
-                      : transaction.transfer_direction === 'OUTGOING'
+                      : transaction.details.direction === 'INCOMING'
                       ? '310deg'
                       : '130deg',
                   },
@@ -358,7 +284,7 @@ export const UserTransaction = memo(function UserTransaction({
               userBalanceDenomination === 'hidden'
                 ? `${HIDDEN_BALANCE_TEXT}`
                 : isDefaultDescription || !paymentDescription
-                ? transaction.transfer_direction === 'OUTGOING'
+                ? transaction.details.direction === 'OUTGOING'
                   ? t('constants.sent')
                   : t('constants.received')
                 : paymentDescription
@@ -402,13 +328,13 @@ export const UserTransaction = memo(function UserTransaction({
           containerStyles={{marginLeft: 'auto', marginBottom: 'auto'}}
           frontText={
             userBalanceDenomination !== 'hidden'
-              ? transaction.transfer_direction === 'OUTGOING'
+              ? transaction.details.direction === 'INCOMING'
                 ? '+'
                 : '-'
               : ''
           }
           styles={styles.amountText}
-          balance={transaction.total_sent}
+          balance={transaction.details.amount}
         />
       </View>
     </TouchableOpacity>
