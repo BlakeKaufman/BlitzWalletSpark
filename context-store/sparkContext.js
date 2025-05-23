@@ -47,9 +47,13 @@ const SparkWalletProvider = ({children}) => {
   const depositAddressIntervalRef = useRef(null);
   const cleanDBStateRef = useRef(null);
   const restoreOffllineStateRef = useRef(null);
-  const sparkReceiveListenerRef = useRef(null);
-  const sparkSendListenerRef = useRef(null);
+  const sparkPaymentActionsRef = useRef(null);
   const [blockedIdentityPubKeys, setBlockedIdentityPubKeys] = useState([]);
+  const blockedIdentityPubKeysRef = useRef([]);
+
+  useEffect(() => {
+    blockedIdentityPubKeysRef.current = blockedIdentityPubKeys;
+  }, [blockedIdentityPubKeys]);
 
   const handleTransactionUpdate = async recevedTxId => {
     try {
@@ -156,31 +160,35 @@ const SparkWalletProvider = ({children}) => {
       if (!selectedSparkTransaction)
         throw new Error('Not able to get recent transfer');
 
-      const response = await addSingleSparkTransaction(paymentObject);
-
-      if (response) {
-        const txs = await getAllSparkTransactions();
-        return {txs, paymentObject};
-      } else false;
+      await addSingleSparkTransaction(paymentObject);
     } catch (err) {
       console.log('Handle incoming transaction error', err);
     }
   };
 
   const handleIncomingPayment = async transferId => {
-    const balance = (await getSparkBalance()) || {balance: 0};
     const storedTransaction = await handleTransactionUpdate(transferId);
-    setSparkInformation(prev => {
-      return {
-        ...prev,
-        balance: balance.balance,
-        transactions: storedTransaction
-          ? storedTransaction.txs
-          : prev.transactions,
-      };
-    });
+
     // block incoming paymetns here
-    if (blockedIdentityPubKeys.includes(transferId)) return;
+    console.log(blockedIdentityPubKeysRef.current, 'blocked identy puib keys');
+    const isLNURLPayment = blockedIdentityPubKeysRef.current.some(
+      blocked => blocked.transferResponse.id === transferId,
+    );
+    console.log(isLNURLPayment, 'isLNURL PAYMNET');
+    if (isLNURLPayment) {
+      const selectedLNURL = storedTransaction.txs.find(
+        tx => tx.id === transferId,
+      );
+      const dbLNURL = isLNURLPayment.db;
+
+      const details = JSON.stringify(selectedLNURL.details);
+      const newDetails = {...details, description: dbLNURL.description};
+      const newPayent = {...selectedLNURL, details: newDetails};
+
+      await bulkUpdateSparkTransactions([newPayent]);
+
+      if (!isLNURLPayment.shouldNavigate) return;
+    }
     // Handle confirm animation here
     setPendingNavigation({
       routes: [
@@ -201,27 +209,10 @@ const SparkWalletProvider = ({children}) => {
   // Add event listeners to listen for bitcoin and lightning or spark transfers when receiving does not handle sending
   useEffect(() => {
     if (!sparkInformation.didConnect) return;
-    if (sparkReceiveListenerRef.current) return;
-    sparkReceiveListenerRef.current = true;
+    if (sparkPaymentActionsRef.current) return;
+    sparkPaymentActionsRef.current = true;
 
-    sparkWallet.on('transfer:claimed', (transferId, balance) => {
-      console.log(`Transfer ${transferId} claimed. New balance: ${balance}`);
-      handleIncomingPayment(transferId);
-    });
-    sparkWallet.on('deposit:confirmed', (transferId, balance) => {
-      console.log(`Transfer ${transferId} claimed. New balance: ${balance}`);
-      handleIncomingPayment(transferId);
-    });
-    return () => {
-      sparkWallet.off('transfer:claimed');
-      sparkWallet.off('deposit:confirmed');
-    };
-  }, [sparkInformation]);
-
-  useEffect(() => {
-    if (!sparkInformation.didConnect) return;
-    if (sparkSendListenerRef.current) return;
-    sparkSendListenerRef.current = true;
+    console.log('Running add spark listneers');
 
     async function handleUpdate(updateType) {
       try {
@@ -244,13 +235,15 @@ const SparkWalletProvider = ({children}) => {
     );
     sparkTransactionsEventEmitter.on(SPARK_TX_UPDATE_ENVENT_NAME, handleUpdate);
 
-    return () => {
-      sparkTransactionsEventEmitter.off(
-        SPARK_TX_UPDATE_ENVENT_NAME,
-        handleUpdate,
-      );
-    };
-  }, [sparkInformation]);
+    sparkWallet.on('transfer:claimed', (transferId, balance) => {
+      console.log(`Transfer ${transferId} claimed. New balance: ${balance}`);
+      handleIncomingPayment(transferId);
+    });
+    sparkWallet.on('deposit:confirmed', (transferId, balance) => {
+      console.log(`Transfer ${transferId} claimed. New balance: ${balance}`);
+      handleIncomingPayment(transferId);
+    });
+  }, [sparkInformation.didConnect]);
 
   useEffect(() => {
     // Interval to check deposit addresses to see if they were paid
@@ -305,39 +298,22 @@ const SparkWalletProvider = ({children}) => {
     restoreOffllineStateRef.current = true;
 
     let isFirstInterval = true;
-    const updatePaymentState = setInterval(async () => {
+    setInterval(async () => {
       try {
-        const response = await restoreSparkTxStateFromLast4Days(
-          50,
-          isFirstInterval,
-        );
+        await restoreSparkTxStateFromLast4Days(50, isFirstInterval);
         isFirstInterval = false; // switch to using last 4 days after first run
-        if (response.updated.length) {
-          const txs = await getAllSparkTransactions();
-          setSparkInformation(prev => ({
-            ...prev,
-            transactions: txs ? txs : prev.transactions,
-          }));
-        }
       } catch (err) {
         console.error('Error during periodic restore:', err);
       }
-    }, 30000); // every 10 seconds
+    }, 30000); // every 30 seconds
 
     async function restoreTxState() {
-      const restored = await fullRestoreSparkState({
+      await fullRestoreSparkState({
         sparkAddress: sparkInformation.sparkAddress,
       });
-      if (!restored.balance && !restored.txs) return;
-      setSparkInformation(prev => ({
-        ...prev,
-        balance: restored.balance,
-        transactions: restored.txs,
-      }));
     }
 
     restoreTxState();
-    return () => clearInterval(updatePaymentState);
   }, [didGetToHomepage]);
 
   const contextValue = useMemo(

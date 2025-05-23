@@ -105,7 +105,7 @@ export function ImageCacheProvider({children}) {
 
       return newCacheEntry;
     } catch (err) {
-      console.log('Error refreshing image cache', err);
+      console.log('Error refreshing image cache');
     }
   }
 
@@ -123,7 +123,7 @@ export function ImageCacheProvider({children}) {
       setCache(prev => ({...prev, [uuid]: newCacheEntry}));
       return newCacheEntry;
     } catch (err) {
-      console.log('Error refreshing image cache', err);
+      console.log('Error removing profile image from cache');
     }
   }
 

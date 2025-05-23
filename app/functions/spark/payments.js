@@ -72,12 +72,12 @@ export const sparkPaymenWrapper = async ({
       if (!lightningPayResponse)
         throw new Error('Error when sending lightning payment');
 
-      if (masterInfoObject?.enabledDeveloperSupport?.isEnabled) {
-        sendSparkPayment({
-          receiverSparkAddress: process.env.BLITZ_SPARK_SUPPORT_ADDRESSS,
-          amountSats: supportFee,
-        });
-      }
+      // if (masterInfoObject?.enabledDeveloperSupport?.isEnabled) {
+      //   sendSparkPayment({
+      //     receiverSparkAddress: process.env.BLITZ_SPARK_SUPPORT_ADDRESSS,
+      //     amountSats: supportFee,
+      //   });
+      // }
 
       console.log(lightningPayResponse, 'lightning pay response');
       let sparkQueryResponse = null;
@@ -154,12 +154,12 @@ export const sparkPaymenWrapper = async ({
 
       console.log('Spark payment response', sparkPayResponse);
 
-      if (masterInfoObject?.enabledDeveloperSupport?.isEnabled) {
-        sendSparkPayment({
-          receiverSparkAddress: process.env.BLITZ_SPARK_SUPPORT_ADDRESSS,
-          amountSats: supportFee,
-        });
-      }
+      // if (masterInfoObject?.enabledDeveloperSupport?.isEnabled) {
+      //   sendSparkPayment({
+      //     receiverSparkAddress: process.env.BLITZ_SPARK_SUPPORT_ADDRESSS,
+      //     amountSats: supportFee,
+      //   });
+      // }
 
       const tx = {
         id: sparkPayResponse.id,

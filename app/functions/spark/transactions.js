@@ -121,6 +121,11 @@ export const updateSingleSparkTransaction = async (saved_spark_id, updates) => {
       ...values,
       saved_spark_id,
     );
+    // Emit event
+    sparkTransactionsEventEmitter.emit(
+      SPARK_TX_UPDATE_ENVENT_NAME,
+      'transactions',
+    );
     return true;
   } catch (error) {
     console.error(`Error updating transaction at ${created_at_time}:`, error);
@@ -232,6 +237,11 @@ export const addSingleSparkTransaction = async tx => {
         JSON.stringify(newDetails),
       ],
     );
+    // Emit event
+    sparkTransactionsEventEmitter.emit(
+      SPARK_TX_UPDATE_ENVENT_NAME,
+      'transactions',
+    );
     return true;
   } catch (error) {
     console.error('Error adding spark transaction:', error);
@@ -244,6 +254,11 @@ export const deleteSparkTransaction = async sparkID => {
     await sqlLiteDB.runAsync(
       `DELETE FROM ${SPARK_TRANSACTIONS_TABLE_NAME} WHERE sparkID = ?`,
       sparkID,
+    );
+    // Emit event
+    sparkTransactionsEventEmitter.emit(
+      SPARK_TX_UPDATE_ENVENT_NAME,
+      'transactions',
     );
     return true;
   } catch (error) {

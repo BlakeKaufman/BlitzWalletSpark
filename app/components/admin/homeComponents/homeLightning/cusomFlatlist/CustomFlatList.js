@@ -41,7 +41,7 @@ function CustomFlatList({style, ...props}) {
         transactions: restored.txs,
       }));
     } catch (err) {
-      console.log('error refreshing', err);
+      console.log('error refreshing on homepage', err);
       crashlyticsRecordErrorReport(err.message);
     } finally {
       setRefreshing(false);

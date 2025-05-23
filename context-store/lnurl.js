@@ -11,17 +11,19 @@ import {batchDeleteLnurlPayments, getLnurlPayments} from '../db';
 import {initializeTempSparkWallet} from '../app/functions/spark';
 import {getBitcoinKeyPair, getSharedKey} from '../app/functions/lnurl';
 import {useSparkWallet} from './sparkContext';
+import {retrieveData} from '../app/functions';
 
 export default function HandleLNURLPayments() {
-  const {setBlockedIdentityPubKeys} = useSparkWallet();
+  const {setBlockedIdentityPubKeys, sparkInformation} = useSparkWallet();
   const {masterInfoObject} = useGlobalContextProvider();
-  const {lnurlPubKey, contacts} = masterInfoObject;
-  const sparkAddress = contacts?.myProfile?.sparkAddress;
+  const {lnurlPubKey} = masterInfoObject;
+  const sparkAddress = sparkInformation.sparkAddress;
   const loadListener = useRef(null);
   const didRunSavedlNURL = useRef(null);
   const [privateKey, setPrivateKey] = useState(null);
-  const didCreateSessionPrivateKey = useRef(false);
+  const didCreateSessionPrivateKey = useRef(null);
   const paymentQueueRef = useRef([]);
+  const tempWalletCacheRef = useRef(new Map());
   const deleteActiveLNURLPaymentsRef = useRef([]);
 
   useEffect(() => {
@@ -34,14 +36,14 @@ export default function HandleLNURLPayments() {
       setPrivateKey(derivedMnemonic.privateKey);
     }
     getSessionPrivateKey();
-  }, []);
+  }, [masterInfoObject.uuid]);
 
   useEffect(() => {
     async function getSavedLNURLPayments() {
       const now = new Date().getTime();
       const payments = await getLnurlPayments(masterInfoObject.uuid);
       if (!payments.length) return;
-      console.log(payments, 'LNURL Payments');
+      console.log(`Restoring ${payments.length} offline lnurl payments`);
       // loop through payments here
       let deletedPaymentIds = [];
       for (let index = 0; index < payments.length; index++) {
@@ -53,25 +55,37 @@ export default function HandleLNURLPayments() {
         const combinedSparkWallet = await initializeTempSparkWallet(
           derivedMnemonic,
         );
-        if (!combinedSparkWallet.isConnected) continue;
 
+        if (!combinedSparkWallet) continue;
         const balance = await combinedSparkWallet.getBalance();
 
-        if (balance.balance === 0) {
+        if (Number(balance.balance) === 0) {
           if (payment.expiredTime < now) deletedPaymentIds.push(payment.id);
           continue;
         }
 
         try {
           const paymentResponse = await combinedSparkWallet.transfer({
-            amountSats: balance.balance,
-            recipient: sparkAddress,
+            amountSats: Number(balance.balance),
+            receiverSparkAddress: sparkAddress,
           });
+
+          console.log(
+            'LNURL internal transfer payment response',
+            paymentResponse,
+          );
 
           if (!paymentResponse) throw new Error('Payment failed');
           setBlockedIdentityPubKeys(prev => {
-            if (prev.includes(paymentResponse.id)) return prev;
-            return [...prev, paymentResponse.id];
+            if (prev.some(p => p.id === transferResponse.id)) return prev;
+            return [
+              ...prev,
+              {
+                transferResponse: {...paymentResponse},
+                db: payment,
+                shouldNavigate: false,
+              },
+            ];
           });
           deletedPaymentIds.push(payment.id);
         } catch (err) {
@@ -124,7 +138,7 @@ export default function HandleLNURLPayments() {
           if (change.type === 'added') {
             const payment = change.doc.data();
             console.log(payment, 'added to payment queue');
-            paymentQueueRef.current.push(payment);
+            paymentQueueRef.current.push({...payment, id: change.doc.id});
           }
         });
       },
@@ -150,30 +164,52 @@ export default function HandleLNURLPayments() {
             privateKey,
             payment.sharedPublicKey,
           );
-          const tempSparkWallet = await initializeTempSparkWallet(
-            derivedMnemonic,
-          );
 
-          if (!tempSparkWallet.isConnected) {
-            newQueue.push(payment);
-            continue;
+          let cached = tempWalletCacheRef.current.get(derivedMnemonic);
+
+          let tempSparkWallet = cached?.wallet;
+          if (!tempSparkWallet) {
+            tempSparkWallet = await initializeTempSparkWallet(derivedMnemonic);
+            if (!tempSparkWallet) {
+              newQueue.push(payment);
+              continue;
+            }
+            tempWalletCacheRef.current.set(derivedMnemonic, {
+              wallet: tempSparkWallet,
+            });
           }
 
           const balance = await tempSparkWallet.getBalance();
-          if (balance.balance === 0) {
+          if (Number(balance.balance) === 0) {
             newQueue.push(payment);
             continue;
           }
 
           const paymentResponse = await tempSparkWallet.transfer({
-            amountSats: balance.balance,
-            recipient: sparkAddress,
+            amountSats: Number(balance.balance),
+            receiverSparkAddress: sparkAddress,
           });
+          console.log(
+            'LNURL internal transfer payment response from queue',
+            paymentResponse,
+          );
 
           if (!paymentResponse) {
             newQueue.push(payment);
             continue;
           }
+
+          setBlockedIdentityPubKeys(prev => {
+            if (prev.some(p => p.id === transferResponse.id)) return prev;
+            return [
+              ...prev,
+              {
+                transferResponse: {...paymentResponse},
+                db: payment,
+                shouldNavigate: true,
+              },
+            ];
+          });
 
           deleteActiveLNURLPaymentsRef.current.push(payment.id);
           console.log('Payment successful:', payment.id);
@@ -192,7 +228,7 @@ export default function HandleLNURLPayments() {
         );
         deleteActiveLNURLPaymentsRef.current = [];
       }
-    }, 30000);
+    }, 10000);
 
     return () => clearInterval(interval);
   }, [privateKey, sparkAddress, masterInfoObject.uuid]);
