@@ -14,6 +14,7 @@ import {
   setDoc,
   limit,
   addDoc,
+  writeBatch,
 } from '@react-native-firebase/firestore';
 import {getLocalStorageItem, setLocalStorageItem} from '../app/functions';
 import {
