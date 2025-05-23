@@ -31,19 +31,18 @@ export default function ConfirmTxPage(props) {
   const animationRef = useRef(null);
 
   const transaction = props.route.params?.transaction;
+  const hasError = props.route.params?.error;
   const paymentInformation = transaction?.details;
 
-  console.log(transaction, 'TRANSACTION');
+  const didSucceed = !hasError;
 
-  const didSucceed = !paymentInformation?.error;
+  const paymentNetwork = transaction?.paymentType;
 
-  const paymentNetwork = transaction.paymentType;
-
-  const showPendingMessage = transaction.paymentStatus === 'pending';
+  const showPendingMessage = transaction?.paymentStatus === 'pending';
 
   const paymentFee = paymentInformation?.fee;
 
-  const errorMessage = paymentInformation?.error;
+  const errorMessage = hasError;
 
   const amount = paymentInformation?.amount || 0;
 
