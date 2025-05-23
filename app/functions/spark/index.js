@@ -2,10 +2,6 @@ import {
   SparkWallet,
   ReactNativeSparkSigner,
 } from '@buildonspark/spark-sdk/native';
-import {
-  BLITZ_SUPPORT_DEFAULT_PAYMENT_DESCRIPTION,
-  IS_DONTATION_PAYMENT_BUFFER,
-} from '../../constants';
 import {retrieveData} from '../secureStore';
 import {getAllSparkTransactions} from './transactions';
 
@@ -15,19 +11,26 @@ export const initializeSparkWallet = async () => {
   try {
     const storedMnemoinc = await retrieveData('mnemonic');
 
-    const {wallet: w} = await SparkWallet.initialize({
-      signer: new ReactNativeSparkSigner(),
-      mnemonicOrSeed: storedMnemoinc,
-      options: {network: 'MAINNET'},
-    });
+    const [type, value] = await Promise.race([
+      SparkWallet.initialize({
+        signer: new ReactNativeSparkSigner(),
+        mnemonicOrSeed: storedMnemoinc,
+        options: {network: 'MAINNET'},
+      }).then(res => ['wallet', res]),
+      new Promise(res => setTimeout(() => res(['timeout', false]), 15000)),
+    ]);
 
-    sparkWallet = w;
-
-    console.log('Wallet initialized:', await w.getIdentityPublicKey());
-    return {isConnected: true};
+    if (type === 'wallet') {
+      console.log('Wallet initialized:', await wallet.getIdentityPublicKey());
+      const {wallet} = value;
+      sparkWallet = wallet;
+      return {isConnected: true};
+    } else if (type === 'timeout') {
+      return {isConnected: false};
+    }
   } catch (err) {
     console.log('Initialize spark wallet error', err);
-    return {isConnected: false}; //make sure to switch back to false
+    return {isConnected: false};
   }
 };
 
@@ -50,7 +53,6 @@ export const initializeTempSparkWallet = async mnemoinc => {
     return w;
   } catch (err) {
     console.log('Initialize spark wallet error', err);
-    return {isConnected: false}; //make sure to switch back to false
   }
 };
 
