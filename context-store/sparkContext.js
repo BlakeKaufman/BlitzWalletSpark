@@ -28,9 +28,8 @@ import {
 import {useAppStatus} from './appStatus';
 import {
   fullRestoreSparkState,
-  restoreSparkTxState,
+  restoreSparkTxStateFromLast4Days,
 } from '../app/functions/spark/restore';
-import {transformTxToPaymentObject} from '../app/functions/spark/transformTxToPayment';
 
 // Initiate context
 const SparkWalletManager = createContext(null);
@@ -300,10 +299,30 @@ const SparkWalletProvider = ({children}) => {
   }, [didGetToHomepage]);
 
   useEffect(() => {
-    // This function runs once per load and check to see if a user received any payments while offline.
+    // This function runs once per load and check to see if a user received any payments while offline. It also starts a timeout to update payment status of paymetns every 30 seconds.
     if (!didGetToHomepage) return;
     if (restoreOffllineStateRef.current) return;
     restoreOffllineStateRef.current = true;
+
+    let isFirstInterval = true;
+    const updatePaymentState = setInterval(async () => {
+      try {
+        const response = await restoreSparkTxStateFromLast4Days(
+          50,
+          isFirstInterval,
+        );
+        isFirstInterval = false; // switch to using last 4 days after first run
+        if (response.updated.length) {
+          const txs = await getAllSparkTransactions();
+          setSparkInformation(prev => ({
+            ...prev,
+            transactions: txs ? txs : prev.transactions,
+          }));
+        }
+      } catch (err) {
+        console.error('Error during periodic restore:', err);
+      }
+    }, 30000); // every 10 seconds
 
     async function restoreTxState() {
       const restored = await fullRestoreSparkState({
@@ -318,6 +337,7 @@ const SparkWalletProvider = ({children}) => {
     }
 
     restoreTxState();
+    return () => clearInterval(updatePaymentState);
   }, [didGetToHomepage]);
 
   const contextValue = useMemo(

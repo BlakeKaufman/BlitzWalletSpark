@@ -1,4 +1,8 @@
-import {getSparkLightningPaymentStatus, useSparkPaymentType} from '.';
+import {
+  getSparkLightningPaymentStatus,
+  getSparkPaymentStatus,
+  useSparkPaymentType,
+} from '.';
 import {
   deleteUnpaidSparkLightningTransaction,
   getAllUnpaidSparkLightningInvoices,
@@ -36,7 +40,7 @@ export async function transformTxToPaymentObject(tx, sparkAddress) {
 
         return {
           id: tx.id,
-          paymentStatus: 'completed',
+          paymentStatus: getSparkPaymentStatus(tx.status),
           paymentType: 'lightning',
           accountId: tx.receiverIdentityPublicKey,
           details: {
@@ -55,7 +59,7 @@ export async function transformTxToPaymentObject(tx, sparkAddress) {
     }
     return {
       id: tx.id,
-      paymentStatus: 'completed',
+      paymentStatus: getSparkPaymentStatus(tx.status),
       paymentType: 'lightning',
       accountId: tx.receiverIdentityPublicKey,
       details: {
@@ -75,7 +79,7 @@ export async function transformTxToPaymentObject(tx, sparkAddress) {
   if (paymentType === 'spark') {
     return {
       id: tx.id,
-      paymentStatus: 'completed',
+      paymentStatus: getSparkPaymentStatus(tx.status),
       paymentType: 'spark',
       accountId: tx.receiverIdentityPublicKey,
       details: {

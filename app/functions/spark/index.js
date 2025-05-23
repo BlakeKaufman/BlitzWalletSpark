@@ -246,6 +246,15 @@ export const useSparkPaymentType = tx => {
   }
 };
 
+export const getSparkPaymentStatus = status => {
+  return status === 'TRANSFER_STATUS_COMPLETED'
+    ? 'completed'
+    : status === 'TRANSFER_STATUS_RETURNED' ||
+      status === 'TRANSFER_STATUS_EXPIRED'
+    ? 'failed'
+    : 'pending';
+};
+
 export const useIsSparkPaymentPending = (tx, transactionPaymentType) => {
   try {
     return (

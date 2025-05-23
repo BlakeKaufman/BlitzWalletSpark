@@ -68,6 +68,7 @@ export default function getFormattedHomepageTxsForSpark({
         const transactionPaymentType = currentTransaction.paymentType;
         const paymentDetials = JSON.parse(currentTransaction.details);
 
+        const isFailedPayment = currentTransaction.paymentStatus === 'failed';
         const isDonation = isSparkDonationPayment(
           currentTransaction,
           paymentDetials,
@@ -90,6 +91,7 @@ export default function getFormattedHomepageTxsForSpark({
             darkModeType={darkModeType}
             userBalanceDenomination={userBalanceDenomination}
             isDonation={isDonation}
+            isFailedPayment={isFailedPayment}
           />
         );
 
@@ -173,8 +175,8 @@ export const UserTransaction = memo(function UserTransaction({
   theme,
   darkModeType,
   userBalanceDenomination,
-
   isDonation,
+  isFailedPayment,
 }) {
   const {t} = useTranslation();
 
@@ -191,37 +193,17 @@ export const UserTransaction = memo(function UserTransaction({
   }, [timeDifferenceMs]);
 
   const paymentImage = useMemo(() => {
-    // I removed failed icons here for now
-
-    return darkModeType && theme
-      ? ICONS.arrow_small_left_white
-      : ICONS.smallArrowLeft;
-
-    // return darkModeType && theme
-    //   ? ICONS.failedTransactionWhite
-    //   : ICONS.failedTransaction;
+    return transaction.paymentStatus === 'completed'
+      ? darkModeType && theme
+        ? ICONS.arrow_small_left_white
+        : ICONS.smallArrowLeft
+      : darkModeType && theme
+      ? ICONS.failedTransactionWhite
+      : ICONS.failedTransaction;
   }, [transactionPaymentType, transaction, darkModeType, theme]);
 
-  const showPendingTransactionStatusIcon = useIsSparkPaymentPending(
-    transaction,
-    transactionPaymentType,
-  );
-  // const showPendingTransactionStatusIcon = useMemo(
-  //   () =>
-  //     (transactionPaymentType === 'bitcoin' &&
-  //       transaction.status === 'TRANSFER_STATUS_SENDER_KEY_TWEAK_PENDING') ||
-  //     (transactionPaymentType === 'spark' &&
-  //       transaction.status === 'TRANSFER_STATUS_SENDER_KEY_TWEAKED') ||
-  //     (transactionPaymentType === 'lightning' &&
-  //       transaction.status === 'LIGHTNING_PAYMENT_INITIATED'),
-  //   [
-  //     transaction,
-  //     //  isBitcoinPayment,
-  //     // isSparkPayment,
-  //     //  isLightningPayment,
-  //     transactionPaymentType,
-  //   ],
-  // );
+  const showPendingTransactionStatusIcon =
+    transaction.paymentStatus === 'pending';
 
   const paymentDescription = isDonation
     ? BLITZ_SUPPORT_DEFAULT_PAYMENT_DESCRIPTION
@@ -278,9 +260,22 @@ export const UserTransaction = memo(function UserTransaction({
           <ThemeText
             CustomEllipsizeMode="tail"
             CustomNumberOfLines={1}
-            styles={styles.descriptionText}
+            styles={{
+              ...styles.descriptionText,
+              color: isFailedPayment
+                ? theme && darkModeType
+                  ? COLORS.darkModeText
+                  : COLORS.failedTransaction
+                : theme
+                ? COLORS.darkModeText
+                : COLORS.lightModeText,
+              fontStyle: isFailedPayment ? 'italic' : 'normal',
+              marginRight: 20,
+            }}
             content={
-              userBalanceDenomination === 'hidden'
+              isFailedPayment
+                ? t('transactionLabelText.failed')
+                : userBalanceDenomination === 'hidden'
                 ? `${HIDDEN_BALANCE_TEXT}`
                 : isDefaultDescription || !paymentDescription
                 ? transaction.details.direction === 'OUTGOING'
@@ -291,7 +286,18 @@ export const UserTransaction = memo(function UserTransaction({
           />
 
           <ThemeText
-            styles={styles.dateText}
+            styles={{
+              ...styles.dateText,
+              fontWeight: isFailedPayment ? 400 : 300,
+              color: isFailedPayment
+                ? theme && darkModeType
+                  ? COLORS.darkModeText
+                  : COLORS.failedTransaction
+                : theme
+                ? COLORS.darkModeText
+                : COLORS.lightModeText,
+              fontStyle: isFailedPayment ? 'italic' : 'normal',
+            }}
             content={`${
               timeDifference.minutes <= 1
                 ? `Just now`
@@ -322,19 +328,20 @@ export const UserTransaction = memo(function UserTransaction({
             }`}
           />
         </View>
-
-        <FormattedSatText
-          containerStyles={{marginLeft: 'auto', marginBottom: 'auto'}}
-          frontText={
-            userBalanceDenomination !== 'hidden'
-              ? transaction.details.direction === 'INCOMING'
-                ? '+'
-                : '-'
-              : ''
-          }
-          styles={styles.amountText}
-          balance={transaction.details.amount}
-        />
+        {!isFailedPayment && (
+          <FormattedSatText
+            containerStyles={{marginLeft: 'auto', marginBottom: 'auto'}}
+            frontText={
+              userBalanceDenomination !== 'hidden'
+                ? transaction.details.direction === 'INCOMING'
+                  ? '+'
+                  : '-'
+                : ''
+            }
+            styles={styles.amountText}
+            balance={transaction.details.amount}
+          />
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -375,7 +382,6 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontSize: SIZES.small,
-    fontWeight: 300,
   },
   amountText: {
     fontWeight: 400,
