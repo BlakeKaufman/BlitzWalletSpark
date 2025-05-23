@@ -209,7 +209,9 @@ export default function ConnectingToNodeLoadingScreen({
             'Spark wallet information was not set properly, please try again.',
           );
       } else {
-        throw new Error('We were unable to connect to the spark node.');
+        throw new Error(
+          'We were unable to connect to the spark node. Please try again.',
+        );
       }
     } catch (err) {
       setHasError(String(err.message));

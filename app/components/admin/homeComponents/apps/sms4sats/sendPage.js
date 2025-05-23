@@ -44,7 +44,7 @@ import {parse} from '@breeztech/react-native-breez-sdk-liquid';
 
 export default function SMSMessagingSendPage({SMSprices}) {
   const {contactsPrivateKey, publicKey} = useKeysContext();
-  const {nodeInformation, liquidNodeInformation} = useNodeContext();
+  const {nodeInformation, liquidNodeInformation, fiatStats} = useNodeContext();
   const {minMaxLiquidSwapAmounts} = useAppStatus();
   const {masterInfoObject} = useGlobalContextProvider();
   const {theme, darkModeType} = useGlobalThemeContext();
@@ -260,7 +260,7 @@ export default function SMSMessagingSendPage({SMSprices}) {
                 setInputValue={setPhoneNumber}
                 frompage={'sendSMSPage'}
                 usingForBalance={false}
-                nodeInformation={nodeInformation}
+                fiatStats={fiatStats}
               />
             )}
           </View>

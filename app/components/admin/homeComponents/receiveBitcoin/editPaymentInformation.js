@@ -273,7 +273,7 @@ export default function EditReceivePaymentInformation(props) {
             showDot={inputDenomination === 'fiat'}
             setInputValue={setAmountValue}
             usingForBalance={true}
-            nodeInformation={nodeInformation}
+            fiatStats={fiatStats}
           />
 
           <CustomButton

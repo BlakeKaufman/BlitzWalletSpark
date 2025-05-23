@@ -15,17 +15,17 @@ import {
   ThemeText,
 } from '../../../../functions/CustomElements';
 import CustomNumberKeyboard from '../../../../functions/CustomElements/customNumberKeyboard';
-import {
-  DUST_LIMIT_FOR_LBTC_CHAIN_PAYMENTS,
-  LIGHTNINGAMOUNTBUFFER,
-} from '../../../../constants/math';
+// import {
+//   DUST_LIMIT_FOR_LBTC_CHAIN_PAYMENTS,
+//   LIGHTNINGAMOUNTBUFFER,
+// } from '../../../../constants/math';
 import CustomButton from '../../../../functions/CustomElements/button';
 import FormattedSatText from '../../../../functions/CustomElements/satTextDisplay';
 import {useGlobalContacts} from '../../../../../context-store/globalContacts';
 import GetThemeColors from '../../../../hooks/themeColors';
 import ThemeImage from '../../../../functions/CustomElements/themeImage';
 import {getFiatRates} from '../../../../functions/SDK';
-import {useGlobaleCash} from '../../../../../context-store/eCash';
+// import {useGlobaleCash} from '../../../../../context-store/eCash';
 import CustomSearchInput from '../../../../functions/CustomElements/searchInput';
 import customUUID from '../../../../functions/customUUID';
 import FormattedBalanceInput from '../../../../functions/CustomElements/formattedBalanceInput';
@@ -33,28 +33,29 @@ import {useGlobalThemeContext} from '../../../../../context-store/theme';
 import {useNodeContext} from '../../../../../context-store/nodeContext';
 import {useAppStatus} from '../../../../../context-store/appStatus';
 import {useKeysContext} from '../../../../../context-store/keys';
-import {
-  calculateEcashFees,
-  getProofsToUse,
-} from '../../../../functions/eCash/wallet';
+// import {
+//   calculateEcashFees,
+//   getProofsToUse,
+// } from '../../../../functions/eCash/wallet';
 import useHandleBackPressNew from '../../../../hooks/useHandleBackPressNew';
 import formatBip21LiquidAddress from '../../../../functions/liquidWallet/formatBip21liquidAddress';
 import {crashlyticsLogReport} from '../../../../functions/crashlyticsLogs';
 import {getSingleContact} from '../../../../../db';
 import convertTextInputValue from '../../../../functions/textInputConvertValue';
+import {formatBip21SparkAddress} from '../../../../functions/spark/handleBip21SparkAddress';
 
 export default function SendAndRequestPage(props) {
   const navigate = useNavigation();
   const {masterInfoObject} = useGlobalContextProvider();
   const {contactsPrivateKey} = useKeysContext();
   const {isConnectedToTheInternet} = useAppStatus();
-  const {nodeInformation, liquidNodeInformation, fiatStats} = useNodeContext();
+  const {fiatStats} = useNodeContext();
   const {minMaxLiquidSwapAmounts} = useAppStatus();
   const {theme, darkModeType} = useGlobalThemeContext();
   const {textColor, backgroundOffset} = GetThemeColors();
   const {globalContactsInformation} = useGlobalContacts();
-  const {ecashWalletInformation} = useGlobaleCash();
-  const eCashBalance = ecashWalletInformation.balance;
+  // const {ecashWalletInformation} = useGlobaleCash();
+  // const eCashBalance = ecashWalletInformation.balance;
   const [amountValue, setAmountValue] = useState('');
   const [isAmountFocused, setIsAmountFocused] = useState(true);
   const [descriptionValue, setDescriptionValue] = useState('');
@@ -77,130 +78,122 @@ export default function SendAndRequestPage(props) {
     [amountValue, fiatStats, isBTCdenominated],
   );
 
-  const boltzFee = useMemo(() => {
-    return (
-      minMaxLiquidSwapAmounts.reverseSwapStats?.fees?.minerFees?.claim +
-      minMaxLiquidSwapAmounts.reverseSwapStats?.fees?.minerFees?.lockup +
-      Math.round(convertedSendAmount * 0.0025)
-    );
-  }, [convertedSendAmount, minMaxLiquidSwapAmounts]);
+  // const boltzFee = useMemo(() => {
+  //   return (
+  //     minMaxLiquidSwapAmounts.reverseSwapStats?.fees?.minerFees?.claim +
+  //     minMaxLiquidSwapAmounts.reverseSwapStats?.fees?.minerFees?.lockup +
+  //     Math.round(convertedSendAmount * 0.0025)
+  //   );
+  // }, [convertedSendAmount, minMaxLiquidSwapAmounts]);
 
-  const lnFee = useMemo(() => {
-    return convertedSendAmount * 0.005 + 4;
-  }, [convertedSendAmount]);
+  // const lnFee = useMemo(() => {
+  //   return convertedSendAmount * 0.005 + 4;
+  // }, [convertedSendAmount]);
 
-  const canUseLiquid = useMemo(
-    () =>
-      selectedContact?.isLNURL
-        ? Number(convertedSendAmount) >= minMaxLiquidSwapAmounts.min &&
-          Number(convertedSendAmount) <= minMaxLiquidSwapAmounts.max &&
-          liquidNodeInformation.userBalance >= Number(convertedSendAmount)
-        : liquidNodeInformation.userBalance >= Number(convertedSendAmount) &&
-          Number(convertedSendAmount) >= DUST_LIMIT_FOR_LBTC_CHAIN_PAYMENTS,
-    [
-      convertedSendAmount,
-      selectedContact,
-      liquidNodeInformation,
-      minMaxLiquidSwapAmounts,
-    ],
-  );
+  // const canUseLiquid = useMemo(
+  //   () =>
+  //     selectedContact?.isLNURL
+  //       ? Number(convertedSendAmount) >= minMaxLiquidSwapAmounts.min &&
+  //         Number(convertedSendAmount) <= minMaxLiquidSwapAmounts.max &&
+  //         liquidNodeInformation.userBalance >= Number(convertedSendAmount)
+  //       : liquidNodeInformation.userBalance >= Number(convertedSendAmount) &&
+  //         Number(convertedSendAmount) >= DUST_LIMIT_FOR_LBTC_CHAIN_PAYMENTS,
+  //   [
+  //     convertedSendAmount,
+  //     selectedContact,
+  //     liquidNodeInformation,
+  //     minMaxLiquidSwapAmounts,
+  //   ],
+  // );
 
-  const canUseLightning = useMemo(
-    () =>
-      masterInfoObject.liquidWalletSettings.isLightningEnabled
-        ? selectedContact?.isLNURL
-          ? nodeInformation.userBalance >= Number(convertedSendAmount)
-          : nodeInformation.userBalance >=
-              Number(convertedSendAmount) + lnFee &&
-            Number(convertedSendAmount) >= minMaxLiquidSwapAmounts.min &&
-            Number(convertedSendAmount) <= minMaxLiquidSwapAmounts.max
-        : false,
-    [
-      convertedSendAmount,
-      boltzFee,
-      minMaxLiquidSwapAmounts,
-      nodeInformation,
-      masterInfoObject,
-      selectedContact,
-      lnFee,
-    ],
-  );
+  // const canUseLightning = useMemo(
+  //   () =>
+  //     masterInfoObject.liquidWalletSettings.isLightningEnabled
+  //       ? selectedContact?.isLNURL
+  //         ? nodeInformation.userBalance >= Number(convertedSendAmount)
+  //         : nodeInformation.userBalance >=
+  //             Number(convertedSendAmount) + lnFee &&
+  //           Number(convertedSendAmount) >= minMaxLiquidSwapAmounts.min &&
+  //           Number(convertedSendAmount) <= minMaxLiquidSwapAmounts.max
+  //       : false,
+  //   [
+  //     convertedSendAmount,
+  //     boltzFee,
+  //     minMaxLiquidSwapAmounts,
+  //     nodeInformation,
+  //     masterInfoObject,
+  //     selectedContact,
+  //     lnFee,
+  //   ],
+  // );
 
-  const usedEcashProofs = useMemo(() => {
-    const proofsToUse = getProofsToUse(
-      ecashWalletInformation.proofs,
-      convertedSendAmount,
-    );
-    return proofsToUse
-      ? proofsToUse?.proofsToUse
-      : ecashWalletInformation.proofs;
-  }, [convertedSendAmount, ecashWalletInformation]);
+  // const usedEcashProofs = useMemo(() => {
+  //   const proofsToUse = getProofsToUse(
+  //     ecashWalletInformation.proofs,
+  //     convertedSendAmount,
+  //   );
+  //   return proofsToUse
+  //     ? proofsToUse?.proofsToUse
+  //     : ecashWalletInformation.proofs;
+  // }, [convertedSendAmount, ecashWalletInformation]);
 
-  const canUseEcash = useMemo(
-    () =>
-      masterInfoObject.enabledEcash
-        ? selectedContact?.isLNURL
-          ? eCashBalance >= Number(convertedSendAmount) + lnFee
-          : eCashBalance >= Number(convertedSendAmount) + lnFee &&
-            Number(convertedSendAmount) >= minMaxLiquidSwapAmounts.min &&
-            Number(convertedSendAmount) <= minMaxLiquidSwapAmounts.max
-        : false,
-    [
-      selectedContact,
-      eCashBalance,
-      convertedSendAmount,
-      masterInfoObject,
-      ecashWalletInformation,
-      usedEcashProofs,
-      lnFee,
-    ],
-  );
+  // const canUseEcash = useMemo(
+  //   () =>
+  //     masterInfoObject.enabledEcash
+  //       ? selectedContact?.isLNURL
+  //         ? eCashBalance >= Number(convertedSendAmount) + lnFee
+  //         : eCashBalance >= Number(convertedSendAmount) + lnFee &&
+  //           Number(convertedSendAmount) >= minMaxLiquidSwapAmounts.min &&
+  //           Number(convertedSendAmount) <= minMaxLiquidSwapAmounts.max
+  //       : false,
+  //   [
+  //     selectedContact,
+  //     eCashBalance,
+  //     convertedSendAmount,
+  //     masterInfoObject,
+  //     ecashWalletInformation,
+  //     usedEcashProofs,
+  //     lnFee,
+  //   ],
+  // );
 
-  const canSendToLNURL = useMemo(
-    () =>
-      !!selectedContact?.isLNURL &&
-      (nodeInformation.userBalance >=
-        Number(convertedSendAmount) + LIGHTNINGAMOUNTBUFFER ||
-        canUseEcash ||
-        (canUseLiquid &&
-          Number(convertedSendAmount) >= minMaxLiquidSwapAmounts.min)) &&
-      !!Number(convertedSendAmount),
-    [
-      selectedContact,
-      nodeInformation,
-      convertedSendAmount,
-      LIGHTNINGAMOUNTBUFFER,
-      canUseEcash,
-      canUseLiquid,
-      minMaxLiquidSwapAmounts,
-    ],
-  );
+  // const canSendToLNURL = useMemo(
+  //   () =>
+  //     !!selectedContact?.isLNURL &&
+  //     (nodeInformation.userBalance >=
+  //       Number(convertedSendAmount) + LIGHTNINGAMOUNTBUFFER ||
+  //       canUseEcash ||
+  //       (canUseLiquid &&
+  //         Number(convertedSendAmount) >= minMaxLiquidSwapAmounts.min)) &&
+  //     !!Number(convertedSendAmount),
+  //   [
+  //     selectedContact,
+  //     nodeInformation,
+  //     convertedSendAmount,
+  //     LIGHTNINGAMOUNTBUFFER,
+  //     canUseEcash,
+  //     canUseLiquid,
+  //     minMaxLiquidSwapAmounts,
+  //   ],
+  // );
 
-  console.log(
-    canUseLiquid,
-    canUseEcash,
-    canUseLightning,
-    canSendToLNURL,
-    convertedSendAmount,
-    minMaxLiquidSwapAmounts.min,
-    'CAN USE LIQUID',
-  );
+  // console.log(
+  //   canUseLiquid,
+  //   canUseEcash,
+  //   canUseLightning,
+  //   canSendToLNURL,
+  //   convertedSendAmount,
+  //   minMaxLiquidSwapAmounts.min,
+  //   'CAN USE LIQUID',
+  // );
 
   const canSendPayment = useMemo(
     () =>
       paymentType === 'request'
         ? convertedSendAmount >= minMaxLiquidSwapAmounts.min &&
           convertedSendAmount
-        : (canUseEcash || canUseLightning || canUseLiquid) &&
-          convertedSendAmount,
-    [
-      convertedSendAmount,
-      canUseEcash,
-      canUseLightning,
-      canUseLiquid,
-      minMaxLiquidSwapAmounts,
-      paymentType,
-    ],
+        : convertedSendAmount,
+    [convertedSendAmount, minMaxLiquidSwapAmounts, paymentType],
   );
   useHandleBackPressNew();
 
@@ -242,30 +235,42 @@ export default function SendAndRequestPage(props) {
             }`,
           });
         } else {
-          let locallyChosenAddress = '';
-          const addressList = payingContact?.offlineReceiveAddresses?.addresses;
-          console.log('selected contacts address list:', addressList);
-
-          if (addressList) {
-            // Randomly select one of the stored addresses
-            const randomNumber = Math.round(
-              Math.random() * (addressList.length - 1),
-            );
-            locallyChosenAddress = addressList[randomNumber];
+          if (payingContact?.contacts?.myProfile?.sparkAddress) {
+            receiveAddress = formatBip21SparkAddress({
+              address: payingContact?.contacts?.myProfile?.sparkAddress,
+              amount: convertedSendAmount,
+              message: `Paying ${
+                selectedContact.name || selectedContact.uniqueName
+              }`,
+            });
           } else {
-            // If paying to legacy user use their stored liquid address
-            locallyChosenAddress = selectedContact.receiveAddress;
+            let locallyChosenAddress = '';
+            const addressList =
+              payingContact?.offlineReceiveAddresses?.addresses;
+            console.log('selected contacts address list:', addressList);
+
+            if (addressList) {
+              // Randomly select one of the stored addresses
+              const randomNumber = Math.round(
+                Math.random() * (addressList.length - 1),
+              );
+              locallyChosenAddress = addressList[randomNumber];
+            } else {
+              // If paying to legacy user use their stored liquid address
+              locallyChosenAddress = selectedContact.receiveAddress;
+            }
+            console.log('selected address:', locallyChosenAddress);
+            receiveAddress = formatBip21LiquidAddress({
+              address: locallyChosenAddress,
+              amount: convertedSendAmount,
+              message: `Paying ${
+                selectedContact.name || selectedContact.uniqueName
+              }`,
+            });
           }
-          console.log('selected address:', locallyChosenAddress);
-          receiveAddress = formatBip21LiquidAddress({
-            address: locallyChosenAddress,
-            amount: convertedSendAmount,
-            message: `Paying ${
-              selectedContact.name || selectedContact.uniqueName
-            }`,
-          });
         }
       }
+
       const UUID = customUUID();
       let sendObject = {};
       if (paymentType === 'send') {
@@ -444,7 +449,7 @@ export default function SendAndRequestPage(props) {
             frompage="sendContactsPage"
             setInputValue={handleSearch}
             usingForBalance={true}
-            nodeInformation={nodeInformation}
+            fiatStats={fiatStats}
           />
         )}
 
