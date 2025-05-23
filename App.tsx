@@ -50,6 +50,7 @@ import {LiquidEventProvider} from './context-store/liquidEventContext';
 import {
   EcashNavigationListener,
   LiquidNavigationListener,
+  SparkNavigationListener,
 } from './context-store/SDKNavigation';
 // import {LightningEventProvider} from './context-store/lightningEventContext';
 import {
@@ -328,6 +329,7 @@ function ResetStack(): JSX.Element | null {
     <NavigationContainer theme={navigationTheme} ref={navigationRef}>
       <LiquidNavigationListener />
       <HandleLNURLPayments />
+      <SparkNavigationListener />
       <EcashNavigationListener />
       <Stack.Navigator screenOptions={screenOptions}>
         <Stack.Screen

@@ -26,6 +26,8 @@ import {
   sparkTransactionsEventEmitter,
 } from '../app/functions/spark/transactions';
 import {useAppStatus} from './appStatus';
+import {restoreSparkTxState} from '../app/functions/spark/restore';
+import {transformTxToPaymentObject} from '../app/functions/spark/transformTxToPayment';
 
 // Initiate context
 const SparkWalletManager = createContext(null);
@@ -39,8 +41,10 @@ const SparkWalletProvider = ({children}) => {
     sparkAddress: '',
     didConnect: null,
   });
+  const [pendingNavigation, setPendingNavigation] = useState(null);
   const depositAddressIntervalRef = useRef(null);
   const cleanDBStateRef = useRef(null);
+  const restoreOffllineStateRef = useRef(null);
   const sparkReceiveListenerRef = useRef(null);
   const sparkSendListenerRef = useRef(null);
   const [blockedIdentityPubKeys, setBlockedIdentityPubKeys] = useState([]);
@@ -122,7 +126,7 @@ const SparkWalletProvider = ({children}) => {
             fee: 0,
             amount: selectedSparkTransaction.totalValue,
             address: matchedUnpaidInvoice?.invoice?.encodedInvoice || '',
-            time: new Date(selectedSparkTransaction.updatedTime).getTime(),
+            time: new Date().getTime(),
             direction: 'INCOMING',
             description: savedInvoice.description || '',
             preimage: matchedUnpaidInvoice?.paymentPreimage || '',
@@ -133,13 +137,15 @@ const SparkWalletProvider = ({children}) => {
           id: recevedTxId,
           paymentStatus: 'completed',
           paymentType: 'spark',
-          accountId: selectedSparkTransaction.receiver_identity_pubkey,
+          accountId: selectedSparkTransaction.receiverIdentityPublicKey,
           details: {
             fee: 0,
             amount: selectedSparkTransaction.totalValue,
             address: sparkInformation.sparkAddress,
-            time: new Date(selectedSparkTransaction.updatedTime).getTime(),
+            time: new Date().getTime(),
             direction: 'INCOMING',
+            senderIdentityPublicKey:
+              selectedSparkTransaction.senderIdentityPublicKey,
             description: '',
           },
         };
@@ -152,7 +158,7 @@ const SparkWalletProvider = ({children}) => {
 
       if (response) {
         const txs = await getAllSparkTransactions();
-        return txs;
+        return {txs, paymentObject};
       } else false;
     } catch (err) {
       console.log('Handle incoming transaction error', err);
@@ -166,11 +172,28 @@ const SparkWalletProvider = ({children}) => {
       return {
         ...prev,
         balance: balance.balance,
-        transactions: storedTransaction ? storedTransaction : prev.transactions,
+        transactions: storedTransaction
+          ? storedTransaction.txs
+          : prev.transactions,
       };
     });
+    // block incoming paymetns here
     if (blockedIdentityPubKeys.includes(transferId)) return;
     // Handle confirm animation here
+    setPendingNavigation({
+      routes: [
+        {
+          name: 'HomeAdmin',
+          params: {screen: 'Home'},
+        },
+        {
+          name: 'ConfirmTxPage',
+          params: {
+            transaction: storedTransaction.paymentObject,
+          },
+        },
+      ],
+    });
   };
 
   // Add event listeners to listen for bitcoin and lightning or spark transfers when receiving does not handle sending
@@ -271,9 +294,48 @@ const SparkWalletProvider = ({children}) => {
     if (cleanDBStateRef.current) return;
     cleanDBStateRef.current = true;
     cleanStalePendingSparkLightningTransactions();
-    getAllUnpaidSparkLightningInvoices().then(unpaidInvoices => {
-      console.log('Unpaid invoices', unpaidInvoices);
-    });
+  }, [didGetToHomepage]);
+
+  useEffect(() => {
+    // This function runs once per load and check to see if a user received any payments while offline.
+    if (!didGetToHomepage) return;
+    if (restoreOffllineStateRef.current) return;
+    restoreOffllineStateRef.current = true;
+
+    async function restoreTxState() {
+      const restored = await restoreSparkTxState(50);
+      console.log(restored.txs);
+      if (!restored.txs.length) return;
+
+      const newPaymentObjects = [];
+
+      for (const tx of restored.txs) {
+        const paymentObject = await transformTxToPaymentObject(
+          tx,
+          sparkInformation.sparkAddress,
+        );
+        if (paymentObject) {
+          newPaymentObjects.push(paymentObject);
+        }
+      }
+
+      if (newPaymentObjects.length) {
+        await bulkUpdateSparkTransactions(newPaymentObjects);
+
+        const [txs, balance] = await Promise.all([
+          getAllSparkTransactions(),
+          getSparkBalance(),
+        ]);
+
+        setSparkInformation(prev => ({
+          ...prev,
+          balance: balance?.balance || prev.balance,
+          transactions: txs,
+        }));
+      }
+    }
+
+    restoreTxState();
   }, [didGetToHomepage]);
 
   const contextValue = useMemo(
@@ -281,8 +343,16 @@ const SparkWalletProvider = ({children}) => {
       sparkInformation,
       setSparkInformation,
       setBlockedIdentityPubKeys,
+      pendingNavigation,
+      setPendingNavigation,
     }),
-    [sparkInformation, setSparkInformation, setBlockedIdentityPubKeys],
+    [
+      sparkInformation,
+      setSparkInformation,
+      setBlockedIdentityPubKeys,
+      pendingNavigation,
+      setPendingNavigation,
+    ],
   );
 
   return (

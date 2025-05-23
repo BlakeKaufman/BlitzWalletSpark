@@ -54,9 +54,13 @@ export const getAllSparkTransactions = async () => {
     const result = await sqlLiteDB.getAllAsync(
       `SELECT * FROM ${SPARK_TRANSACTIONS_TABLE_NAME}`,
     );
-    return result;
+
+    return result.sort(
+      (a, b) => JSON.parse(b.details).time - JSON.parse(a.details).time,
+    );
   } catch (error) {
     console.error('Error fetching transactions:', error);
+    return [];
   }
 };
 
@@ -128,19 +132,24 @@ export const bulkUpdateSparkTransactions = async transactions => {
   if (!Array.isArray(transactions) || transactions.length === 0) return;
 
   try {
+    // Begin transaction
     await sqlLiteDB.execAsync('BEGIN TRANSACTION');
+
     for (const tx of transactions) {
       const sparkID = tx.id;
-      const existingTx = await sqlLiteDB.getAsync(
+
+      // Check if transaction exists
+      const existingTx = await sqlLiteDB.getFirstAsync(
         `SELECT * FROM ${SPARK_TRANSACTIONS_TABLE_NAME} 
          WHERE sparkID = ? 
          LIMIT 1`,
-        sparkID,
+        [sparkID],
       );
 
       const newDetails = tx.details;
 
       if (existingTx) {
+        // Update existing transaction
         let existingDetails;
         try {
           existingDetails = JSON.parse(existingTx.details);
@@ -155,7 +164,7 @@ export const bulkUpdateSparkTransactions = async transactions => {
            SET paymentStatus = ?, paymentType = ?, accountId = ?, details = ?
            WHERE sparkID = ?`,
           [
-            newDetails.status,
+            tx.paymentStatus,
             tx.paymentType ?? 'unknown',
             tx.accountId ?? 'unknown',
             JSON.stringify(mergedDetails),
@@ -163,13 +172,14 @@ export const bulkUpdateSparkTransactions = async transactions => {
           ],
         );
       } else {
+        // Insert new transaction
         await sqlLiteDB.runAsync(
           `INSERT INTO ${SPARK_TRANSACTIONS_TABLE_NAME}
            (sparkID, paymentStatus, paymentType, accountId, details)
            VALUES (?, ?, ?, ?, ?)`,
           [
             sparkID,
-            newDetails.status,
+            tx.paymentStatus,
             tx.paymentType ?? 'unknown',
             tx.accountId ?? 'unknown',
             JSON.stringify(newDetails),
@@ -178,15 +188,26 @@ export const bulkUpdateSparkTransactions = async transactions => {
       }
     }
 
+    // Commit transaction
     await sqlLiteDB.execAsync('COMMIT');
+
+    // Emit event
     sparkTransactionsEventEmitter.emit(
       SPARK_TX_UPDATE_ENVENT_NAME,
       'transactions',
     );
+
     return true;
   } catch (error) {
     console.error('Error upserting transactions batch:', error);
-    await sqlLiteDB.execAsync('ROLLBACK');
+
+    // Rollback on error
+    try {
+      await sqlLiteDB.execAsync('ROLLBACK');
+    } catch (rollbackError) {
+      console.error('Error rolling back transaction:', rollbackError);
+    }
+
     return false;
   }
 };

@@ -18,10 +18,12 @@ export default function TechnicalTransactionDetails(props) {
 
   const paymentDetails =
     transaction.paymentType === 'spark'
-      ? ['Payment Id', 'Receiver Public Key', 'Payment Address']
+      ? ['Payment Id', 'Sender Public Key', 'Payment Address']
       : transaction.paymentType === 'lightning'
       ? ['Payment Id', 'Payment Preimage', 'Payment Address']
       : ['Payment Id', 'Bitcoin Txid', 'Payment Address'];
+
+  console.log(transaction);
 
   const infoElements = paymentDetails.map((item, id) => {
     const txItem =
@@ -29,7 +31,7 @@ export default function TechnicalTransactionDetails(props) {
         ? id === 0
           ? sparkID
           : id === 1
-          ? details.receiverPublicKey
+          ? details.senderIdentityPublicKey
           : details.address
         : transaction.paymentType === 'lightning'
         ? id === 0

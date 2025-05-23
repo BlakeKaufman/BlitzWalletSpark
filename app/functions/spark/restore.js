@@ -1,32 +1,42 @@
 import {getSparkTransactions} from '.';
+import {getAllSparkTransactions} from './transactions';
 
-const BATCH_SIZE = 500;
-const MAX_GAP = 1;
-export const restoreSparkTxState = async () => {
-  let resotredTxs = [];
+export const restoreSparkTxState = async BATCH_SIZE => {
+  let restoredTxs = [];
   try {
     let start = 0;
-    let noProofsFoundCounter = 0;
-    const noProofsFoundLimit = MAX_GAP;
+    const savedTxs = await getAllSparkTransactions();
+    const savedIds = savedTxs?.map(tx => tx.spark_id) || [];
+
+    let foundOverlap = false;
 
     do {
       const txs = await getSparkTransactions(start + BATCH_SIZE, start);
-      const newTxs = [...txs.transfers];
+      const batchTxs = txs.transfers || [];
 
-      if (newTxs.length) {
-        console.log(`Restored ${newTxs.length} transactions`);
-        noProofsFoundCounter = 0;
-        resotredTxs.push(...newTxs);
-      } else {
-        noProofsFoundCounter++;
-        console.log(
-          `No transactions found in batch starting at ${start - BATCH_SIZE}`,
-        );
+      if (!batchTxs.length) {
+        console.log('No more transactions found, ending restore.');
+        break;
       }
-      start = start + BATCH_SIZE;
-    } while (noProofsFoundCounter < noProofsFoundLimit);
 
-    return {txs: resotredTxs};
+      // Check for overlap with saved transactions
+      const overlap = batchTxs.some(tx => savedIds.includes(tx.id));
+
+      if (overlap) {
+        console.log('Found overlap with saved transactions, stopping restore.');
+        foundOverlap = true;
+      }
+
+      restoredTxs.push(...batchTxs);
+      start += BATCH_SIZE;
+    } while (!foundOverlap);
+
+    // Filter out any already-saved txs
+    const newTxs = restoredTxs.filter(tx => !savedIds.includes(tx.id));
+
+    console.log(`Total restored transactions: ${restoredTxs.length}`);
+    console.log(`New transactions after filtering: ${newTxs.length}`);
+    return {txs: newTxs};
   } catch (error) {
     console.error('Error in spark restore history state:', error);
     return {txs: []};
