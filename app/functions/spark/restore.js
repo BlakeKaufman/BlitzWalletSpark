@@ -1,5 +1,9 @@
-import {getSparkTransactions} from '.';
-import {getAllSparkTransactions} from './transactions';
+import {getSparkBalance, getSparkTransactions} from '.';
+import {
+  bulkUpdateSparkTransactions,
+  getAllSparkTransactions,
+} from './transactions';
+import {transformTxToPaymentObject} from './transformTxToPayment';
 
 export const restoreSparkTxState = async BATCH_SIZE => {
   let restoredTxs = [];
@@ -42,3 +46,40 @@ export const restoreSparkTxState = async BATCH_SIZE => {
     return {txs: []};
   }
 };
+
+export async function fullRestoreSparkState({sparkAddress}) {
+  try {
+    const restored = await restoreSparkTxState(50);
+    console.log(restored.txs);
+    if (!restored.txs.length) return;
+
+    const newPaymentObjects = [];
+
+    for (const tx of restored.txs) {
+      const paymentObject = await transformTxToPaymentObject(tx, sparkAddress);
+      if (paymentObject) {
+        newPaymentObjects.push(paymentObject);
+      }
+    }
+
+    if (newPaymentObjects.length) {
+      await bulkUpdateSparkTransactions(newPaymentObjects);
+
+      const [txs, balance] = await Promise.all([
+        getAllSparkTransactions(),
+        getSparkBalance(),
+      ]);
+
+      return {
+        balance: balance?.balance,
+        txs: txs,
+      };
+    }
+  } catch (err) {
+    console.log('full restore spark state error', err);
+    return {
+      balance: null,
+      txs: null,
+    };
+  }
+}

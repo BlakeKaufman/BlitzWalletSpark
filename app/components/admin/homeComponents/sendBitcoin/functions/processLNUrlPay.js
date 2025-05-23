@@ -5,8 +5,9 @@ import {
   crashlyticsRecordErrorReport,
 } from '../../../../../functions/crashlyticsLogs';
 
-export default async function processLNUrlPay(input, context) {
-  const {masterInfoObject, comingFromAccept, enteredPaymentInfo} = context;
+export default function processLNUrlPay(input, context) {
+  const {masterInfoObject, comingFromAccept, enteredPaymentInfo, fiatStats} =
+    context;
   try {
     crashlyticsLogReport('Beiging decode LNURL pay');
     const amountMsat = comingFromAccept
@@ -22,6 +23,7 @@ export default async function processLNUrlPay(input, context) {
         : input.data,
       type: InputTypeVariant.LN_URL_PAY,
       paymentNetwork: 'lightning',
+
       sendAmount: `${
         masterInfoObject.userBalanceDenomination != 'fiat'
           ? `${Math.round(amountMsat / 1000)}`
@@ -32,7 +34,7 @@ export default async function processLNUrlPay(input, context) {
       canEditPayment: !comingFromAccept,
     };
   } catch (err) {
-    console.log('error processing lnurl pay');
+    console.log('error processing lnurl pay', err);
     crashlyticsRecordErrorReport(err.message);
   }
 }

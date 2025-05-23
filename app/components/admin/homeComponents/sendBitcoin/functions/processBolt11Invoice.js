@@ -4,8 +4,9 @@ import {
   crashlyticsLogReport,
   crashlyticsRecordErrorReport,
 } from '../../../../../functions/crashlyticsLogs';
+import {sparkPaymenWrapper} from '../../../../../functions/spark/payments';
 
-export default function processBolt11Invoice(input, context) {
+export default async function processBolt11Invoice(input, context) {
   const {
     masterInfoObject,
     goBackFunction,
@@ -31,10 +32,26 @@ export default function processBolt11Invoice(input, context) {
       Number(amountMsat / 1000) /
         (SATSPERBITCOIN / (fiatStats?.value || 65000));
 
+    const fee = await sparkPaymenWrapper({
+      getFee: true,
+      address: input.invoice.bolt11,
+      amountSats: Math.round(input.invoice.amountMsat / 1000),
+      paymentType: 'lightning',
+      masterInfoObject,
+    });
+    console.log(fee, 'fee');
+
+    if (!fee.didWork) {
+      throw new Error(fee.error);
+    }
+
     return {
       data: input,
       type: InputTypeVariant.BOLT11,
       paymentNetwork: 'lightning',
+      paymentFee: fee.fee,
+      supportFee: fee.supportFee,
+      address: input.invoice.bolt11,
       sendAmount: !amountMsat
         ? ''
         : `${

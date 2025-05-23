@@ -24,6 +24,8 @@ export const UserSatAmount = memo(function UserSatAmount({
   const {masterInfoObject, toggleMasterInfoObject, setMasterInfoObject} =
     useGlobalContextProvider();
 
+  console.log(process.env.BLITZ_SPARK_SUPPORT_ADDRESSS, 't');
+
   // const eCashBalance = ecashWalletInformation.balance;
   const saveTimeoutRef = useRef(null);
   const navigate = useNavigation();

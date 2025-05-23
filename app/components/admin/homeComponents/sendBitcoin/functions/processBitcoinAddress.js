@@ -39,22 +39,21 @@ export default async function processBitcoinAddress(input, context) {
 
       if (paymentFeeResponse.didWork) {
         paymentFee = paymentFeeResponse.fee;
-        supportFee = paymentFeeResponse.supportFeeResponse;
+        supportFee = paymentFeeResponse.supportFee;
       } else {
         goBackFunction(`Sending amount is above your balance`);
         return;
       }
     }
-    newPaymentInfo = {
-      ...newPaymentInfo,
-      fee: paymentFee,
-      supportFee: supportFee,
-    };
 
     return {
       data: newPaymentInfo,
       type: 'Bitcoin',
       paymentNetwork: 'Bitcoin',
+      address: input.address.address,
+      paymentFee: paymentFee,
+      supportFee: supportFee,
+      address: input.address.address,
       sendAmount: !amountSat
         ? ''
         : `${

@@ -14,6 +14,8 @@ import processLNUrlWithdraw from './processLNUrlWithdrawl';
 import processLiquidAddress from './processLiquidAddress';
 import getLiquidAddressFromSwap from '../../../../../functions/boltz/magicRoutingHints';
 import {crashlyticsLogReport} from '../../../../../functions/crashlyticsLogs';
+import processSparkAddress from './processSparkAddress';
+import {decodeBip21SparkAddress} from '../../../../../functions/spark/handleBip21SparkAddress';
 // import processBolt12Offer from './processBolt12Offer';
 
 export default async function decodeSendAddress(props) {
@@ -33,6 +35,8 @@ export default async function decodeSendAddress(props) {
     paymentInfo,
     parsedInvoice,
     fiatStats,
+    fromPage,
+    publishMessageFunc,
   } = props;
 
   try {
@@ -84,6 +88,33 @@ export default async function decodeSendAddress(props) {
 
     crashlyticsLogReport('Parsing bitcoin address input');
 
+    console.log(btcAdress, 'btcaddress');
+    if (btcAdress.startsWith('spark:') || btcAdress.startsWith('sp1p')) {
+      if (btcAdress.startsWith('spark:')) {
+        const processedAddress = decodeBip21SparkAddress(btcAdress);
+        parsedInvoice = {
+          type: 'Spark',
+          address: {
+            adress: processedAddress.address,
+            message: processedAddress.options.message,
+            label: processedAddress.options.label,
+            network: 'Spark',
+            amount: processedAddress.options.amount * SATSPERBITCOIN,
+          },
+        };
+      } else
+        parsedInvoice = {
+          type: 'Spark',
+          address: {
+            address: btcAdress,
+            message: null,
+            label: null,
+            network: 'Spark',
+            amount: null,
+          },
+        };
+    }
+
     const chosenPath = parsedInvoice
       ? Promise.resolve(parsedInvoice)
       : parse(btcAdress);
@@ -116,6 +147,8 @@ export default async function decodeSendAddress(props) {
       // setWebViewArgs,
       setLoadingMessage,
       paymentInfo,
+      fromPage,
+      publishMessageFunc,
     });
 
     if (processedPaymentInfo) {
@@ -140,7 +173,7 @@ async function processInputType(input, context) {
       return await processBitcoinAddress(input, context);
 
     case InputTypeVariant.BOLT11:
-      return processBolt11Invoice(input, context);
+      return await processBolt11Invoice(input, context);
 
     case InputTypeVariant.LN_URL_AUTH:
       return await processLNUrlAuth(input, context);
@@ -156,6 +189,9 @@ async function processInputType(input, context) {
 
     // case LiquidTypeVarient.BOLT12_OFFER:
     //   return processBolt12Offer(input, context);
+
+    case 'Spark':
+      return await processSparkAddress(input, context);
     default:
       goBackFunction('Not a valid address type');
       return null;

@@ -26,7 +26,10 @@ import {
   sparkTransactionsEventEmitter,
 } from '../app/functions/spark/transactions';
 import {useAppStatus} from './appStatus';
-import {restoreSparkTxState} from '../app/functions/spark/restore';
+import {
+  fullRestoreSparkState,
+  restoreSparkTxState,
+} from '../app/functions/spark/restore';
 import {transformTxToPaymentObject} from '../app/functions/spark/transformTxToPayment';
 
 // Initiate context
@@ -303,36 +306,15 @@ const SparkWalletProvider = ({children}) => {
     restoreOffllineStateRef.current = true;
 
     async function restoreTxState() {
-      const restored = await restoreSparkTxState(50);
-      console.log(restored.txs);
-      if (!restored.txs.length) return;
-
-      const newPaymentObjects = [];
-
-      for (const tx of restored.txs) {
-        const paymentObject = await transformTxToPaymentObject(
-          tx,
-          sparkInformation.sparkAddress,
-        );
-        if (paymentObject) {
-          newPaymentObjects.push(paymentObject);
-        }
-      }
-
-      if (newPaymentObjects.length) {
-        await bulkUpdateSparkTransactions(newPaymentObjects);
-
-        const [txs, balance] = await Promise.all([
-          getAllSparkTransactions(),
-          getSparkBalance(),
-        ]);
-
-        setSparkInformation(prev => ({
-          ...prev,
-          balance: balance?.balance || prev.balance,
-          transactions: txs,
-        }));
-      }
+      const restored = await fullRestoreSparkState({
+        sparkAddress: sparkInformation.sparkAddress,
+      });
+      if (!restored.balance && !restored.txs) return;
+      setSparkInformation(prev => ({
+        ...prev,
+        balance: restored.balance,
+        transactions: restored.txs,
+      }));
     }
 
     restoreTxState();

@@ -67,7 +67,6 @@ export default function getFormattedHomepageTxsForSpark({
         const currentTransaction = sparkTransactions[transactionIndex];
         const transactionPaymentType = currentTransaction.paymentType;
         const paymentDetials = JSON.parse(currentTransaction.details);
-        console.log(paymentDetials, 'testing');
 
         const isDonation = isSparkDonationPayment(
           currentTransaction,
@@ -182,7 +181,7 @@ export const UserTransaction = memo(function UserTransaction({
   const endDate = currentTime;
 
   const timeDifferenceMs = endDate - paymentDate;
-  console.log(transaction);
+
   const timeDifference = useMemo(() => {
     const minutes = timeDifferenceMs / (1000 * 60);
     const hours = minutes / 60;

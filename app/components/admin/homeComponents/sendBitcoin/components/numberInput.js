@@ -5,7 +5,6 @@ import {useGlobalContextProvider} from '../../../../../../context-store/context'
 export default function NumberInputSendPage({
   setPaymentInfo,
   paymentInfo,
-  nodeInformation,
   fiatStats,
 }) {
   const {masterInfoObject} = useGlobalContextProvider();
@@ -28,8 +27,8 @@ export default function NumberInputSendPage({
     <CustomNumberKeyboard
       showDot={masterInfoObject.userBalanceDenomination === 'fiat'}
       setInputValue={setAmount}
-      nodeInformation={nodeInformation}
       usingForBalance={true}
+      fiatStats={fiatStats}
     />
   );
 }

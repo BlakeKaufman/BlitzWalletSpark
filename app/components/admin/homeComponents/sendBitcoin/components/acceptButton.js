@@ -6,9 +6,9 @@ import {useState} from 'react';
 import {useNodeContext} from '../../../../../../context-store/nodeContext';
 import {useAppStatus} from '../../../../../../context-store/appStatus';
 import displayCorrectDenomination from '../../../../../functions/displayCorrectDenomination';
-import {InputTypeVariant} from '@breeztech/react-native-breez-sdk-liquid';
 
 export default function AcceptButtonSendPage({
+  isUsingSwapWithZeroInvoice,
   canSendPayment,
   decodeSendAddress,
   errorMessageNavigation,
@@ -17,12 +17,10 @@ export default function AcceptButtonSendPage({
   convertedSendAmount,
   paymentDescription,
   setPaymentInfo,
-  isSendingSwap,
-  canUseLightning,
-  canUseLiquid,
   setLoadingMessage,
-  minSendAmount,
-  maxSendAmount,
+  isLiquidPayment,
+  fromPage,
+  publishMessageFunc,
 }) {
   const {masterInfoObject} = useGlobalContextProvider();
   const {liquidNodeInformation, fiatStats} = useNodeContext();
@@ -35,15 +33,11 @@ export default function AcceptButtonSendPage({
       buttonStyles={{
         opacity:
           canSendPayment &&
+          !(paymentInfo?.data?.invoice?.amountMsat === null) &&
           !(
-            isSendingSwap &&
-            paymentInfo?.data?.invoice?.amountMsat === null &&
-            !canUseLightning
-          ) &&
-          !(
-            paymentInfo.type === 'Bitcoin' &&
-            (convertedSendAmount < paymentInfo.data.limits.minSat ||
-              convertedSendAmount > paymentInfo.data.limits.maxSat)
+            isLiquidPayment &&
+            (convertedSendAmount < minMaxLiquidSwapAmounts.min ||
+              convertedSendAmount > minMaxLiquidSwapAmounts.max)
           )
             ? 1
             : 0.5,
@@ -64,66 +58,34 @@ export default function AcceptButtonSendPage({
       });
       return;
     }
+    if (isUsingSwapWithZeroInvoice) {
+      navigate.navigate('ErrorScreen', {
+        errorMessage: 'Cannot send payment to a 0 amount lightning invoice.',
+      });
+      return;
+    }
     if (
-      paymentInfo.type === 'Bitcoin' &&
-      (convertedSendAmount < paymentInfo.data.limits.minSat ||
-        convertedSendAmount > paymentInfo.data.limits.maxSat)
+      isLiquidPayment &&
+      (convertedSendAmount < minMaxLiquidSwapAmounts.min ||
+        convertedSendAmount > minMaxLiquidSwapAmounts.max)
     ) {
       navigate.navigate('ErrorScreen', {
         errorMessage: `${
-          convertedSendAmount <= paymentInfo.data.limits.minSat
+          convertedSendAmount < minMaxLiquidSwapAmounts.min
             ? 'Minimum'
             : 'Maximum'
         } send amount ${displayCorrectDenomination({
           amount:
-            paymentInfo.data.limits[
-              convertedSendAmount <= paymentInfo.data.limits.minSat
-                ? 'minSat'
-                : 'maxSat'
-            ],
-          masterInfoObject,
+            convertedSendAmount < minMaxLiquidSwapAmounts.min
+              ? minMaxLiquidSwapAmounts.min
+              : minMaxLiquidSwapAmounts.max,
           fiatStats,
+          masterInfoObject,
         })}`,
       });
       return;
     }
-    if (
-      isSendingSwap &&
-      paymentInfo?.data?.invoice?.amountMsat === null &&
-      !canUseLightning
-    ) {
-      navigate.navigate('ErrorScreen', {
-        errorMessage: 'Cannot send to zero amount invoice from the bank',
-      });
-      return;
-    }
-    if (
-      (!canSendPayment && paymentInfo?.sendAmount < minSendAmount) ||
-      paymentInfo?.sendAmount > maxSendAmount
-    ) {
-      navigate.navigate('ErrorScreen', {
-        errorMessage: `${
-          paymentInfo?.sendAmount < minSendAmount ? 'Minimum' : 'Maximum'
-        } send amount ${displayCorrectDenomination({
-          amount:
-            paymentInfo?.sendAmount < minSendAmount
-              ? minSendAmount
-              : maxSendAmount,
-          masterInfoObject,
-          fiatStats,
-        })}`,
-      });
-      return;
-    }
-    if (
-      !canSendPayment &&
-      paymentInfo?.type === InputTypeVariant.BOLT12_OFFER
-    ) {
-      navigate.navigate('ErrorScreen', {
-        errorMessage: 'You can only send to Bolt12 offers from Liquid',
-      });
-      return;
-    }
+
     if (!canSendPayment && !!paymentInfo?.sendAmount) {
       navigate.navigate('ErrorScreen', {
         errorMessage: 'Not enough funds to cover fees',
@@ -146,11 +108,12 @@ export default function AcceptButtonSendPage({
         enteredPaymentInfo: {
           amount: convertedSendAmount,
           description: paymentDescription,
-          from: canUseLiquid ? 'liquid' : 'lightning',
         },
         paymentInfo,
         setLoadingMessage,
         parsedInvoice: paymentInfo.decodedInput,
+        fromPage,
+        publishMessageFunc,
       });
     } catch (err) {
       console.log('accecpt button error', err);

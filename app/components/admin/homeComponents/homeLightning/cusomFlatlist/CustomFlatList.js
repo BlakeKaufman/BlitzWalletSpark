@@ -3,17 +3,18 @@ import {Platform, RefreshControl, View} from 'react-native';
 import Animated from 'react-native-reanimated';
 import {useCustomFlatListHook} from './useCustomFlatListHooks';
 import {COLORS} from '../../../../../constants';
-// import {sync as syncLiquid} from '@breeztech/react-native-breez-sdk-liquid';
-import {useGlobalContextProvider} from '../../../../../../context-store/context';
 import {useGlobalThemeContext} from '../../../../../../context-store/theme';
 import {
   crashlyticsLogReport,
   crashlyticsRecordErrorReport,
 } from '../../../../../functions/crashlyticsLogs';
 import {useFocusEffect} from '@react-navigation/native';
+import {useSparkWallet} from '../../../../../../context-store/sparkContext';
+
+import {fullRestoreSparkState} from '../../../../../functions/spark/restore';
 
 function CustomFlatList({style, ...props}) {
-  const {masterInfoObject} = useGlobalContextProvider();
+  const {setSparkInformation, sparkInformation} = useSparkWallet();
   const {theme, darkModeType} = useGlobalThemeContext();
   const [refreshing, setRefreshing] = useState(false);
   const flatListRef = useRef(null);
@@ -30,21 +31,22 @@ function CustomFlatList({style, ...props}) {
   const handleRefresh = useCallback(async () => {
     crashlyticsLogReport(`Running in handle refresh function on homepage`);
     try {
-      return;
-      // setRefreshing(true);
-      // await Promise.all([
-      //   syncLiquid(),
-      //   masterInfoObject.liquidWalletSettings.isLightningEnabled
-      //     ? syncLightning()
-      //     : Promise.resolve(true),
-      // ]);
+      const restored = await fullRestoreSparkState({
+        sparkAddress: sparkInformation.sparkAddress,
+      });
+      if (!restored.balance && !restored.txs) return;
+      setSparkInformation(prev => ({
+        ...prev,
+        balance: restored.balance,
+        transactions: restored.txs,
+      }));
     } catch (err) {
       console.log('error refreshing', err);
       crashlyticsRecordErrorReport(err.message);
     } finally {
       setRefreshing(false);
     }
-  }, [masterInfoObject]);
+  }, []);
 
   useFocusEffect(
     useCallback(() => {

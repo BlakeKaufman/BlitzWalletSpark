@@ -1,20 +1,31 @@
 import {SATSPERBITCOIN} from '../../../../../constants';
+import {getBoltzWsUrl} from '../../../../../functions/boltz/boltzEndpoitns';
+import {calculateBoltzFeeNew} from '../../../../../functions/boltz/boltzFeeNew';
+import handleReverseClaimWSS from '../../../../../functions/boltz/handle-reverse-claim-wss';
 import {
   crashlyticsLogReport,
   crashlyticsRecordErrorReport,
 } from '../../../../../functions/crashlyticsLogs';
+import {sparkPaymenWrapper} from '../../../../../functions/spark/payments';
+import {contactsLNtoLiquidSwapInfo} from '../../contacts/internalComponents/LNtoLiquidSwap';
 
-export default function processLiquidAddress(input, context) {
+export default async function processLiquidAddress(input, context) {
   const {
-    liquidNodeInformation,
     masterInfoObject,
     comingFromAccept,
     enteredPaymentInfo,
     fiatStats,
+    webViewRef,
+    fromPage,
+    publishMessageFunc,
   } = context;
+  let webSocket;
   try {
     crashlyticsLogReport('Handling decode liquid address');
     let addressInfo = JSON.parse(JSON.stringify(input?.address));
+    let paymentFee = 0;
+    let supportFee = 0;
+
     if (comingFromAccept) {
       addressInfo.amount = enteredPaymentInfo.amount;
       addressInfo.label =
@@ -22,11 +33,45 @@ export default function processLiquidAddress(input, context) {
       addressInfo.message =
         enteredPaymentInfo.description || input?.address?.message || '';
       addressInfo.isBip21 = true;
-      const shouldDrain =
-        liquidNodeInformation.userBalance - addressInfo.amount < 10
-          ? true
-          : false;
-      addressInfo.shouldDrain = shouldDrain;
+      const {data, publicKey, privateKey, keys, preimage, liquidAddress} =
+        await contactsLNtoLiquidSwapInfo(
+          input?.address.address,
+          Number(enteredPaymentInfo.amount),
+          enteredPaymentInfo.description || input?.address?.label || '',
+        );
+
+      if (!data?.invoice) throw new Error('No Invoice genereated');
+
+      webSocket = new WebSocket(
+        `${getBoltzWsUrl(process.env.BOLTZ_ENVIRONMENT)}`,
+      );
+      const didHandle = await handleReverseClaimWSS({
+        ref: webViewRef,
+        webSocket: webSocket,
+        liquidAddress: liquidAddress,
+        swapInfo: data,
+        preimage: preimage,
+        privateKey: privateKey,
+        fromPage: fromPage,
+        contactsFunction: publishMessageFunc,
+      });
+      if (!didHandle) throw new Error('Unable to open websocket');
+
+      const fee = await sparkPaymenWrapper({
+        getFee: true,
+        address: data.invoice,
+        amountSats: Math.round(enteredPaymentInfo.amount),
+        paymentType: 'lightning',
+        masterInfoObject,
+      });
+      console.log(fee, 'fee');
+
+      if (!fee.didWork) {
+        throw new Error(fee.error);
+      }
+      paymentFee = fee.fee;
+      supportFee = fee.supportFee;
+      addressInfo.invoice = data.invoice;
     } else {
       addressInfo.amount = addressInfo.amountSat;
     }
@@ -39,6 +84,10 @@ export default function processLiquidAddress(input, context) {
       data: addressInfo,
       type: 'liquid',
       paymentNetwork: 'liquid',
+      address: input?.address,
+      paymentFee: paymentFee,
+      supportFee: supportFee,
+      webSocket,
       sendAmount: !addressInfo.amount
         ? ''
         : `${
@@ -52,6 +101,7 @@ export default function processLiquidAddress(input, context) {
     };
   } catch (err) {
     console.log('process liquid invoice error', err);
+    webSocket?.close();
     crashlyticsRecordErrorReport(err.message);
   }
 }
