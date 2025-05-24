@@ -37,8 +37,8 @@ import {isMoreThanADayOld} from '../../../../../functions/rotateAddressDateCheck
 import {getFiatRates} from '../../../../../functions/SDK';
 import CustomSearchInput from '../../../../../functions/CustomElements/searchInput';
 import {useGlobalThemeContext} from '../../../../../../context-store/theme';
-import {useNodeContext} from '../../../../../../context-store/nodeContext';
-import {useAppStatus} from '../../../../../../context-store/appStatus';
+// import {useNodeContext} from '../../../../../../context-store/nodeContext';
+// import {useAppStatus} from '../../../../../../context-store/appStatus';
 import {useKeysContext} from '../../../../../../context-store/keys';
 import {useGlobalContextProvider} from '../../../../../../context-store/context';
 import {ANDROIDSAFEAREA} from '../../../../../constants/styles';
@@ -46,11 +46,13 @@ import useHandleBackPressNew from '../../../../../hooks/useHandleBackPressNew';
 import {keyboardGoBack} from '../../../../../functions/customNavigation';
 import sendStorePayment from '../../../../../functions/apps/payments';
 import {parse} from '@breeztech/react-native-breez-sdk-liquid';
+import {useSparkWallet} from '../../../../../../context-store/sparkContext';
 
 export default function ExpandedGiftCardPage(props) {
+  const {sparkInformation} = useSparkWallet();
   const {contactsPrivateKey, publicKey} = useKeysContext();
-  const {nodeInformation, liquidNodeInformation} = useNodeContext();
-  const {minMaxLiquidSwapAmounts} = useAppStatus();
+  // const {nodeInformation, liquidNodeInformation} = useNodeContext();
+  // const {minMaxLiquidSwapAmounts} = useAppStatus();
   const {theme, darkModeType} = useGlobalThemeContext();
   const {globalContactsInformation} = useGlobalContacts();
   const {masterInfoObject} = useGlobalContextProvider();
@@ -499,12 +501,12 @@ export default function ExpandedGiftCardPage(props) {
       }
 
       const paymentResponse = await sendStorePayment({
-        liquidNodeInformation,
-        nodeInformation,
         invoice: responseInvoice,
-        minMaxLiquidSwapAmounts,
-        sendingAmountSats: sendingAmountSat,
         masterInfoObject: masterInfoObject,
+        sendingAmountSats: sendingAmountSat,
+        fee: responseObject?.supportFee + responseObject?.paymentFee,
+        userBalance: sparkInformation.balance,
+        sparkInformation: sparkInformation,
       });
 
       if (!paymentResponse.didWork) {
@@ -525,7 +527,6 @@ export default function ExpandedGiftCardPage(props) {
       saveClaimInformation({
         responseObject,
         paymentObject: paymentResponse.response,
-        nodeType: paymentResponse.formattingType,
       });
       return;
     } catch (err) {
@@ -580,8 +581,7 @@ export default function ExpandedGiftCardPage(props) {
           name: 'ConfirmTxPage',
           params: {
             for: 'paymentSucceed',
-            information: paymentObject,
-            formattingType: nodeType,
+            transaction: paymentObject,
           },
         },
       ],

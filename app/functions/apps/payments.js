@@ -12,8 +12,12 @@ import {sparkPaymenWrapper} from '../spark/payments';
 export default async function sendStorePayment({
   invoice, // Bolt11 invoice
   masterInfoObject,
-  description = '',
+  sendingAmountSats,
+  paymentType = 'lightning',
+  description = '', //only for spark or bitcoin txs
   fee = 1,
+  userBalance,
+  sparkInformation,
   // liquidNodeInformation,
   // nodeInformation,
   // payingStateUpdate,
@@ -25,10 +29,13 @@ export default async function sendStorePayment({
 
     const response = await sparkPaymenWrapper({
       address: invoice,
-      paymentType: 'lightning',
+      paymentType: paymentType,
+      amountSats: sendingAmountSats,
       masterInfoObject,
       fee,
       memo: description,
+      userBalance,
+      sparkInformation,
     });
     if (!response.didWork) throw new Error(response.error);
     return response;
