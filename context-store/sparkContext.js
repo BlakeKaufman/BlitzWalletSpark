@@ -30,6 +30,7 @@ import {
   fullRestoreSparkState,
   restoreSparkTxStateFromLast4Days,
 } from '../app/functions/spark/restore';
+import {transformTxToPaymentObject} from '../app/functions/spark/transformTxToPayment';
 
 // Initiate context
 const SparkWalletManager = createContext(null);
@@ -55,6 +56,7 @@ const SparkWalletProvider = ({children}) => {
     blockedIdentityPubKeysRef.current = blockedIdentityPubKeys;
   }, [blockedIdentityPubKeys]);
 
+  // This is a function that handles incoming transactions and formmataes it to reqirued formation
   const handleTransactionUpdate = async recevedTxId => {
     try {
       // First we need to get recent spark transfers
@@ -216,6 +218,10 @@ const SparkWalletProvider = ({children}) => {
 
     async function handleUpdate(updateType) {
       try {
+        console.log(
+          'running update in spark context from db changes',
+          updateType,
+        );
         const balance = (await getSparkBalance()) || {balance: 0};
         const txs = await getAllSparkTransactions();
         setSparkInformation(prev => {
@@ -229,10 +235,7 @@ const SparkWalletProvider = ({children}) => {
         console.log('error in spark handle db update function', err);
       }
     }
-    sparkTransactionsEventEmitter.off(
-      SPARK_TX_UPDATE_ENVENT_NAME,
-      handleUpdate,
-    );
+
     sparkTransactionsEventEmitter.on(SPARK_TX_UPDATE_ENVENT_NAME, handleUpdate);
 
     sparkWallet.on('transfer:claimed', (transferId, balance) => {
@@ -256,15 +259,30 @@ const SparkWalletProvider = ({children}) => {
         const newTransactions = await Promise.all(
           depoistAddresses.map(async address => {
             const response = await claimSparkBitcoinL1Transaction(address);
-            // make sure to add address to tx item and format it like it needs to be for the sql database
+
             console.log('Bitcoin claim response', response);
-            if (!response) return false;
-            return response;
+            if (!response.filter(Boolean).length) return false;
+            const [txid, [data]] = response;
+            console.log(txid, data, 'destructed response object');
+            const formattedTx = await transformTxToPaymentObject(
+              {
+                ...data,
+                transferDirection: 'INCOMING',
+                address: address,
+                txid: txid,
+              },
+              '',
+              'bitcoin',
+            );
+            console.log('formatted data', formattedTx);
+            return formattedTx;
           }),
         );
         const filteredTxs = newTransactions.filter(Boolean);
 
-        // Eventualy save the claimed txs to the transaction array
+        if (filteredTxs.length) {
+          await bulkUpdateSparkTransactions([filteredTxs]);
+        }
       } catch (err) {
         console.log('Handle deposit address check error', err);
       }
@@ -273,14 +291,12 @@ const SparkWalletProvider = ({children}) => {
     if (depositAddressIntervalRef.current) {
       clearInterval(depositAddressIntervalRef.current);
     }
-    return;
+
+    handleDepositAddressCheck();
     depositAddressIntervalRef.current = setInterval(
       handleDepositAddressCheck,
       1_000 * 60,
     );
-    return () => {
-      clearInterval(depositAddressIntervalRef.current);
-    };
   }, []);
 
   useEffect(() => {

@@ -21,6 +21,7 @@ export default function AcceptButtonSendPage({
   isLiquidPayment,
   fromPage,
   publishMessageFunc,
+  webViewRef,
 }) {
   const {masterInfoObject} = useGlobalContextProvider();
   const {liquidNodeInformation, fiatStats} = useNodeContext();
@@ -114,6 +115,7 @@ export default function AcceptButtonSendPage({
         parsedInvoice: paymentInfo.decodedInput,
         fromPage,
         publishMessageFunc,
+        webViewRef,
       });
     } catch (err) {
       console.log('accecpt button error', err);

@@ -69,7 +69,7 @@ export const restoreSparkTxStateFromLast4Days = async (
       historicalTime =
         JSON.parse(
           await getLocalStorageItem(LAST_LOADED_BLITZ_LOCAL_STOREAGE_KEY),
-        ) || Date.now() - 1 * 24 * 60 * 60 * 1000;
+        ) || Date.now() - 4 * 24 * 60 * 60 * 1000;
       setLocalStorageItem(
         LAST_LOADED_BLITZ_LOCAL_STOREAGE_KEY,
         JSON.stringify(Date.now()),
@@ -79,7 +79,7 @@ export const restoreSparkTxStateFromLast4Days = async (
         new Date(historicalTime).toISOString(),
       );
     } else {
-      historicalTime = Date.now() - 1 * 24 * 60 * 60 * 1000;
+      historicalTime = Date.now() - 60 * 60 * 1000;
       console.log(
         'Using last 4 days as cutoff:',
         new Date(historicalTime).toISOString(),

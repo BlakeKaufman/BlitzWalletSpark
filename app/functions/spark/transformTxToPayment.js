@@ -8,8 +8,14 @@ import {
   getAllUnpaidSparkLightningInvoices,
 } from './transactions';
 
-export async function transformTxToPaymentObject(tx, sparkAddress) {
-  const paymentType = useSparkPaymentType(tx);
+export async function transformTxToPaymentObject(
+  tx,
+  sparkAddress,
+  forcePaymentType,
+) {
+  const paymentType = forcePaymentType
+    ? forcePaymentType
+    : useSparkPaymentType(tx);
 
   if (paymentType === 'lightning') {
     const unpaidInvoices = await getAllUnpaidSparkLightningInvoices();
@@ -92,6 +98,27 @@ export async function transformTxToPaymentObject(tx, sparkAddress) {
         direction: tx.transferDirection,
         senderIdentityPublicKey: tx.senderIdentityPublicKey,
         description: '',
+      },
+    };
+  }
+
+  if (paymentType === 'bitcoin') {
+    return {
+      id: tx.id,
+      paymentStatus: getSparkPaymentStatus(tx.status),
+      paymentType: 'bitcoin',
+      accountId: tx.ownerIdentityPublicKey,
+      details: {
+        fee: 0,
+        amount: tx.value,
+        address: tx.address,
+        time: tx.updatedTime
+          ? new Date(tx.updatedTime).getTime()
+          : new Date().getTime(),
+        direction: tx.transferDirection,
+        description: '',
+        onChainTxid: tx.txid,
+        refundTx: tx.refundTx,
       },
     };
   }

@@ -1,4 +1,9 @@
-import {getSparkTransactions, sendSparkPayment, sparkWallet} from '.';
+import {
+  getSparkLightningSendRequest,
+  getSparkTransactions,
+  sendSparkPayment,
+  sparkWallet,
+} from '.';
 import {BLITZ_SUPPORT_DEFAULT_PAYMENT_DESCRIPTION} from '../../constants';
 import {
   BLITZ_FEE_PERCET,
@@ -170,7 +175,7 @@ export const sparkPaymenWrapper = async ({
           fee: fee,
           amount: amountSats,
           address: address,
-          time: new Date(sparkPayResponse.updatedAt).getTime(),
+          time: new Date(sparkPayResponse.updatedTime).getTime(),
           direction: 'OUTGOING',
           description: memo || '',
           senderIdentityPublicKey: sparkPayResponse.receiverIdentityPublicKey,

@@ -118,6 +118,12 @@ export default function getFormattedHomepageTxsForSpark({
         }
 
         if (
+          currentTransaction.paymentStatus === 'failed' &&
+          paymentDetials.direction === 'INCOMING'
+        )
+          throw new Error("Don't show failed incoming txs.");
+
+        if (
           transactionPaymentType === 'lightning' &&
           currentTransaction.status === 'LIGHTNING_PAYMENT_INITIATED'
         )

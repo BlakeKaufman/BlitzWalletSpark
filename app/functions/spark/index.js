@@ -4,6 +4,7 @@ import {
 } from '@buildonspark/spark-sdk/native';
 import {retrieveData} from '../secureStore';
 import {getAllSparkTransactions} from './transactions';
+import {getLatestDepositTxId} from '@buildonspark/spark-sdk';
 
 export let sparkWallet = null;
 
@@ -24,6 +25,7 @@ export const initializeSparkWallet = async () => {
       const {wallet} = value;
       console.log('Wallet initialized:', await wallet.getIdentityPublicKey());
       sparkWallet = wallet;
+
       return {isConnected: true};
     } else if (type === 'timeout') {
       return {isConnected: false};
@@ -73,12 +75,11 @@ export const getSparkBitcoinL1Address = async () => {
     console.log('Get Bitcoin mainchain address error', err);
   }
 };
+
 export const getUnusedSparkBitcoinL1Address = async () => {
   try {
     if (!sparkWallet) throw new Error('sparkWallet not initialized');
-    return new Array.from(
-      new Set((await sparkWallet.getUnusedDepositAddresses()) || []),
-    );
+    return (await sparkWallet.getUnusedDepositAddresses()) || [];
   } catch (err) {
     console.log('Get Bitcoin mainchain address error', err);
   }
@@ -97,9 +98,10 @@ export const claimSparkBitcoinL1Transaction = async depositAddress => {
   try {
     if (!sparkWallet) throw new Error('sparkWallet not initialized');
     const txId = await querySparkBitcoinL1Transaction(depositAddress);
-    return await Promise.all([
-      txId ? sparkWallet.claimDeposit(txId) : Promise.resolve(null),
-    ]);
+    const claimResponse = await (txId
+      ? sparkWallet.claimDeposit(txId)
+      : Promise.resolve(null));
+    return [txId, claimResponse];
   } catch (err) {
     console.log('Claim bitcoin mainnet payment error', err);
   }

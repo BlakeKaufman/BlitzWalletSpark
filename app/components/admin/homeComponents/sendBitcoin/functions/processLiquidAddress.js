@@ -20,11 +20,13 @@ export default async function processLiquidAddress(input, context) {
     publishMessageFunc,
   } = context;
   let webSocket;
+  console.log(webViewRef, 'WEB VIEW REF');
   try {
     crashlyticsLogReport('Handling decode liquid address');
     let addressInfo = JSON.parse(JSON.stringify(input?.address));
     let paymentFee = 0;
     let supportFee = 0;
+    let boltzData;
 
     if (comingFromAccept) {
       addressInfo.amount = enteredPaymentInfo.amount;
@@ -41,7 +43,7 @@ export default async function processLiquidAddress(input, context) {
         );
 
       if (!data?.invoice) throw new Error('No Invoice genereated');
-
+      boltzData = data;
       webSocket = new WebSocket(
         `${getBoltzWsUrl(process.env.BOLTZ_ENVIRONMENT)}`,
       );
@@ -88,6 +90,7 @@ export default async function processLiquidAddress(input, context) {
       paymentFee: paymentFee,
       supportFee: supportFee,
       webSocket,
+      boltzData,
       sendAmount: !addressInfo.amount
         ? ''
         : `${

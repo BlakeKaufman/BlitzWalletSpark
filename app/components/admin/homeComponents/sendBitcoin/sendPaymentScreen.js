@@ -56,6 +56,7 @@ import {crashlyticsLogReport} from '../../../../functions/crashlyticsLogs';
 import {InputTypeVariant} from '@breeztech/react-native-breez-sdk-liquid';
 import {useSparkWallet} from '../../../../../context-store/sparkContext';
 import {sparkPaymenWrapper} from '../../../../functions/spark/payments';
+import {getBoltzApiUrl} from '../../../../functions/boltz/boltzEndpoitns';
 
 export default function SendPaymentScreen(props) {
   console.log('CONFIRM SEND PAYMENT SCREEN');
@@ -369,6 +370,7 @@ export default function SendPaymentScreen(props) {
               setLoadingMessage={setLoadingMessage}
               fromPage={fromPage}
               publishMessageFunc={publishMessageFunc}
+              webViewRef={webViewRef}
             />
           )}
         </>
@@ -430,6 +432,7 @@ export default function SendPaymentScreen(props) {
     } else if (paymentInfo.type === 'liquid') {
       formmateedSparkPaymentInfo.address = paymentInfo?.data?.invoice;
       formmateedSparkPaymentInfo.paymentType = 'lightning';
+      console.log(paymentInfo?.boltzData);
     }
     console.log(formmateedSparkPaymentInfo, 'manual spark information');
 
@@ -446,6 +449,75 @@ export default function SendPaymentScreen(props) {
 
     // Shouuld be same for all paymetns
     const paymentResponse = await sparkPaymenWrapper(paymentObject);
+
+    if (paymentInfo.type === 'liquid' && paymentResponse.didWork) {
+      async function pollBoltzSwapStatus() {
+        let didSettleInvoice = false;
+        let runCount = 0;
+
+        while (!didSettleInvoice && runCount < 10) {
+          runCount += 1;
+          const resposne = await fetch(
+            getBoltzApiUrl() + `/v2/swap/${paymentInfo.boltzData.id}`,
+          );
+          const boltzData = await resposne.json();
+          console.log(boltzData);
+
+          if (boltzData.status === 'invoice.settled') {
+            didSettleInvoice = true;
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                navigate.reset({
+                  index: 0, // The top-level route index
+                  routes: [
+                    {
+                      name: 'HomeAdmin', // Navigate to HomeAdmin
+                      params: {
+                        screen: 'Home',
+                      },
+                    },
+                    {
+                      name: 'ConfirmTxPage',
+                      params: {
+                        transaction: paymentResponse.response,
+                      },
+                    },
+                  ],
+                });
+              });
+            });
+          } else {
+            console.log('Waiting for confirmation....');
+            await new Promise(resolve => setTimeout(resolve, 5000));
+          }
+        }
+        if (didSettleInvoice) return;
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            navigate.reset({
+              index: 0, // The top-level route index
+              routes: [
+                {
+                  name: 'HomeAdmin', // Navigate to HomeAdmin
+                  params: {
+                    screen: 'Home',
+                  },
+                },
+                {
+                  name: 'ConfirmTxPage',
+                  params: {
+                    transaction: paymentResponse.response,
+                    error: 'Unable to settle swap',
+                  },
+                },
+              ],
+            });
+          });
+        });
+      }
+      pollBoltzSwapStatus();
+      return;
+    }
 
     if (paymentResponse.didWork) {
       if (fromPage === 'contacts') {
