@@ -30,12 +30,7 @@ export default function SparkDebug() {
           signer: new ReactNativeSparkSigner(),
           mnemonicOrSeed: mnemoinc,
           options: {network: 'MAINNET'},
-        }).then(
-          res =>
-            res.wallet
-              .createLightningInvoice()
-              .then(data => data.invoice.encodedInvoice)[('wallet', res)],
-        ),
+        }).then(res => ['wallet', res]),
         new Promise(res => setTimeout(() => res(['timeout', false]), 15000)),
       ]);
 
@@ -169,7 +164,6 @@ const styles = StyleSheet.create({
   },
   innerContainer: {
     width: '95%',
-    flex: 1,
     alignSelf: 'center',
   },
   title: {
