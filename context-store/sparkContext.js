@@ -316,8 +316,13 @@ const SparkWalletProvider = ({children}) => {
     let isFirstInterval = true;
     setInterval(async () => {
       try {
-        await restoreSparkTxStateFromLast4Days(50, isFirstInterval);
+        const [balance, _] = Promise.all([
+          getSparkBalance(),
+          restoreSparkTxStateFromLast4Days(50, isFirstInterval),
+        ]);
         isFirstInterval = false; // switch to using last 4 days after first run
+        if (!balance.balance) return;
+        setSparkInformation(prev => ({...prev, balance: balance.balance}));
       } catch (err) {
         console.error('Error during periodic restore:', err);
       }
