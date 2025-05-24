@@ -30,7 +30,12 @@ export default function SparkDebug() {
           signer: new ReactNativeSparkSigner(),
           mnemonicOrSeed: mnemoinc,
           options: {network: 'MAINNET'},
-        }).then(res => ['wallet', res]),
+        }).then(
+          res =>
+            res.wallet
+              .createLightningInvoice()
+              .then(data => data.invoice.encodedInvoice)[('wallet', res)],
+        ),
         new Promise(res => setTimeout(() => res(['timeout', false]), 15000)),
       ]);
 
@@ -64,7 +69,7 @@ export default function SparkDebug() {
         amountSats: 1000,
         memo: 'Testing',
       });
-      setLnInvoice(invoice);
+      setLnInvoice(invoice.invoice.encodedInvoice);
     } catch (err) {
       console.log('Initialize spark wallet error', err);
     }
