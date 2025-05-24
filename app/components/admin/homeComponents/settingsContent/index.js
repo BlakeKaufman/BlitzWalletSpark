@@ -14,7 +14,7 @@ import LoginSecurity from './loginSecurity';
 import SendOnChainBitcoin from './sendOnChain';
 import BlitzSocialOptions from './socialOptions';
 
-import LiquidWallet from './bank';
+// import LiquidWallet from './bank';
 import ViewAllLiquidSwaps from './viewAllLiquidSwaps';
 import WalletInformation from './walletInformation';
 import ExperimentalItemsPage from './ExperimentalItems';
@@ -44,7 +44,7 @@ export {
   SendOnChainBitcoin,
   BlitzSocialOptions,
   ViewAllLiquidSwaps,
-  LiquidWallet,
+  // LiquidWallet,
   ExperimentalItemsPage,
   PosSettingsPage,
   HistoricalOnChainPayments,

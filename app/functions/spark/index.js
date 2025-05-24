@@ -21,8 +21,8 @@ export const initializeSparkWallet = async () => {
     ]);
 
     if (type === 'wallet') {
-      console.log('Wallet initialized:', await wallet.getIdentityPublicKey());
       const {wallet} = value;
+      console.log('Wallet initialized:', await wallet.getIdentityPublicKey());
       sparkWallet = wallet;
       return {isConnected: true};
     } else if (type === 'timeout') {

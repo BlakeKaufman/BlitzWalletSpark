@@ -8,7 +8,7 @@ import {
   FastPay,
   FiatCurrencyPage,
   LSPPage,
-  LiquidWallet,
+  // LiquidWallet,
   NodeInfo,
   NosterWalletConnect,
   PosSettingsPage,
@@ -62,7 +62,7 @@ export default function SettingsContentIndex(props) {
     <>
       {selectedPage?.toLowerCase() === 'display currency' ||
       selectedPage?.toLowerCase() === 'experimental' ||
-      selectedPage?.toLowerCase() === 'bank' ||
+      // selectedPage?.toLowerCase() === 'bank' ||
       selectedPage?.toLowerCase() === 'point-of-sale' ||
       selectedPage?.toLowerCase() === 'edit contact profile' ||
       selectedPage?.toLowerCase() === 'channel closure' ||
@@ -74,9 +74,9 @@ export default function SettingsContentIndex(props) {
           {selectedPage?.toLowerCase() === 'experimental' && (
             <ExperimentalItemsPage />
           )}
-          {selectedPage?.toLowerCase() === 'bank' && (
+          {/* {selectedPage?.toLowerCase() === 'bank' && (
             <LiquidWallet theme={theme} />
-          )}
+          )} */}
           {selectedPage?.toLowerCase() === 'point-of-sale' && (
             <PosSettingsPage />
           )}

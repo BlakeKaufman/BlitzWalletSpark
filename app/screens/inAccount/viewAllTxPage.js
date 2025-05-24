@@ -3,7 +3,6 @@ import {FlatList, Platform, View} from 'react-native';
 import {ICONS} from '../../constants';
 import {ANDROIDSAFEAREA} from '../../constants/styles';
 import {GlobalThemeView} from '../../functions/CustomElements';
-import getFormattedHomepageTxs from '../../functions/combinedTransactions';
 import {useTranslation} from 'react-i18next';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useGlobalThemeContext} from '../../../context-store/theme';
@@ -11,13 +10,14 @@ import useHandleBackPressNew from '../../hooks/useHandleBackPressNew';
 import CustomSettingsTopBar from '../../functions/CustomElements/settingsTopBar';
 import {useUpdateHomepageTransactions} from '../../hooks/updateHomepageTransactions';
 import {useGlobalContextProvider} from '../../../context-store/context';
-import {useGlobalTxContextProvider} from '../../../context-store/combinedTransactionsContext';
 import {useEffect, useState} from 'react';
 import FullLoadingScreen from '../../functions/CustomElements/loadingScreen';
+import getFormattedHomepageTxsForSpark from '../../functions/combinedTransactionsSpark';
+import {useSparkWallet} from '../../../context-store/sparkContext';
 
 export default function ViewAllTxPage() {
   const navigate = useNavigation();
-  const {combinedTransactions} = useGlobalTxContextProvider();
+  const {sparkInformation} = useSparkWallet();
   const {masterInfoObject} = useGlobalContextProvider();
   const {theme, darkModeType} = useGlobalThemeContext();
   const [txs, setTxs] = useState([]);
@@ -33,12 +33,12 @@ export default function ViewAllTxPage() {
   });
 
   useEffect(() => {
-    const formattedTxs = getFormattedHomepageTxs({
+    const txs = getFormattedHomepageTxsForSpark({
       currentTime,
-      combinedTransactions,
+      sparkInformation,
       navigate,
-      isBankPage: false,
       frompage: 'viewAllTx',
+      viewAllTxText: t('wallet.see_all_txs'),
       noTransactionHistoryText: t('wallet.no_transaction_history'),
       todayText: t('constants.today'),
       yesterdayText: t('constants.yesterday'),
@@ -50,10 +50,11 @@ export default function ViewAllTxPage() {
       darkModeType,
       userBalanceDenomination,
     });
-    setTxs(formattedTxs);
+
+    setTxs(txs);
   }, [
     currentTime,
-    combinedTransactions,
+    sparkInformation,
     navigate,
     theme,
     darkModeType,

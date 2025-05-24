@@ -148,6 +148,7 @@ import navigationIcon from '../assets/icons/navigation.png';
 import navigationIconFill from '../assets/icons/navigation_fill.png';
 import navigationIconWhite from '../assets/icons/navigation_white.png';
 import navigationIconFillWhite from '../assets/icons/navigation_fill_white.png';
+import shareBlack from '../assets/icons/shareBlack.png';
 import sparkAsteriskBlack from '../assets/icons/SparkAsteriskBlack.png';
 import sparkAsteriskWhite from '../assets/icons/SparkAsteriskWhite.png';
 export default {
@@ -302,6 +303,7 @@ export default {
   navigationIconFill,
   navigationIconWhite,
   navigationIconFillWhite,
+  shareBlack,
   sparkAsteriskBlack,
   sparkAsteriskWhite,
 };

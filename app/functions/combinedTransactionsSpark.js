@@ -1,7 +1,6 @@
-import {Image, StyleSheet, View, TouchableOpacity, Text} from 'react-native';
+import {Image, StyleSheet, View, TouchableOpacity} from 'react-native';
 import {
   BLITZ_DEFAULT_PAYMENT_DESCRIPTION,
-  BLITZ_SUPPORT_DEFAULT_PAYMENT_DESCRIPTION,
   CENTER,
   COLORS,
   HIDDEN_BALANCE_TEXT,
@@ -14,7 +13,6 @@ import {useTranslation} from 'react-i18next';
 import Icon from './CustomElements/Icon';
 import {memo, useMemo} from 'react';
 import {crashlyticsLogReport} from './crashlyticsLogs';
-import {isSparkDonationPayment, useIsSparkPaymentPending} from './spark';
 
 export default function getFormattedHomepageTxsForSpark({
   currentTime,
@@ -54,7 +52,6 @@ export default function getFormattedHomepageTxsForSpark({
     let formattedTxs = [];
     let currentGroupedDate = '';
     let transactionIndex = 0;
-    let didExcludeTxs = false;
 
     while (
       formattedTxs.length <
@@ -69,10 +66,6 @@ export default function getFormattedHomepageTxsForSpark({
         const paymentDetials = JSON.parse(currentTransaction.details);
 
         const isFailedPayment = currentTransaction.paymentStatus === 'failed';
-        const isDonation = isSparkDonationPayment(
-          currentTransaction,
-          paymentDetials,
-        );
 
         const paymentDate = new Date(paymentDetials.time).getTime();
 
@@ -90,7 +83,6 @@ export default function getFormattedHomepageTxsForSpark({
             theme={theme}
             darkModeType={darkModeType}
             userBalanceDenomination={userBalanceDenomination}
-            isDonation={isDonation}
             isFailedPayment={isFailedPayment}
           />
         );
@@ -125,11 +117,6 @@ export default function getFormattedHomepageTxsForSpark({
           formattedTxs.push(dateBanner(bannerText));
         }
 
-        if (isDonation && frompage != 'viewAllTx') {
-          didExcludeTxs = true;
-          throw Error('Support transactions are not shown on homepage');
-        }
-
         if (
           transactionPaymentType === 'lightning' &&
           currentTransaction.status === 'LIGHTNING_PAYMENT_INITIATED'
@@ -144,11 +131,7 @@ export default function getFormattedHomepageTxsForSpark({
       }
     }
 
-    if (
-      frompage != 'viewAllTx' &&
-      formattedTxs?.length == homepageTxPreferance &&
-      didExcludeTxs
-    )
+    if (frompage != 'viewAllTx' && formattedTxs?.length == homepageTxPreferance)
       formattedTxs.push(
         <TouchableOpacity
           key={'view_all_tx_btn'}
@@ -175,7 +158,6 @@ export const UserTransaction = memo(function UserTransaction({
   theme,
   darkModeType,
   userBalanceDenomination,
-  isDonation,
   isFailedPayment,
 }) {
   const {t} = useTranslation();
@@ -205,9 +187,7 @@ export const UserTransaction = memo(function UserTransaction({
   const showPendingTransactionStatusIcon =
     transaction.paymentStatus === 'pending';
 
-  const paymentDescription = isDonation
-    ? BLITZ_SUPPORT_DEFAULT_PAYMENT_DESCRIPTION
-    : transaction.details?.description;
+  const paymentDescription = transaction.details?.description;
   const isDefaultDescription =
     paymentDescription === BLITZ_DEFAULT_PAYMENT_DESCRIPTION;
 
