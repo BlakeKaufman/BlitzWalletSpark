@@ -37,8 +37,15 @@ export const restoreSparkTxState = async BATCH_SIZE => {
       start += BATCH_SIZE;
     } while (!foundOverlap);
 
-    // Filter out any already-saved txs
-    const newTxs = restoredTxs.filter(tx => !savedIds.includes(tx.id));
+    // Filter out any already-saved txs or dontation payments
+    const newTxs = restoredTxs.filter(
+      tx =>
+        !savedIds.includes(tx.id) ||
+        !(
+          tx.transferDirection === 'OUTGOING' &&
+          tx.receiverIdentityPublicKey === process.env.BLITZ_SPARK_PUBLICKEY
+        ),
+    );
 
     console.log(`Total restored transactions: ${restoredTxs.length}`);
     console.log(`New transactions after filtering: ${newTxs.length}`);
