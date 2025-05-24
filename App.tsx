@@ -69,7 +69,7 @@ import {
 } from './navigation/screens';
 import getDeepLinkUser from './app/components/admin/homeComponents/contacts/internalComponents/getDeepLinkUser';
 import {navigationRef} from './navigation/navigationService';
-import {GlobalConbinedTxContextProvider} from './context-store/combinedTransactionsContext';
+// import {GlobalConbinedTxContextProvider} from './context-store/combinedTransactionsContext';
 // import BreezTest from './app/screens/breezTest';
 import {ImageCacheProvider} from './context-store/imageCache';
 import {SparkWalletProvider} from './context-store/sparkContext';
@@ -87,27 +87,27 @@ function App(): JSX.Element {
               <GlobaleCashVariables>
                 <SparkWalletProvider>
                   <GLobalNodeContextProider>
-                    <GlobalConbinedTxContextProvider>
-                      <GlobalAppDataProvider>
-                        <POSTransactionsProvider>
-                          <WebViewProvider>
-                            <GlobalContactsList>
-                              <PushNotificationManager>
-                                <LiquidEventProvider>
-                                  <ImageCacheProvider>
-                                    {/* <Suspense
+                    {/* <GlobalConbinedTxContextProvider> */}
+                    <GlobalAppDataProvider>
+                      <POSTransactionsProvider>
+                        <WebViewProvider>
+                          <GlobalContactsList>
+                            <PushNotificationManager>
+                              <LiquidEventProvider>
+                                <ImageCacheProvider>
+                                  {/* <Suspense
                     fallback={<FullLoadingScreen text={'Loading Page'} />}> */}
-                                    <ResetStack />
-                                    {/* </Suspense> */}
-                                  </ImageCacheProvider>
-                                </LiquidEventProvider>
-                              </PushNotificationManager>
-                            </GlobalContactsList>
-                          </WebViewProvider>
-                        </POSTransactionsProvider>
-                      </GlobalAppDataProvider>
-                      {/* <BreezTest /> */}
-                    </GlobalConbinedTxContextProvider>
+                                  <ResetStack />
+                                  {/* </Suspense> */}
+                                </ImageCacheProvider>
+                              </LiquidEventProvider>
+                            </PushNotificationManager>
+                          </GlobalContactsList>
+                        </WebViewProvider>
+                      </POSTransactionsProvider>
+                    </GlobalAppDataProvider>
+                    {/* <BreezTest /> */}
+                    {/* </GlobalConbinedTxContextProvider> */}
                   </GLobalNodeContextProider>
                 </SparkWalletProvider>
               </GlobaleCashVariables>
