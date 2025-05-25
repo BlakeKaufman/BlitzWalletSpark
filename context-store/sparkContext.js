@@ -18,7 +18,6 @@ import {
 import {
   addSingleSparkTransaction,
   bulkUpdateSparkTransactions,
-  cleanStalePendingSparkLightningTransactions,
   deleteUnpaidSparkLightningTransaction,
   getAllSparkTransactions,
   getAllUnpaidSparkLightningInvoices,
@@ -28,7 +27,7 @@ import {
 import {useAppStatus} from './appStatus';
 import {
   fullRestoreSparkState,
-  restoreSparkTxStateFromLast4Days,
+  updateSparkTxStatus,
 } from '../app/functions/spark/restore';
 import {transformTxToPaymentObject} from '../app/functions/spark/transformTxToPayment';
 
@@ -46,11 +45,11 @@ const SparkWalletProvider = ({children}) => {
   });
   const [pendingNavigation, setPendingNavigation] = useState(null);
   const depositAddressIntervalRef = useRef(null);
-  const cleanDBStateRef = useRef(null);
   const restoreOffllineStateRef = useRef(null);
   const sparkPaymentActionsRef = useRef(null);
   const [blockedIdentityPubKeys, setBlockedIdentityPubKeys] = useState([]);
   const blockedIdentityPubKeysRef = useRef([]);
+  const isFirstSparkUpdateStateInterval = useRef(true);
 
   useEffect(() => {
     blockedIdentityPubKeysRef.current = blockedIdentityPubKeys;
@@ -157,35 +156,43 @@ const SparkWalletProvider = ({children}) => {
             description: '',
           },
         };
+      } else {
+        //Don't need to do anything here for bitcoin This gets hanldes by the payment state update which will turn it from pending to confirmed once one confirmation happens
       }
 
       if (!selectedSparkTransaction)
         throw new Error('Not able to get recent transfer');
 
       await addSingleSparkTransaction(paymentObject);
+
+      const savedTxs = await getAllSparkTransactions();
+
+      return {txs: savedTxs, paymentObject};
     } catch (err) {
       console.log('Handle incoming transaction error', err);
     }
   };
 
   const handleIncomingPayment = async transferId => {
-    const storedTransaction = await handleTransactionUpdate(transferId);
+    let storedTransaction = await handleTransactionUpdate(transferId);
 
     // block incoming paymetns here
     console.log(blockedIdentityPubKeysRef.current, 'blocked identy puib keys');
-    const isLNURLPayment = blockedIdentityPubKeysRef.current.some(
+    const isLNURLPayment = blockedIdentityPubKeysRef.current.find(
       blocked => blocked.transferResponse.id === transferId,
     );
     console.log(isLNURLPayment, 'isLNURL PAYMNET');
-    if (isLNURLPayment) {
+    if (!!isLNURLPayment) {
       const selectedLNURL = storedTransaction.txs.find(
-        tx => tx.id === transferId,
+        tx => tx.sparkID === transferId,
       );
       const dbLNURL = isLNURLPayment.db;
 
-      const details = JSON.stringify(selectedLNURL.details);
-      const newDetails = {...details, description: dbLNURL.description};
-      const newPayent = {...selectedLNURL, details: newDetails};
+      const newPayent = {
+        ...selectedLNURL,
+        details: {description: dbLNURL.description},
+        id: selectedLNURL.sparkID,
+      };
 
       await bulkUpdateSparkTransactions([newPayent]);
 
@@ -242,10 +249,11 @@ const SparkWalletProvider = ({children}) => {
       console.log(`Transfer ${transferId} claimed. New balance: ${balance}`);
       handleIncomingPayment(transferId);
     });
-    sparkWallet.on('deposit:confirmed', (transferId, balance) => {
-      console.log(`Transfer ${transferId} claimed. New balance: ${balance}`);
-      handleIncomingPayment(transferId);
-    });
+
+    // sparkWallet.on('deposit:confirmed', (transferId, balance) => {
+    //   console.log(`Transfer ${transferId} claimed. New balance: ${balance}`);
+    //   handleIncomingPayment(transferId);
+    // });
   }, [sparkInformation.didConnect]);
 
   useEffect(() => {
@@ -254,16 +262,16 @@ const SparkWalletProvider = ({children}) => {
       try {
         console.log('l1Deposit check running....');
         const depoistAddresses = await getUnusedSparkBitcoinL1Address();
-        console.log('Reteived deposit addresses', depoistAddresses);
+        console.log(
+          'Number of active deposit addresses:',
+          depoistAddresses?.length,
+        );
         if (!depoistAddresses || !depoistAddresses.length) return;
         const newTransactions = await Promise.all(
           depoistAddresses.map(async address => {
             const response = await claimSparkBitcoinL1Transaction(address);
-
-            console.log('Bitcoin claim response', response);
             if (!response.filter(Boolean).length) return false;
             const [txid, [data]] = response;
-            console.log(txid, data, 'destructed response object');
             const formattedTx = await transformTxToPaymentObject(
               {
                 ...data,
@@ -274,7 +282,6 @@ const SparkWalletProvider = ({children}) => {
               '',
               'bitcoin',
             );
-            console.log('formatted data', formattedTx);
             return formattedTx;
           }),
         );
@@ -292,7 +299,6 @@ const SparkWalletProvider = ({children}) => {
       clearInterval(depositAddressIntervalRef.current);
     }
 
-    handleDepositAddressCheck();
     depositAddressIntervalRef.current = setInterval(
       handleDepositAddressCheck,
       1_000 * 60,
@@ -300,29 +306,19 @@ const SparkWalletProvider = ({children}) => {
   }, []);
 
   useEffect(() => {
-    // This function runs once per load and check to see if there are any stale lightning payments inside of the sql database.
-    if (!didGetToHomepage) return;
-    if (cleanDBStateRef.current) return;
-    cleanDBStateRef.current = true;
-    cleanStalePendingSparkLightningTransactions();
-  }, [didGetToHomepage]);
-
-  useEffect(() => {
     // This function runs once per load and check to see if a user received any payments while offline. It also starts a timeout to update payment status of paymetns every 30 seconds.
     if (!didGetToHomepage) return;
     if (restoreOffllineStateRef.current) return;
     restoreOffllineStateRef.current = true;
 
-    let isFirstInterval = true;
     setInterval(async () => {
       try {
-        const [balance, _] = Promise.all([
-          getSparkBalance(),
-          restoreSparkTxStateFromLast4Days(50, isFirstInterval),
-        ]);
-        isFirstInterval = false; // switch to using last 4 days after first run
-        if (!balance.balance) return;
-        setSparkInformation(prev => ({...prev, balance: balance.balance}));
+        console.log(
+          'Is first interval',
+          isFirstSparkUpdateStateInterval.current,
+        );
+        updateSparkTxStatus(50, isFirstSparkUpdateStateInterval.current);
+        isFirstSparkUpdateStateInterval.current = false;
       } catch (err) {
         console.error('Error during periodic restore:', err);
       }
@@ -333,7 +329,6 @@ const SparkWalletProvider = ({children}) => {
         sparkAddress: sparkInformation.sparkAddress,
       });
     }
-
     restoreTxState();
   }, [didGetToHomepage]);
 

@@ -88,6 +88,7 @@ export default function HandleLNURLPayments() {
             ];
           });
           deletedPaymentIds.push(payment.id);
+          console.log('Payment successful:', payment.id);
         } catch (err) {
           console.log('Error sending LNURL transfer payment', err);
         }
