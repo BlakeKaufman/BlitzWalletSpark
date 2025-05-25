@@ -15,6 +15,7 @@ export default function TechnicalTransactionDetails(props) {
   const {transaction} = props.route.params;
 
   const {details, sparkID} = transaction;
+  console.log(details);
 
   const paymentDetails =
     transaction.paymentType === 'spark'
@@ -37,7 +38,7 @@ export default function TechnicalTransactionDetails(props) {
         ? id === 0
           ? sparkID
           : id === 1
-          ? details.preimage
+          ? details.preImage
           : details.address
         : id === 0
         ? sparkID
