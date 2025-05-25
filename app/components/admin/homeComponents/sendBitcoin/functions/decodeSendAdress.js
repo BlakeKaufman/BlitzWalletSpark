@@ -25,7 +25,6 @@ export default async function decodeSendAddress(props) {
     setPaymentInfo,
     liquidNodeInformation,
     masterInfoObject,
-    // setWebViewArgs,
     webViewRef,
     navigate,
     maxZeroConf,
@@ -40,7 +39,6 @@ export default async function decodeSendAddress(props) {
   } = props;
 
   try {
-    // Handle cryptoqr.net special case
     if (btcAdress.includes('cryptoqr.net')) {
       crashlyticsLogReport('Handling crypto qr code');
       try {
@@ -51,10 +49,9 @@ export default async function decodeSendAddress(props) {
         const data = await response.json();
 
         if (data.status === 'ERROR') {
-          goBackFunction(
+          throw new Error(
             'Not able to get merchant payment information from invoice',
           );
-          return;
         }
 
         const bolt11 = await getLNAddressForLiquidPayment(
@@ -62,25 +59,28 @@ export default async function decodeSendAddress(props) {
           data.minSendable / 1000,
         );
 
-        if (!bolt11) throw new Error('Not able to parse invoice');
+        if (!bolt11) {
+          throw new Error('Unable to parse invoice from merchant link');
+        }
 
         const parsedInvoice = await parseInvoice(bolt11);
 
         if (parsedInvoice.amountMsat / 1000 >= maxZeroConf) {
-          goBackFunction(
+          throw new Error(
             `Cannot send more than ${displayCorrectDenomination({
               amount: maxZeroConf,
               masterInfoObject,
               fiatStats,
             })} to a merchant`,
           );
-          return;
         }
+
         btcAdress = bolt11;
       } catch (err) {
-        console.log('error getting cryptoQR', err);
+        console.error('error getting cryptoQR', err);
         goBackFunction(
-          `There was a problem getting the invoice for this address`,
+          err.message ||
+            'There was a problem getting the invoice for this address',
         );
         return;
       }
@@ -88,7 +88,6 @@ export default async function decodeSendAddress(props) {
 
     crashlyticsLogReport('Parsing bitcoin address input');
 
-    console.log(btcAdress, 'btcaddress');
     if (btcAdress.startsWith('spark:') || btcAdress.startsWith('sp1p')) {
       if (btcAdress.startsWith('spark:')) {
         const processedAddress = decodeBip21SparkAddress(btcAdress);
@@ -102,7 +101,7 @@ export default async function decodeSendAddress(props) {
             amount: processedAddress.options.amount * SATSPERBITCOIN,
           },
         };
-      } else
+      } else {
         parsedInvoice = {
           type: 'Spark',
           address: {
@@ -113,58 +112,71 @@ export default async function decodeSendAddress(props) {
             amount: null,
           },
         };
+      }
     }
 
     const chosenPath = parsedInvoice
       ? Promise.resolve(parsedInvoice)
       : parse(btcAdress);
-    let input = await chosenPath;
+
+    let input;
+    try {
+      input = await chosenPath;
+    } catch (err) {
+      return goBackFunction('Unable to parse address');
+    }
 
     if (input.type === InputTypeVariant.BOLT11) {
-      crashlyticsLogReport(
-        'Running check to see if bolt11 address contains liquid address',
-      );
-      const isMagicRoutingHint = await getLiquidAddressFromSwap(
-        input.invoice.bolt11,
-      );
-      if (isMagicRoutingHint) {
-        const parsed = await parse(isMagicRoutingHint);
-        input = parsed;
+      crashlyticsLogReport('Checking if bolt11 contains magic routing hint');
+      try {
+        const isMagicRoutingHint = await getLiquidAddressFromSwap(
+          input.invoice.bolt11,
+        );
+        if (isMagicRoutingHint) {
+          const parsed = await parse(isMagicRoutingHint);
+          input = parsed;
+        }
+      } catch (err) {
+        return goBackFunction('Failed to resolve embedded liquid address');
       }
     }
 
-    const processedPaymentInfo = await processInputType(input, {
-      fiatStats,
-      liquidNodeInformation,
-      masterInfoObject,
-      navigate,
-      goBackFunction,
-      maxZeroConf,
-      comingFromAccept,
-      enteredPaymentInfo,
-      setPaymentInfo,
-      webViewRef,
-      // setWebViewArgs,
-      setLoadingMessage,
-      paymentInfo,
-      fromPage,
-      publishMessageFunc,
-    });
+    let processedPaymentInfo;
+    try {
+      processedPaymentInfo = await processInputType(input, {
+        fiatStats,
+        liquidNodeInformation,
+        masterInfoObject,
+        navigate,
+        goBackFunction,
+        maxZeroConf,
+        comingFromAccept,
+        enteredPaymentInfo,
+        setPaymentInfo,
+        webViewRef,
+        setLoadingMessage,
+        paymentInfo,
+        fromPage,
+        publishMessageFunc,
+      });
+    } catch (err) {
+      return goBackFunction(err.message || 'Error processing payment info');
+    }
 
     if (processedPaymentInfo) {
       setPaymentInfo({...processedPaymentInfo, decodedInput: input});
     } else {
-      goBackFunction('Unable to to process input');
+      return goBackFunction('Unable to process input');
     }
   } catch (err) {
-    console.log(err, 'Decoding send address erorr');
-    goBackFunction(err.message);
+    console.error('Decoding send address error:', err);
+    goBackFunction(err.message || 'Unknown decoding error occurred');
     return;
   }
 }
 
 async function processInputType(input, context) {
-  const {navigate, goBackFunction, setLoadingMessage} = context;
+  const {setLoadingMessage} = context;
   setLoadingMessage('Getting invoice details');
   crashlyticsLogReport('Getting invoice detials');
 
@@ -193,7 +205,6 @@ async function processInputType(input, context) {
     case 'Spark':
       return await processSparkAddress(input, context);
     default:
-      goBackFunction('Not a valid address type');
-      return null;
+      throw new Error('Not a valid address type');
   }
 }

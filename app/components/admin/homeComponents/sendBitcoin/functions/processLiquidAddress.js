@@ -42,7 +42,7 @@ export default async function processLiquidAddress(input, context) {
           enteredPaymentInfo.description || input?.address?.label || '',
         );
 
-      if (!data?.invoice) throw new Error('No Invoice genereated');
+      if (!data?.invoice) throw new Error('No Swap invoice genereated');
       boltzData = data;
       webSocket = new WebSocket(
         `${getBoltzWsUrl(process.env.BOLTZ_ENVIRONMENT)}`,
@@ -66,11 +66,9 @@ export default async function processLiquidAddress(input, context) {
         paymentType: 'lightning',
         masterInfoObject,
       });
-      console.log(fee, 'fee');
 
-      if (!fee.didWork) {
-        throw new Error(fee.error);
-      }
+      if (!fee.didWork) throw new Error(fee.error);
+
       paymentFee = fee.fee;
       supportFee = fee.supportFee;
       addressInfo.invoice = data.invoice;
@@ -105,6 +103,6 @@ export default async function processLiquidAddress(input, context) {
   } catch (err) {
     console.log('process liquid invoice error', err);
     webSocket?.close();
-    crashlyticsRecordErrorReport(err.message);
+    throw new Error(err.message);
   }
 }
