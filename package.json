@@ -4,10 +4,17 @@
   "private": true,
   "scripts": {
     "android": "react-native run-android",
+    "android:clean": "cd android && ./gradlew clean && cd .. && react-native run-android",
     "ios": "react-native run-ios",
     "lint": "eslint .",
     "start": "react-native start",
-    "test": "jest"
+    "test": "jest",
+    "build-android": "react-native build-android",
+    "build-ios": "react-native build-ios",
+    "depCheck": "npx depcheck",
+    "apkBuild": "cd android && ./gradlew assembleRelease && cd ..",
+    "apkBuild:clean": "cd android && ./gradlew clean assembleRelease && cd ..",
+    "playstoreBuild": "cd android && ./gradlew bundleRelease && cd .."
   },
   "dependencies": {
     "@azure/core-asynciterator-polyfill": "^1.0.2",

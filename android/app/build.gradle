@@ -1,6 +1,9 @@
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
+// Firebase plugins inports
+apply plugin: 'com.google.gms.google-services'
+apply plugin: 'com.google.firebase.crashlytics'
 
 /**
  * This is the configuration block to customize your React Native Android app.
@@ -87,15 +90,25 @@ android {
         applicationId "com.blitzwallet"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode 26
+        versionName "0.4.5"
+        ndk {
+            abiFilters 'arm64-v8a', 'x86_64', 'x86', 'armeabi-v7a'// Exclude riscv64
+        }
     }
+
     signingConfigs {
         debug {
             storeFile file('debug.keystore')
             storePassword 'android'
             keyAlias 'androiddebugkey'
             keyPassword 'android'
+        }
+        release {
+            storeFile file('my-release-key.keystore')
+            storePassword System.getenv("MY_STORE_PASSWORD")
+            keyAlias 'my-key-alias'
+            keyPassword System.getenv("MY_KEY_PASSWORD")
         }
     }
     buildTypes {
@@ -121,4 +134,9 @@ dependencies {
     } else {
         implementation jscFlavor
     }
+
+
+    // Adding firebase implementations
+    implementation platform('com.google.firebase:firebase-bom:33.4.0')
+    implementation('com.google.firebase:firebase-messaging')
 }

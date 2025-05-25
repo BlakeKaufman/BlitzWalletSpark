@@ -1,7 +1,7 @@
 buildscript {
     ext {
         buildToolsVersion = "35.0.0"
-        minSdkVersion = 24
+        minSdkVersion = 26
         compileSdkVersion = 35
         targetSdkVersion = 35
         ndkVersion = "27.1.12297006"
@@ -15,6 +15,11 @@ buildscript {
         classpath("com.android.tools.build:gradle")
         classpath("com.facebook.react:react-native-gradle-plugin")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
+
+
+        // Firebase depenedencies
+        classpath('com.google.gms:google-services:4.4.1')
+        classpath('com.google.firebase:firebase-crashlytics-gradle:3.0.3')
     }
 }
 
