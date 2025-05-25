@@ -55,7 +55,7 @@ export const restoreSparkTxState = async BATCH_SIZE => {
     return {txs: []};
   }
 };
-export const restoreSparkTxStateFromLast4Days = async (
+export const updateSparkTxStatus = async (
   BATCH_SIZE,
   useLastLoggedInTime = false,
 ) => {
@@ -64,12 +64,13 @@ export const restoreSparkTxStateFromLast4Days = async (
     let start = 0;
 
     // Determine cutoff time
+    // Arbitraily chose one week. Should be enough back time to cover last login if last login doesnt exist
     let historicalTime;
     if (useLastLoggedInTime) {
       historicalTime =
         JSON.parse(
           await getLocalStorageItem(LAST_LOADED_BLITZ_LOCAL_STOREAGE_KEY),
-        ) || Date.now() - 4 * 24 * 60 * 60 * 1000;
+        ) || Date.now() - 7 * 24 * 60 * 60 * 1000;
       setLocalStorageItem(
         LAST_LOADED_BLITZ_LOCAL_STOREAGE_KEY,
         JSON.stringify(Date.now()),
@@ -79,9 +80,10 @@ export const restoreSparkTxStateFromLast4Days = async (
         new Date(historicalTime).toISOString(),
       );
     } else {
+      // go an hour back, should cover this sessions
       historicalTime = Date.now() - 60 * 60 * 1000;
       console.log(
-        'Using last 4 days as cutoff:',
+        'Using last hour as cutoff:',
         new Date(historicalTime).toISOString(),
       );
     }
@@ -148,7 +150,6 @@ export const restoreSparkTxStateFromLast4Days = async (
 export async function fullRestoreSparkState({sparkAddress}) {
   try {
     const restored = await restoreSparkTxState(50);
-    console.log(restored.txs);
     if (!restored.txs.length) return;
 
     const newPaymentObjects = [];
@@ -161,7 +162,8 @@ export async function fullRestoreSparkState({sparkAddress}) {
     }
 
     if (newPaymentObjects.length) {
-      await bulkUpdateSparkTransactions(newPaymentObjects);
+      // Update DB state of payments but dont hold up thread
+      bulkUpdateSparkTransactions(newPaymentObjects);
     }
     const [txs, balance] = await Promise.all([
       getAllSparkTransactions(),

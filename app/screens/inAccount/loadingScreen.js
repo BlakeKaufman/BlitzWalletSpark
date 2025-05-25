@@ -41,7 +41,10 @@ import {
   initializeSparkWallet,
 } from '../../functions/spark';
 import {useSparkWallet} from '../../../context-store/sparkContext';
-import {initializeSparkDatabase} from '../../functions/spark/transactions';
+import {
+  cleanStalePendingSparkLightningTransactions,
+  initializeSparkDatabase,
+} from '../../functions/spark/transactions';
 const mascotAnimation = require('../../assets/MOSCATWALKING.json');
 
 export default function ConnectingToNodeLoadingScreen({
@@ -350,6 +353,8 @@ export default function ConnectingToNodeLoadingScreen({
   }
   async function initializeSparkSession() {
     try {
+      // Clean DB state but do not hold up process
+      cleanStalePendingSparkLightningTransactions();
       const [balance, transactions, sparkAddress, identityPubKey] =
         await Promise.all([
           getSparkBalance(),
