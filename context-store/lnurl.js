@@ -14,7 +14,11 @@ import {useSparkWallet} from './sparkContext';
 import {retrieveData} from '../app/functions';
 
 export default function HandleLNURLPayments() {
-  const {setBlockedIdentityPubKeys, sparkInformation} = useSparkWallet();
+  const {
+    setBlockedIdentityPubKeys,
+    sparkInformation,
+    setNumberOfIncomingLNURLPayments,
+  } = useSparkWallet();
   const {masterInfoObject} = useGlobalContextProvider();
   const {lnurlPubKey} = masterInfoObject;
   const sparkAddress = sparkInformation.sparkAddress;
@@ -118,6 +122,7 @@ export default function HandleLNURLPayments() {
         'LNURL payment queue claim length',
         paymentQueueRef.current.length,
       );
+      setNumberOfIncomingLNURLPayments(paymentQueueRef.current.length);
       if (paymentQueueRef.current.length === 0) return;
 
       const newQueue = [];
@@ -162,6 +167,13 @@ export default function HandleLNURLPayments() {
             continue;
           }
 
+          const shouldNavigate =
+            payment.shouldNavigate &&
+            paymentQueueRef.current.filter(
+              queueItem =>
+                queueItem.id !== payment.id && queueItem.shouldNavigate,
+            ).length === 0;
+
           setBlockedIdentityPubKeys(prev => {
             if (prev.some(p => p.id === transferResponse.id)) return prev;
             return [
@@ -169,7 +181,7 @@ export default function HandleLNURLPayments() {
               {
                 transferResponse: {...paymentResponse},
                 db: payment,
-                shouldNavigate: payment.shouldNavigate,
+                shouldNavigate: shouldNavigate,
               },
             ];
           });

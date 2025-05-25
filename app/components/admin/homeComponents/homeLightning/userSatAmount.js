@@ -10,45 +10,41 @@ import {useNodeContext} from '../../../../../context-store/nodeContext';
 import {useGlobaleCash} from '../../../../../context-store/eCash';
 import {crashlyticsLogReport} from '../../../../functions/crashlyticsLogs';
 import {useSparkWallet} from '../../../../../context-store/sparkContext';
+import {ThemeText} from '../../../../functions/CustomElements';
 
 export const UserSatAmount = memo(function UserSatAmount({
   isConnectedToTheInternet,
   theme,
   darkModeType,
 }) {
-  console.log('User sat amount container');
-  const {sparkInformation} = useSparkWallet();
-  // const didMount = useRef(null);
-  // const {nodeInformation, liquidNodeInformation} = useNodeContext();
-  // const {ecashWalletInformation} = useGlobaleCash();
+  const {sparkInformation, numberOfIncomingLNURLPayments} = useSparkWallet();
+  const didMount = useRef(null);
+
   const {masterInfoObject, toggleMasterInfoObject, setMasterInfoObject} =
     useGlobalContextProvider();
 
-  console.log(process.env.BLITZ_SPARK_SUPPORT_ADDRESSS, 't');
-
-  // const eCashBalance = ecashWalletInformation.balance;
   const saveTimeoutRef = useRef(null);
   const navigate = useNavigation();
-  // const [balanceWidth, setBalanceWidth] = useState(0);
+  const [balanceWidth, setBalanceWidth] = useState(0);
   const userBalance = sparkInformation.balance;
   console.log(sparkInformation.transactions[0]);
-  // useEffect(() => {
-  //   didMount.current = true;
-  //   return () => (didMount.current = false);
-  // }, []);
+  useEffect(() => {
+    didMount.current = true;
+    return () => (didMount.current = false);
+  }, []);
 
-  // const handleLayout = useCallback(
-  //   event => {
-  //     const {width} = event.nativeEvent.layout;
-  //     if (!didMount.current) return;
-  //     setBalanceWidth(width);
-  //   },
-  //   [didMount],
-  // );
+  const handleLayout = useCallback(
+    event => {
+      const {width} = event.nativeEvent.layout;
+      if (!didMount.current) return;
+      setBalanceWidth(width);
+    },
+    [didMount],
+  );
 
   return (
     <TouchableOpacity
-      // onLayout={handleLayout}
+      onLayout={handleLayout}
       style={styles.balanceContainer}
       onPress={() => {
         if (!isConnectedToTheInternet) {
@@ -83,8 +79,7 @@ export const UserSatAmount = memo(function UserSatAmount({
       <View style={styles.valueContainer}>
         <FormattedSatText styles={styles.valueText} balance={userBalance} />
       </View>
-      {/* {(!!liquidNodeInformation.pendingReceive ||
-        !!liquidNodeInformation.pendingSend) && (
+      {!!numberOfIncomingLNURLPayments && (
         <TouchableOpacity
           onPress={() => {
             crashlyticsLogReport(
@@ -93,14 +88,11 @@ export const UserSatAmount = memo(function UserSatAmount({
             navigate.navigate('InformationPopup', {
               CustomTextComponent: () => {
                 return (
-                  <FormattedSatText
-                    containerStyles={styles.informationPopupContainer}
-                    frontText={'You have '}
-                    balance={
-                      liquidNodeInformation.pendingReceive -
-                      liquidNodeInformation.pendingSend
-                    }
-                    backText={' waiting to confirm'}
+                  <ThemeText
+                    styles={styles.informationText}
+                    content={`You have ${numberOfIncomingLNURLPayments} lightning address payment${
+                      numberOfIncomingLNURLPayments > 1 ? 's' : ''
+                    } waiting to confirm.`}
                   />
                 );
               },
@@ -115,7 +107,7 @@ export const UserSatAmount = memo(function UserSatAmount({
             name={'pendingTxIcon'}
           />
         </TouchableOpacity>
-      )} */}
+      )}
     </TouchableOpacity>
   );
 });
@@ -140,6 +132,8 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   pendingBalanceChange: {position: 'absolute'},
+
+  informationText: {marginBottom: 20, textAlign: 'center'},
 
   valueText: {
     fontSize: SIZES.xxLarge,
