@@ -40,64 +40,18 @@ export default function HandleLNURLPayments() {
 
   useEffect(() => {
     async function getSavedLNURLPayments() {
-      const now = new Date().getTime();
       const payments = await getLnurlPayments(masterInfoObject.uuid);
       if (!payments.length) return;
       console.log(`Restoring ${payments.length} offline lnurl payments`);
-      // loop through payments here
-      let deletedPaymentIds = [];
+      // loop through payments here and add them to the queue list
       for (let index = 0; index < payments.length; index++) {
         const payment = payments[index];
-        const derivedMnemonic = getSharedKey(
-          privateKey,
-          payment.sharedPublicKey,
-        );
-        const combinedSparkWallet = await initializeTempSparkWallet(
-          derivedMnemonic,
-        );
-
-        if (!combinedSparkWallet) continue;
-        const balance = await combinedSparkWallet.getBalance();
-
-        if (Number(balance.balance) === 0) {
-          if (payment.expiredTime < now) deletedPaymentIds.push(payment.id);
-          continue;
-        }
-
-        try {
-          const paymentResponse = await combinedSparkWallet.transfer({
-            amountSats: Number(balance.balance),
-            receiverSparkAddress: sparkAddress,
-          });
-
-          console.log(
-            'LNURL internal transfer payment response',
-            paymentResponse,
-          );
-
-          if (!paymentResponse) throw new Error('Payment failed');
-          setBlockedIdentityPubKeys(prev => {
-            if (prev.some(p => p.id === transferResponse.id)) return prev;
-            return [
-              ...prev,
-              {
-                transferResponse: {...paymentResponse},
-                db: payment,
-                shouldNavigate: false,
-              },
-            ];
-          });
-          deletedPaymentIds.push(payment.id);
-          console.log('Payment successful:', payment.id);
-        } catch (err) {
-          console.log('Error sending LNURL transfer payment', err);
-        }
-      }
-      if (deletedPaymentIds.length) {
-        await batchDeleteLnurlPayments(
-          masterInfoObject.uuid,
-          deletedPaymentIds,
-        );
+        paymentQueueRef.current.push({
+          ...payment,
+          id: payment.id,
+          shouldNavigate: false,
+        });
+        return;
       }
     }
     if (!masterInfoObject.uuid) return;
@@ -139,7 +93,11 @@ export default function HandleLNURLPayments() {
           if (change.type === 'added') {
             const payment = change.doc.data();
             console.log(payment, 'added to payment queue');
-            paymentQueueRef.current.push({...payment, id: change.doc.id});
+            paymentQueueRef.current.push({
+              ...payment,
+              id: change.doc.id,
+              shouldNavigate: true,
+            });
           }
         });
       },
@@ -156,6 +114,10 @@ export default function HandleLNURLPayments() {
   useEffect(() => {
     const interval = setInterval(async () => {
       if (!privateKey || !sparkAddress) return;
+      console.log(
+        'LNURL payment queue claim length',
+        paymentQueueRef.current.length,
+      );
       if (paymentQueueRef.current.length === 0) return;
 
       const newQueue = [];
@@ -207,7 +169,7 @@ export default function HandleLNURLPayments() {
               {
                 transferResponse: {...paymentResponse},
                 db: payment,
-                shouldNavigate: true,
+                shouldNavigate: payment.shouldNavigate,
               },
             ];
           });
