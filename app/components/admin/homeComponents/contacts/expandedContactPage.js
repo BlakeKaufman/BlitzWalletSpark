@@ -63,7 +63,6 @@ export default function ExpandedContactsPage(props) {
   const imageData = useContactImage(selectedContact.uuid);
   const contactTransactions = contactsMessags[selectedUUID]?.messages || []; //selectedContact?.transactions;
   useHandleBackPressNew();
-  console.log(selectedContact);
   useEffect(() => {
     //listening for messages when you're on the contact
     async function updateSeenTransactions() {

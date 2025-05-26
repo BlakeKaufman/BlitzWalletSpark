@@ -10,8 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system';
 import {useGlobalContacts} from './globalContacts';
 import {useAppStatus} from './appStatus';
-
-const BLITZ_PROFILE_IMG_STORAGE_REF = 'profile_pictures';
+import {BLITZ_PROFILE_IMG_STORAGE_REF} from '../app/constants';
 const FILE_DIR = FileSystem.cacheDirectory + 'profile_images/';
 
 const ImageCacheContext = createContext();

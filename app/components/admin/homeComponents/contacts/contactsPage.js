@@ -53,12 +53,6 @@ export default function ContactsPage({navigation}) {
 
   useHandleBackPressNew(handleBackPressFunction);
 
-  console.log(
-    decodedAddedContacts.filter(
-      contact => !hideUnknownContacts || contact.isAdded,
-    ).length !== 0 && myProfile.didEditProfile,
-    'TESDFSD',
-  );
   const pinnedContacts = useMemo(() => {
     return decodedAddedContacts
       .filter(contact => contact.isFavorite)
