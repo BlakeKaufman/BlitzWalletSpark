@@ -62,6 +62,7 @@ class ReverseSwapWebSocketHandler {
 
     this.webSocket.onerror = error => {
       console.error('WebSocket error:', error);
+      if (this.webSocket) this.webSocket.close();
       if (!this.isWebSocketOpen) resolve(false);
     };
 
@@ -190,7 +191,8 @@ async function handleSavedReverseClaims(claim, shouldSave) {
 
   setLocalStorageItem('savedReverseSwapInfo', JSON.stringify(savedClaimInfo));
 }
-function getClaimReverseSubmarineSwapJS({
+
+export function getClaimReverseSubmarineSwapJS({
   webViewRef,
   address,
   swapInfo,
@@ -209,6 +211,9 @@ function getClaimReverseSubmarineSwapJS({
   });
 
   webViewRef.current.injectJavaScript(
-    `window.claimReverseSubmarineSwap(${args}); void(0);`,
+    `
+    window.ReactNativeWebView.postMessage(Object.keys(window).join(', '));
+    window.claimReverseSubmarineSwap(${args}); void(0);
+    `,
   );
 }

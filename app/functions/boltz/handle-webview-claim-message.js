@@ -1,5 +1,6 @@
 import {getBoltzApiUrl} from './boltzEndpoitns';
 import {getLocalStorageItem, setLocalStorageItem} from '../localStorage';
+import {BOLTZ_SAVED_CLAIM_TXS_KEY} from '../../constants';
 
 export default function handleWebviewClaimMessage(
   // navigate,
@@ -8,6 +9,7 @@ export default function handleWebviewClaimMessage(
   // confirmFunction,
   // saveBotlzSwapIdFunction,
 ) {
+  console.log(event.nativeEvent.data, 'Webview claim message');
   (async () => {
     const data = JSON.parse(event.nativeEvent.data);
     try {
@@ -53,23 +55,27 @@ export default function handleWebviewClaimMessage(
 
         if (didPost) return;
 
-        let claimTxs =
-          JSON.parse(await getLocalStorageItem('boltzClaimTxs')) || [];
-
+        let [savedFailedClaims, claimTxs] = await Promise.all([
+          getLocalStorageItem(BOLTZ_SAVED_CLAIM_TXS_KEY)
+            .then(JSON.parse)
+            .catch(() => []),
+          getLocalStorageItem('boltzClaimTxs')
+            .then(JSON.parse)
+            .catch(() => []),
+        ]);
+        savedFailedClaims.filter(
+          savedClaim => savedClaim.swapInfo.id !== data.id,
+        );
         claimTxs.push([data.tx, new Date()]);
 
         setLocalStorageItem('boltzClaimTxs', JSON.stringify(claimTxs));
+        setLocalStorageItem(
+          BOLTZ_SAVED_CLAIM_TXS_KEY,
+          JSON.stringify(savedFailedClaims),
+        );
       }
     } catch (err) {
-      console.log(err, 'WEBVIEW ERROR');
-      if (typeof data === 'object' && data?.tx) {
-        let claimTxs =
-          JSON.parse(await getLocalStorageItem('boltzClaimTxs')) || [];
-
-        claimTxs.push([data.tx, new Date()]);
-
-        setLocalStorageItem('boltzClaimTxs', JSON.stringify(claimTxs));
-      }
+      console.log(err, 'Webview claim error');
     }
   })();
 }
