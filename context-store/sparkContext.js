@@ -259,6 +259,7 @@ const SparkWalletProvider = ({children}) => {
   }, [sparkInformation.didConnect]);
 
   useEffect(() => {
+    if (!sparkInformation.didConnect) return;
     // Interval to check deposit addresses to see if they were paid
     const handleDepositAddressCheck = async () => {
       try {
@@ -305,7 +306,7 @@ const SparkWalletProvider = ({children}) => {
       handleDepositAddressCheck,
       1_000 * 60,
     );
-  }, []);
+  }, [sparkInformation.didConnect]);
 
   useEffect(() => {
     // This function runs once per load and check to see if a user received any payments while offline. It also starts a timeout to update payment status of paymetns every 30 seconds.
