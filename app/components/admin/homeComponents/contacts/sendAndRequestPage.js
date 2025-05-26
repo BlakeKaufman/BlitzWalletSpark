@@ -40,7 +40,7 @@ import {useKeysContext} from '../../../../../context-store/keys';
 import useHandleBackPressNew from '../../../../hooks/useHandleBackPressNew';
 import formatBip21LiquidAddress from '../../../../functions/liquidWallet/formatBip21liquidAddress';
 import {crashlyticsLogReport} from '../../../../functions/crashlyticsLogs';
-import {getSingleContact} from '../../../../../db';
+import {getDataFromCollection} from '../../../../../db';
 import convertTextInputValue from '../../../../functions/textInputConvertValue';
 import {formatBip21SparkAddress} from '../../../../functions/spark/handleBip21SparkAddress';
 
@@ -221,19 +221,16 @@ export default function SendAndRequestPage(props) {
         receiveAddress = address;
         // note do not need to set an amount for lnurl taken care of down below with entered payment information object
       } else {
-        const [payingContact] = await getSingleContact(
-          selectedContact.uniqueName,
+        const payingContact = await getDataFromCollection(
+          'blitzWalletUsers',
+          selectedContact.uuid,
         );
         console.log('Retrived selected contact', payingContact);
         if (!payingContact) {
-          // If accessing database fails use legacy liquid address to not inturrupt payment experince
-          receiveAddress = formatBip21LiquidAddress({
-            address: address,
-            amount: convertedSendAmount,
-            message: `Paying ${
-              selectedContact.name || selectedContact.uniqueName
-            }`,
+          navigate.navigate('ErrorScreen', {
+            errorMessage: 'Error retrieving contact information',
           });
+          return;
         } else {
           if (payingContact?.contacts?.myProfile?.sparkAddress) {
             receiveAddress = formatBip21SparkAddress({
@@ -244,29 +241,11 @@ export default function SendAndRequestPage(props) {
               }`,
             });
           } else {
-            let locallyChosenAddress = '';
-            const addressList =
-              payingContact?.offlineReceiveAddresses?.addresses;
-            console.log('selected contacts address list:', addressList);
-
-            if (addressList) {
-              // Randomly select one of the stored addresses
-              const randomNumber = Math.round(
-                Math.random() * (addressList.length - 1),
-              );
-              locallyChosenAddress = addressList[randomNumber];
-            } else {
-              // If paying to legacy user use their stored liquid address
-              locallyChosenAddress = selectedContact.receiveAddress;
-            }
-            console.log('selected address:', locallyChosenAddress);
-            receiveAddress = formatBip21LiquidAddress({
-              address: locallyChosenAddress,
-              amount: convertedSendAmount,
-              message: `Paying ${
-                selectedContact.name || selectedContact.uniqueName
-              }`,
+            navigate.navigate('ErrorScreen', {
+              errorMessage:
+                'Contact has not updated thier wallet yet. Please ask them to update their wallet to pay them.',
             });
+            return;
           }
         }
       }
