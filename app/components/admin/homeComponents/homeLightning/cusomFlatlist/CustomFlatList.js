@@ -12,9 +12,10 @@ import {useFocusEffect} from '@react-navigation/native';
 import {useSparkWallet} from '../../../../../../context-store/sparkContext';
 
 import {fullRestoreSparkState} from '../../../../../functions/spark/restore';
+import {getSparkBalance} from '../../../../../functions/spark';
 
 function CustomFlatList({style, ...props}) {
-  const {sparkInformation} = useSparkWallet();
+  const {sparkInformation, setSparkInformation} = useSparkWallet();
   const {theme, darkModeType} = useGlobalThemeContext();
   const [refreshing, setRefreshing] = useState(false);
   const flatListRef = useRef(null);
@@ -31,9 +32,13 @@ function CustomFlatList({style, ...props}) {
   const handleRefresh = useCallback(async () => {
     crashlyticsLogReport(`Running in handle refresh function on homepage`);
     try {
-      await fullRestoreSparkState({
+      const restoredLengh = await fullRestoreSparkState({
         sparkAddress: sparkInformation.sparkAddress,
       });
+      if (restoredLengh) return;
+      const balance = getSparkBalance();
+      if (!balance) return;
+      setSparkInformation(prev => ({...prev, balance: balance.balance}));
     } catch (err) {
       console.log('error refreshing on homepage', err);
       crashlyticsRecordErrorReport(err.message);
