@@ -291,7 +291,7 @@ const SparkWalletProvider = ({children}) => {
         const filteredTxs = newTransactions.filter(Boolean);
 
         if (filteredTxs.length) {
-          await bulkUpdateSparkTransactions([filteredTxs]);
+          await bulkUpdateSparkTransactions(filteredTxs);
         }
       } catch (err) {
         console.log('Handle deposit address check error', err);

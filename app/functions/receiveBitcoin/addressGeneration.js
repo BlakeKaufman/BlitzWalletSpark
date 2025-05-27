@@ -1,4 +1,7 @@
-import {BLITZ_DEFAULT_PAYMENT_DESCRIPTION} from '../../constants';
+import {
+  BLITZ_DEFAULT_PAYMENT_DESCRIPTION,
+  SATSPERBITCOIN,
+} from '../../constants';
 import {breezLiquidReceivePaymentWrapper} from '../breezLiquid';
 
 import customUUID from '../customUUID';
@@ -55,11 +58,7 @@ export async function initializeAddressProcess(wolletInfo) {
       // const response = await generateBitcoinAddress(wolletInfo);
       if (!response.didWork) throw new Error('Error with bitcoin');
       stateTracker = {
-        generatedAddress: bip21.encode(response.invoice, {
-          amount: wolletInfo.receivingAmount,
-          label: wolletInfo.description,
-          message: wolletInfo.description,
-        }),
+        generatedAddress: response.invoice,
         fee: 0,
       };
       // stateTracker = response;

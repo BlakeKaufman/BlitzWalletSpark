@@ -15,7 +15,6 @@ export default function TechnicalTransactionDetails(props) {
   const {transaction} = props.route.params;
 
   const {details, sparkID} = transaction;
-  console.log(details);
 
   const paymentDetails =
     transaction.paymentType === 'spark'
@@ -23,8 +22,6 @@ export default function TechnicalTransactionDetails(props) {
       : transaction.paymentType === 'lightning'
       ? ['Payment Id', 'Payment Preimage', 'Payment Address']
       : ['Payment Id', 'Bitcoin Txid', 'Payment Address'];
-
-  console.log(transaction);
 
   const infoElements = paymentDetails.map((item, id) => {
     const txItem =
@@ -38,12 +35,12 @@ export default function TechnicalTransactionDetails(props) {
         ? id === 0
           ? sparkID
           : id === 1
-          ? details.preImage
+          ? details.preimage
           : details.address
         : id === 0
         ? sparkID
         : id === 1
-        ? details.onchainTxid
+        ? details.onChainTxid
         : details.address;
 
     return (
@@ -51,12 +48,15 @@ export default function TechnicalTransactionDetails(props) {
         <ThemeText content={item} styles={{...styles.headerText}} />
         <TouchableOpacity
           onPress={() => {
-            // if (isLiquidPayment && item === 'Transaction Id') {
-            //   navigate.navigate('CustomWebView', {
-            //     webViewURL: `https://liquid.network/tx/${txItem}`,
-            //   });
-            //   return;
-            // }
+            if (
+              transaction.paymentType === 'bitcoin' &&
+              item === 'Bitcoin Txid'
+            ) {
+              navigate.navigate('CustomWebView', {
+                webViewURL: `https://mempool.space/tx/${txItem}`,
+              });
+              return;
+            }
             copyToClipboard(txItem, navigate);
           }}>
           <ThemeText
