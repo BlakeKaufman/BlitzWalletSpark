@@ -33,6 +33,7 @@ class ReverseSwapWebSocketHandler {
     this.contactsFunction = contactsFunction;
     this.didRunClaim = false;
     this.isWebSocketOpen = false;
+    this.errorHandled = false;
   }
 
   initialize() {
@@ -47,6 +48,7 @@ class ReverseSwapWebSocketHandler {
     console.log('Contacts Function:', this.contactsFunction);
     console.log('Did Run Claim:', this.didRunClaim);
     console.log('Is WebSocket Open:', this.isWebSocketOpen);
+    console.log('Did handle error:', this.errorHandled);
 
     return new Promise(resolve => {
       this.setupWebSocketEvents(resolve);
@@ -61,12 +63,37 @@ class ReverseSwapWebSocketHandler {
     };
 
     this.webSocket.onerror = error => {
-      console.error('WebSocket error:', error);
-      if (this.webSocket) this.webSocket.close();
+      // Check if the error is already handled
+      if (this.errorHandled) return;
+      this.errorHandled = true;
+
+      console.error('WebSocket error:', {
+        message: error.message,
+        type: error.type,
+        isTrusted: error?.isTrusted,
+        stack: error?.stack,
+      });
+
+      // Clean up
+      this.cleanupWebSocket();
+
       if (!this.isWebSocketOpen) resolve(false);
     };
 
     this.webSocket.onmessage = this.handleMessage.bind(this, resolve);
+  }
+
+  cleanupWebSocket() {
+    if (this.webSocket) {
+      this.webSocket.onopen = null;
+      this.webSocket.onerror = null;
+      this.webSocket.onmessage = null;
+      this.webSocket.onclose = null;
+
+      if (this.webSocket.readyState === WebSocket.OPEN) {
+        this.webSocket.close();
+      }
+    }
   }
 
   subscribeToSwapUpdates() {
