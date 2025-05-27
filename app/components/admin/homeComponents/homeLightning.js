@@ -51,7 +51,7 @@ export default function HomeLightning() {
       userBalanceDenomination,
     });
   }, [
-    sparkInformation,
+    sparkInformation.transactions,
     homepageTxPreferance,
     navigate,
     currentTime,
