@@ -86,7 +86,7 @@ export default function AddChatGPTCredits({confirmationSliderData}) {
     // FUNCTION TO PURCHASE CREDITS
     if (!confirmationSliderData?.purchaseCredits) return;
     navigate.setParams({purchaseCredits: null});
-    payForChatGPTCredits();
+    payForChatGPTCredits(confirmationSliderData?.invoiceInformation);
   }, [confirmationSliderData?.purchaseCredits]);
 
   const subscriptionElements = selectedSubscription.map((subscription, id) => {
@@ -233,47 +233,61 @@ export default function AddChatGPTCredits({confirmationSliderData}) {
     </GlobalThemeView>
   );
 
-  async function payForChatGPTCredits() {
+  async function payForChatGPTCredits(invoiceInformation) {
     try {
       setIsPaying(true);
-      const [selectedPlan] = selectedSubscription.filter(
-        subscription => subscription.isSelected,
-      );
+      let invoice = '';
+      let fee;
 
-      let creditPrice = selectedPlan.price;
-      creditPrice += 150; //blitz flat fee
-      creditPrice += Math.ceil(creditPrice * 0.005);
+      if (invoiceInformation.invoice) {
+        invoice = invoiceInformation.invoice;
+      } else {
+        const [selectedPlan] = selectedSubscription.filter(
+          subscription => subscription.isSelected,
+        );
 
-      // const lightningFee = creditPrice * 0.005 + 4;
-      const lnPayoutLNURL = process.env.GPT_PAYOUT_LNURL;
-      const input = await parse(lnPayoutLNURL);
-      const lnInvoice = await getLNAddressForLiquidPayment(
-        input,
-        creditPrice,
-        'Store - chatGPT',
-      );
+        let creditPrice = selectedPlan.price;
+        creditPrice += 150; //blitz flat fee
+        creditPrice += Math.ceil(creditPrice * 0.005);
 
-      const fee = await sparkPaymenWrapper({
-        getFee: true,
-        address: lnInvoice,
-        paymentType: 'lightning',
-        amountSats: creditPrice,
-        masterInfoObject,
-        sparkInformation,
-        userBalance: sparkInformation.balance,
-      });
+        // const lightningFee = creditPrice * 0.005 + 4;
+        const lnPayoutLNURL = process.env.GPT_PAYOUT_LNURL;
+        const input = await parse(lnPayoutLNURL);
+        const lnInvoice = await getLNAddressForLiquidPayment(
+          input,
+          creditPrice,
+          'Store - chatGPT',
+        );
+        invoice = lnInvoice;
+      }
 
-      if (!fee.didWork) throw new Error(fee.error);
+      if (invoiceInformation.fee && invoiceInformation.supportFee) {
+        fee = invoiceInformation.fee + invoiceInformation.supportFee;
+      } else {
+        const fee = await sparkPaymenWrapper({
+          getFee: true,
+          address: invoice,
+          paymentType: 'lightning',
+          amountSats: creditPrice,
+          masterInfoObject,
+          sparkInformation,
+          userBalance: sparkInformation.balance,
+        });
 
-      if (sparkInformation.balance < fee.supportFee + fee.fee)
+        if (!fee.didWork) throw new Error(fee.error);
+
+        fee = fee.fee + fee.supportFee;
+      }
+
+      if (sparkInformation.balance < fee)
         throw new Error('Insufficent balance');
 
       const paymentResponse = await sparkPaymenWrapper({
         getFee: false,
-        address: lnInvoice,
+        address: invoice,
         paymentType: 'lightning',
         amountSats: creditPrice,
-        fee: fee.fee + fee.supportFee,
+        fee: fee,
         memo: 'Store - chatGPT',
         masterInfoObject,
         sparkInformation,
@@ -290,7 +304,6 @@ export default function AddChatGPTCredits({confirmationSliderData}) {
         },
         true,
       );
-      setIsPaying(false);
 
       // if (masterInfoObject.enabledEcash) {
       //   try {
@@ -409,6 +422,7 @@ export default function AddChatGPTCredits({confirmationSliderData}) {
       navigate.navigate('ErrorScreen', {
         errorMessage: 'Error processing payment. Try again.',
       });
+    } finally {
       setIsPaying(false);
     }
   }
