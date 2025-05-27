@@ -23,17 +23,19 @@ import {useKeysContext} from '../../../../../../context-store/keys';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {ANDROIDSAFEAREA} from '../../../../../constants/styles';
 import sendStorePayment from '../../../../../functions/apps/payments';
-import {useAppStatus} from '../../../../../../context-store/appStatus';
 import {useGlobalContextProvider} from '../../../../../../context-store/context';
 import {parse} from '@breeztech/react-native-breez-sdk-liquid';
+import {sparkPaymenWrapper} from '../../../../../functions/spark/payments';
+import {useSparkWallet} from '../../../../../../context-store/sparkContext';
 
 export default function VPNPlanPage({countryList}) {
   const [searchInput, setSearchInput] = useState('');
+  const {sparkInformation} = useSparkWallet();
   const {contactsPrivateKey, publicKey} = useKeysContext();
-  const {nodeInformation, liquidNodeInformation, fiatStats} = useNodeContext();
+  const {fiatStats} = useNodeContext();
   const {decodedVPNS, toggleGlobalAppDataInformation} = useGlobalAppData();
   const {masterInfoObject} = useGlobalContextProvider();
-  const {minMaxLiquidSwapAmounts} = useAppStatus();
+
   const [selectedDuration, setSelectedDuration] = useState('week');
   const [isPaying, setIsPaying] = useState(false);
   const [generatedFile, setGeneratedFile] = useState(null);
@@ -157,7 +159,7 @@ export default function VPNPlanPage({countryList}) {
     </View>
   );
 
-  async function createVPN() {
+  async function createVPN(invoiceInformation) {
     setIsPaying(true);
     let savedVPNConfigs = JSON.parse(JSON.stringify(decodedVPNS));
 
@@ -174,23 +176,55 @@ export default function VPNPlanPage({countryList}) {
         : '9',
     );
     try {
-      const response = await fetch('https://lnvpn.net/api/v1/getInvoice', {
-        method: 'POST',
-        body: new URLSearchParams({
-          duration:
-            selectedDuration === 'week'
+      let invoice = '';
+
+      if (
+        invoiceInformation.payment_request &&
+        invoiceInformation.payment_hash
+      ) {
+        invoice = invoiceInformation;
+      } else {
+        const response = await fetch('https://lnvpn.net/api/v1/getInvoice', {
+          method: 'POST',
+          body: new URLSearchParams({
+            duration:
+              selectedDuration === 'week'
+                ? 1.5
+                : selectedDuration === 'month'
+                ? 4
+                : 9,
+          }).toString(),
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        });
+        const responseData = await response.json();
+        const cost = Math.round(
+          (SATSPERBITCOIN / fiatStats.value) *
+            (selectedDuration === 'week'
               ? 1.5
               : selectedDuration === 'month'
               ? 4
-              : 9,
-        }).toString(),
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      });
-      const invoice = await response.json();
-      console.log(invoice, 'GET INVOICE API RESPONSE');
+              : 9),
+        );
+
+        const fee = await sparkPaymenWrapper({
+          getFee: true,
+          address: responseData.payment_request,
+          paymentType: 'lightning',
+          amountSats: cost,
+          masterInfoObject,
+          sparkInformation,
+          userBalance: sparkInformation.balance,
+        });
+        if (!fee.didWork) throw new Error(fee.error);
+        invoice = {
+          ...responseData,
+          supportFee: fee.supportFee,
+          fee: fee.fee,
+        };
+      }
 
       if (invoice.payment_hash && invoice.payment_request) {
         savedVPNConfigs.push({
@@ -205,12 +239,12 @@ export default function VPNPlanPage({countryList}) {
         const parsedInput = await parse(invoice.payment_request);
         const sendingAmountSat = parsedInput.invoice.amountMsat / 1000;
         const paymentResponse = await sendStorePayment({
-          liquidNodeInformation,
-          nodeInformation,
           invoice: invoice.payment_request,
-          minMaxLiquidSwapAmounts,
+          masterInfoObject,
           sendingAmountSats: sendingAmountSat,
-          masterInfoObject: masterInfoObject,
+          paymentType: 'lightning',
+          userBalance: sparkInformation.balance,
+          sparkInformation,
         });
 
         if (!paymentResponse.didWork) {
