@@ -1,4 +1,4 @@
-import {getSparkBalance, getSparkPaymentStatus, getSparkTransactions} from '.';
+import {getSparkPaymentStatus, getSparkTransactions} from '.';
 import {LAST_LOADED_BLITZ_LOCAL_STOREAGE_KEY} from '../../constants';
 import {getLocalStorageItem, setLocalStorageItem} from '../localStorage';
 import {
@@ -164,20 +164,10 @@ export async function fullRestoreSparkState({sparkAddress}) {
       // Update DB state of payments but dont hold up thread
       bulkUpdateSparkTransactions(newPaymentObjects);
     }
-    const [txs, balance] = await Promise.all([
-      getAllSparkTransactions(),
-      getSparkBalance(),
-    ]);
 
-    return {
-      balance: balance?.balance,
-      txs: txs,
-    };
+    return true;
   } catch (err) {
     console.log('full restore spark state error', err);
-    return {
-      balance: null,
-      txs: null,
-    };
+    return false;
   }
 }

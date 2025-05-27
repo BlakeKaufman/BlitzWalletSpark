@@ -14,7 +14,7 @@ import {useSparkWallet} from '../../../../../../context-store/sparkContext';
 import {fullRestoreSparkState} from '../../../../../functions/spark/restore';
 
 function CustomFlatList({style, ...props}) {
-  const {setSparkInformation, sparkInformation} = useSparkWallet();
+  const {sparkInformation} = useSparkWallet();
   const {theme, darkModeType} = useGlobalThemeContext();
   const [refreshing, setRefreshing] = useState(false);
   const flatListRef = useRef(null);
@@ -31,15 +31,9 @@ function CustomFlatList({style, ...props}) {
   const handleRefresh = useCallback(async () => {
     crashlyticsLogReport(`Running in handle refresh function on homepage`);
     try {
-      const restored = await fullRestoreSparkState({
+      await fullRestoreSparkState({
         sparkAddress: sparkInformation.sparkAddress,
       });
-      if (!restored.balance && !restored.txs) return;
-      setSparkInformation(prev => ({
-        ...prev,
-        balance: restored.balance,
-        transactions: restored.txs,
-      }));
     } catch (err) {
       console.log('error refreshing on homepage', err);
       crashlyticsRecordErrorReport(err.message);
