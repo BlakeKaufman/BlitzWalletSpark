@@ -2,11 +2,12 @@ import {StyleSheet, TouchableOpacity, View} from 'react-native';
 import {ThemeText} from '../../../../functions/CustomElements';
 import GetThemeColors from '../../../../hooks/themeColors';
 import {useGlobalThemeContext} from '../../../../../context-store/theme';
-import {CENTER, COLORS} from '../../../../constants';
+import {CENTER, COLORS, ICONS} from '../../../../constants';
 import {copyToClipboard} from '../../../../functions';
 import {useNavigation} from '@react-navigation/native';
 import {INSET_WINDOW_WIDTH} from '../../../../constants/theme';
 import {useSparkWallet} from '../../../../../context-store/sparkContext';
+import ThemeImage from '../../../../functions/CustomElements/themeImage';
 
 export default function SparkInfo() {
   const {sparkInformation} = useSparkWallet();
@@ -29,6 +30,7 @@ export default function SparkInfo() {
           content={'Spark Address'}
         />
         <TouchableOpacity
+          style={styles.buttonContainer}
           onPress={() => {
             copyToClipboard(sparkAddress, navigate);
           }}>
@@ -39,6 +41,12 @@ export default function SparkInfo() {
               sparkAddress.slice(sparkAddress.length - 4)
             }
           />
+          <ThemeImage
+            styles={{width: 20, height: 20, marginLeft: 5}}
+            lightModeIcon={ICONS.clipboardBlue}
+            darkModeIcon={ICONS.clipboardBlue}
+            lightsOutIcon={ICONS.clipboardLight}
+          />
         </TouchableOpacity>
       </View>
       <View style={styles.infoContainer}>
@@ -48,6 +56,7 @@ export default function SparkInfo() {
           content={'Public Key'}
         />
         <TouchableOpacity
+          style={styles.buttonContainer}
           onPress={() => {
             copyToClipboard(identityPubKey, navigate);
           }}>
@@ -57,6 +66,13 @@ export default function SparkInfo() {
               '....' +
               identityPubKey.slice(identityPubKey.length - 4)
             }
+          />
+
+          <ThemeImage
+            styles={{width: 20, height: 20, marginLeft: 5}}
+            lightModeIcon={ICONS.clipboardBlue}
+            darkModeIcon={ICONS.clipboardBlue}
+            lightsOutIcon={ICONS.clipboardLight}
           />
         </TouchableOpacity>
       </View>
@@ -77,7 +93,8 @@ const styles = StyleSheet.create({
   },
   infoContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
   },
 });
