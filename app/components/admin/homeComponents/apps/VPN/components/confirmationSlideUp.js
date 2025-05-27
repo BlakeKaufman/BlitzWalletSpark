@@ -58,7 +58,7 @@ export default function ConfirmVPNPage(props) {
         if (sparkInformation.balance < fee.supportFee + fee.fee) {
           throw new Error('Insufficient balance to purchase credits');
         }
-        console.log(fee);
+
         setInvoiceInformation({
           payment_hash: invoice.payment_hash,
           payment_request: invoice.payment_request,

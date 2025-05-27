@@ -244,6 +244,7 @@ export default function VPNPlanPage({countryList}) {
           sendingAmountSats: sendingAmountSat,
           paymentType: 'lightning',
           userBalance: sparkInformation.balance,
+          fee: invoice.fee + invoice.supportFee,
           sparkInformation,
         });
 
