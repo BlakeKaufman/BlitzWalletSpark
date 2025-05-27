@@ -1,4 +1,4 @@
-import React, {createContext, useEffect, useRef, useState} from 'react';
+import React, {createContext, use, useEffect, useRef, useState} from 'react';
 import WebView from 'react-native-webview';
 import {Platform} from 'react-native';
 import {getLocalStorageItem, setLocalStorageItem} from '../app/functions';
@@ -11,6 +11,7 @@ export const WebViewProvider = ({children}) => {
   const webViewRef = useRef(null);
   const [isWEbViewReady, setIsWebViewReady] = useState(false);
   const handleClaimRetryRef = useRef(null);
+  const startClaimRetryRef = useRef(null);
   // const [webViewArgs, setWebViewArgs] = useState({
   //   navigate: null,
   //   page: null,
@@ -19,6 +20,8 @@ export const WebViewProvider = ({children}) => {
 
   useEffect(() => {
     if (!isWEbViewReady) return;
+    if (startClaimRetryRef.current) return;
+    startClaimRetryRef.current = true;
 
     async function handleUnclaimedReverseSwaps() {
       console.log('Checking for unclaimed reverse swaps');

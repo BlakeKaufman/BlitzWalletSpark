@@ -6,8 +6,6 @@ import {memo, useCallback, useEffect, useRef, useState} from 'react';
 import handleDBStateChange from '../../../../functions/handleDBStateChange';
 import Icon from '../../../../functions/CustomElements/Icon';
 import {useNavigation} from '@react-navigation/native';
-import {useNodeContext} from '../../../../../context-store/nodeContext';
-import {useGlobaleCash} from '../../../../../context-store/eCash';
 import {crashlyticsLogReport} from '../../../../functions/crashlyticsLogs';
 import {useSparkWallet} from '../../../../../context-store/sparkContext';
 import {ThemeText} from '../../../../functions/CustomElements';
@@ -27,7 +25,7 @@ export const UserSatAmount = memo(function UserSatAmount({
   const navigate = useNavigation();
   const [balanceWidth, setBalanceWidth] = useState(0);
   const userBalance = sparkInformation.balance;
-  console.log(sparkInformation.transactions[0]);
+
   useEffect(() => {
     didMount.current = true;
     return () => (didMount.current = false);

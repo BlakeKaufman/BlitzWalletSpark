@@ -40,7 +40,7 @@ export const restoreSparkTxState = async BATCH_SIZE => {
     // Filter out any already-saved txs or dontation payments
     const newTxs = restoredTxs.filter(
       tx =>
-        !savedIds.includes(tx.id) ||
+        !savedIds.includes(tx.id) &&
         !(
           tx.transferDirection === 'OUTGOING' &&
           tx.receiverIdentityPublicKey === process.env.BLITZ_SPARK_PUBLICKEY
@@ -150,7 +150,6 @@ export const updateSparkTxStatus = async (
 export async function fullRestoreSparkState({sparkAddress}) {
   try {
     const restored = await restoreSparkTxState(50);
-    if (!restored.txs.length) return;
 
     const newPaymentObjects = [];
 
