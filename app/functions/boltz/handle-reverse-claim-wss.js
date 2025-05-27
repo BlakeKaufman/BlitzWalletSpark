@@ -156,6 +156,7 @@ class ReverseSwapWebSocketHandler {
         privateKey: this.privateKey,
         preimage: this.preimage,
         createdOn: new Date(),
+        numberOfTries: 0,
       },
       true,
     );

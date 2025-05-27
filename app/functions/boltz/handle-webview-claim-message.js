@@ -1,6 +1,5 @@
 import {getBoltzApiUrl} from './boltzEndpoitns';
 import {getLocalStorageItem, setLocalStorageItem} from '../localStorage';
-import {BOLTZ_SAVED_CLAIM_TXS_KEY} from '../../constants';
 
 export default function handleWebviewClaimMessage(
   // navigate,
@@ -53,26 +52,29 @@ export default function handleWebviewClaimMessage(
           }
         }
 
-        if (didPost) return;
-
-        let [savedFailedClaims, claimTxs] = await Promise.all([
-          getLocalStorageItem(BOLTZ_SAVED_CLAIM_TXS_KEY)
+        let [savedClaimInfo, claimTxs] = await Promise.all([
+          getLocalStorageItem('savedReverseSwapInfo')
             .then(JSON.parse)
             .catch(() => []),
           getLocalStorageItem('boltzClaimTxs')
             .then(JSON.parse)
             .catch(() => []),
         ]);
-        savedFailedClaims.filter(
-          savedClaim => savedClaim.swapInfo.id !== data.id,
+
+        savedClaimInfo = savedClaimInfo.filter(
+          claim => claim?.swapInfo?.id !== data.id,
         );
+
+        setLocalStorageItem(
+          'savedReverseSwapInfo',
+          JSON.stringify(savedClaimInfo),
+        );
+
+        if (didPost) return;
+
         claimTxs.push([data.tx, new Date()]);
 
         setLocalStorageItem('boltzClaimTxs', JSON.stringify(claimTxs));
-        setLocalStorageItem(
-          BOLTZ_SAVED_CLAIM_TXS_KEY,
-          JSON.stringify(savedFailedClaims),
-        );
       }
     } catch (err) {
       console.log(err, 'Webview claim error');
