@@ -166,7 +166,8 @@ export default function FiatCurrencyPage() {
       const [fiatRate] = fiat.filter(rate => {
         return rate.coin.toLowerCase() === selectedCurrency.toLowerCase();
       });
-      toggleFiatStats({fiatStats: fiatRate});
+
+      toggleFiatStats({...fiatRate});
 
       if (fiatRate) {
         navigate.goBack();

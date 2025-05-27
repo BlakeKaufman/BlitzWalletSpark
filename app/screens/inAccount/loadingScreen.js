@@ -303,7 +303,7 @@ export default function ConnectingToNodeLoadingScreen({
         pendingSend: info.pendingSendSat,
       };
 
-      toggleFiatStats({fiatStats: fiat_rate});
+      toggleFiatStats({...fiat_rate});
 
       console.log(
         didRestoreWallet,
