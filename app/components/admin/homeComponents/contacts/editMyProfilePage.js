@@ -5,7 +5,6 @@ import {
   Image,
   ScrollView,
   TextInput,
-  Keyboard,
   Platform,
 } from 'react-native';
 import {
@@ -18,7 +17,7 @@ import {
   VALID_USERNAME_REGEX,
 } from '../../../../constants';
 import {useNavigation} from '@react-navigation/native';
-import {useEffect, useState, useRef, useCallback, useMemo} from 'react';
+import {useEffect, useState, useRef} from 'react';
 import {encriptMessage} from '../../../../functions/messaging/encodingAndDecodingMessages';
 
 import {
@@ -47,7 +46,6 @@ import {
   setDatabaseIMG,
 } from '../../../../../db/photoStorage';
 import {useImageCache} from '../../../../../context-store/imageCache';
-import {useContactImage} from '../../../../hooks/useContactImage';
 
 export default function EditMyProfilePage(props) {
   const navigate = useNavigation();
@@ -69,24 +67,12 @@ export default function EditMyProfilePage(props) {
   const myContact = globalContactsInformation.myProfile;
   const isFirstTimeEditing = myContact.didEditProfile;
 
-  const [selectedAddedContact, setSelectedAddedContact] = useState(
-    props.fromInitialAdd
-      ? providedContact
-      : decodedAddedContacts.find(
-          contact => contact.uuid === providedContact?.uuid,
-        ),
-  );
-
-  useEffect(() => {
-    if (props.fromInitialAdd) {
-      setSelectedAddedContact(providedContact);
-    } else {
-      const contact = decodedAddedContacts.find(
-        contact => contact.uuid === providedContact.uuid,
+  const selectedAddedContact = props.fromInitialAdd
+    ? providedContact
+    : decodedAddedContacts.find(
+        contact => contact.uuid === providedContact?.uuid,
       );
-      setSelectedAddedContact(contact);
-    }
-  }, [props.fromInitialAdd, providedContact, decodedAddedContacts]);
+
   useHandleBackPressNew();
 
   return (
@@ -115,7 +101,6 @@ export default function EditMyProfilePage(props) {
       <InnerContent
         isEditingMyProfile={isEditingMyProfile}
         selectedAddedContact={selectedAddedContact}
-        setSelectedAddedContact={setSelectedAddedContact}
         fromInitialAdd={props.fromInitialAdd}
         fromSettings={fromSettings}
       />
@@ -126,7 +111,6 @@ export default function EditMyProfilePage(props) {
 function InnerContent({
   isEditingMyProfile,
   selectedAddedContact,
-  setSelectedAddedContact,
   fromInitialAdd,
   fromSettings,
 }) {
@@ -167,7 +151,7 @@ function InnerContent({
     uniquename: '',
     receiveAddress: '',
   });
-  const [hasImage, setHasImage] = useState(false);
+
   const [isKeyboardActive, setIsKeyboardActive] = useState(false);
   const paddingBottom = Platform.select({
     ios: insets.bottom,
@@ -219,7 +203,10 @@ function InnerContent({
   ]);
 
   const myProfileImage = cache[myContact?.uuid];
-  const selectedAddedContactImage = useContactImage(selectedAddedContact?.uuid);
+  const selectedAddedContactImage = cache[selectedAddedContact?.uuid];
+  const hasImage = isEditingMyProfile
+    ? !!myProfileImage?.localUri
+    : !!selectedAddedContactImage?.localUri;
 
   return (
     <View style={styles.innerContainer}>
@@ -265,20 +252,15 @@ function InnerContent({
                 updated={
                   isEditingMyProfile
                     ? myProfileImage?.updated
-                    : selectedAddedContact.isLNURL
-                    ? new Date().toISOString()
                     : selectedAddedContactImage?.updated
                 }
                 uri={
                   isEditingMyProfile
                     ? myProfileImage?.localUri
-                    : selectedAddedContact.isLNURL
-                    ? selectedAddedContact.profileImage
                     : selectedAddedContactImage?.localUri
                 }
                 darkModeType={darkModeType}
                 theme={theme}
-                setHasImage={setHasImage}
               />
             )}
           </View>
@@ -525,7 +507,7 @@ function InnerContent({
       inputs.name.length > 30 ||
       inputs.bio.length > 150 ||
       inputs.uniquename.length > 30 ||
-      (selectedAddedContact?.isLNURL && inputs.receiveAddress.length > 60)
+      (selectedAddedContact?.isLNURL && inputs.receiveAddress.length > 100)
     )
       return;
 
@@ -698,39 +680,7 @@ function InnerContent({
       return;
     }
 
-    if (fromInitialAdd) {
-      setSelectedAddedContact(prev => {
-        return {...prev, profileImage: imgURL.uri};
-      });
-      return;
-    }
-
-    let tempSelectedContact = JSON.parse(JSON.stringify(selectedAddedContact));
-    tempSelectedContact['profileImage'] = imgURL.uri;
-
-    const newContacts = [
-      ...JSON.parse(JSON.stringify(decodedAddedContacts)),
-    ].map(contact => {
-      if (contact.uuid === selectedAddedContact.uuid) {
-        return {...contact, profileImage: imgURL.uri};
-      } else return contact;
-    });
-
-    const em = encriptMessage(
-      contactsPrivateKey,
-      publicKey,
-      JSON.stringify(newContacts),
-    );
-
-    toggleGlobalContactsInformation(
-      {
-        myProfile: {
-          ...globalContactsInformation.myProfile,
-        },
-        addedContacts: em,
-      },
-      true,
-    );
+    await refreshCache(selectedAddedContact.uuid, imgURL.uri);
   }
   async function uploadProfileImage({imgURL, removeImage}) {
     try {
@@ -791,36 +741,8 @@ function InnerContent({
         );
         return;
       }
-      if (fromInitialAdd) {
-        setSelectedAddedContact(prev => {
-          return {...prev, profileImage: null};
-        });
 
-        return;
-      }
-      const newContacts = [
-        ...JSON.parse(JSON.stringify(decodedAddedContacts)),
-      ].map(contact => {
-        if (contact.uuid === selectedAddedContact.uuid) {
-          return {...contact, profileImage: null};
-        } else return contact;
-      });
-
-      const em = encriptMessage(
-        contactsPrivateKey,
-        publicKey,
-        JSON.stringify(newContacts),
-      );
-
-      toggleGlobalContactsInformation(
-        {
-          myProfile: {
-            ...globalContactsInformation.myProfile,
-          },
-          addedContacts: em,
-        },
-        true,
-      );
+      await removeProfileImageFromCache(selectedAddedContact.uuid);
     } catch (err) {
       navigate.navigate('ErrorScreen', {
         errorMessage: t('settings.editcontactprofile.text12'),

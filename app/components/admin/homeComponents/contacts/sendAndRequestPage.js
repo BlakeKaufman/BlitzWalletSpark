@@ -43,9 +43,12 @@ import {crashlyticsLogReport} from '../../../../functions/crashlyticsLogs';
 import {getDataFromCollection} from '../../../../../db';
 import convertTextInputValue from '../../../../functions/textInputConvertValue';
 import {formatBip21SparkAddress} from '../../../../functions/spark/handleBip21SparkAddress';
+import {useImageCache} from '../../../../../context-store/imageCache';
+import ContactProfileImage from './internalComponents/profileImage';
 
 export default function SendAndRequestPage(props) {
   const navigate = useNavigation();
+  const {cache} = useImageCache();
   const {masterInfoObject} = useGlobalContextProvider();
   const {contactsPrivateKey} = useKeysContext();
   const {isConnectedToTheInternet} = useAppStatus();
@@ -353,19 +356,11 @@ export default function SendAndRequestPage(props) {
                 marginBottom: 5,
               },
             ]}>
-            <Image
-              source={
-                selectedContact.profileImage
-                  ? {uri: selectedContact.profileImage}
-                  : darkModeType && theme
-                  ? ICONS.userWhite
-                  : ICONS.userIcon
-              }
-              style={
-                selectedContact.profileImage
-                  ? {width: '100%', aspectRatio: 1}
-                  : {width: '50%', height: '50%'}
-              }
+            <ContactProfileImage
+              updated={cache[selectedContact.uuid]?.updated}
+              uri={cache[selectedContact.uuid]?.localUri}
+              darkModeType={darkModeType}
+              theme={theme}
             />
           </View>
           <ThemeText

@@ -31,7 +31,7 @@ import {useAppStatus} from '../../../../../context-store/appStatus';
 import {useKeysContext} from '../../../../../context-store/keys';
 import useHandleBackPressNew from '../../../../hooks/useHandleBackPressNew';
 import ContactProfileImage from './internalComponents/profileImage';
-import {useContactImage} from '../../../../hooks/useContactImage';
+import {useImageCache} from '../../../../../context-store/imageCache';
 
 export default function ExpandedContactsPage(props) {
   const navigate = useNavigation();
@@ -51,6 +51,7 @@ export default function ExpandedContactsPage(props) {
     contactsMessags,
   } = useGlobalContacts();
   const insets = useSafeAreaInsets();
+  const {cache} = useImageCache();
   const currentTime = new Date();
   const selectedUUID = props?.route?.params?.uuid || props?.uuid;
   const myProfile = globalContactsInformation?.myProfile;
@@ -60,7 +61,7 @@ export default function ExpandedContactsPage(props) {
       decodedAddedContacts.filter(contact => contact?.uuid === selectedUUID),
     [decodedAddedContacts, selectedUUID],
   );
-  const imageData = useContactImage(selectedContact.uuid);
+  const imageData = cache[selectedContact.uuid];
   const contactTransactions = contactsMessags[selectedUUID]?.messages || []; //selectedContact?.transactions;
   useHandleBackPressNew();
   useEffect(() => {
@@ -215,16 +216,8 @@ export default function ExpandedContactsPage(props) {
                 },
               ]}>
               <ContactProfileImage
-                updated={
-                  selectedContact.isLNURL
-                    ? new Date().toISOString()
-                    : imageData?.updated
-                }
-                uri={
-                  selectedContact.isLNURL
-                    ? selectedContact.profileImage
-                    : imageData?.localUri
-                }
+                updated={imageData?.updated}
+                uri={imageData?.localUri}
                 darkModeType={darkModeType}
                 theme={theme}
               />

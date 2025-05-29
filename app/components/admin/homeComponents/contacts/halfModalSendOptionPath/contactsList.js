@@ -1,6 +1,5 @@
 import {useNavigation} from '@react-navigation/native';
 import {
-  Image,
   Keyboard,
   Platform,
   ScrollView,
@@ -8,12 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {
-  CENTER,
-  CONTENT_KEYBOARD_OFFSET,
-  ICONS,
-  SIZES,
-} from '../../../../../constants';
+import {CENTER, CONTENT_KEYBOARD_OFFSET, SIZES} from '../../../../../constants';
 import {useMemo, useState} from 'react';
 import {
   CustomKeyboardAvoidingView,
@@ -34,9 +28,12 @@ import {
 import {INSET_WINDOW_WIDTH} from '../../../../../constants/theme';
 import CustomSettingsTopBar from '../../../../../functions/CustomElements/settingsTopBar';
 import useHandleBackPressNew from '../../../../../hooks/useHandleBackPressNew';
+import {useImageCache} from '../../../../../../context-store/imageCache';
+import ContactProfileImage from '../internalComponents/profileImage';
 
 export default function ChooseContactHalfModal() {
   const {theme, darkModeType} = useGlobalThemeContext();
+  const {cache} = useImageCache();
   useUnmountKeyboard();
   const {decodedAddedContacts} = useGlobalContacts();
   const navigate = useNavigation();
@@ -63,9 +60,15 @@ export default function ChooseContactHalfModal() {
         );
       })
       .map((contact, id) => {
-        return <ContactElement key={contact.uuid} contact={contact} />;
+        return (
+          <ContactElement
+            key={contact.uuid}
+            contact={contact}
+            imgCache={cache}
+          />
+        );
       });
-  }, [decodedAddedContacts, inputText]);
+  }, [decodedAddedContacts, inputText, cache]);
 
   return (
     <CustomKeyboardAvoidingView
@@ -120,6 +123,7 @@ export default function ChooseContactHalfModal() {
 
   function ContactElement(props) {
     const {isConnectedToTheInternet} = useAppStatus();
+
     const {t} = useTranslation();
     const {backgroundOffset} = GetThemeColors();
     const contact = props.contact;
@@ -146,19 +150,11 @@ export default function ChooseContactHalfModal() {
                   position: 'relative',
                 },
               ]}>
-              <Image
-                source={
-                  contact.profileImage
-                    ? {uri: contact.profileImage}
-                    : darkModeType && theme
-                    ? ICONS.userWhite
-                    : ICONS.userIcon
-                }
-                style={
-                  contact.profileImage
-                    ? {width: '100%', aspectRatio: 1}
-                    : {width: '50%', height: '50%'}
-                }
+              <ContactProfileImage
+                updated={props.imgCache[contact.uuid]?.updated}
+                uri={props.imgCache[contact.uuid]?.localUri}
+                darkModeType={darkModeType}
+                theme={theme}
               />
             </View>
 
