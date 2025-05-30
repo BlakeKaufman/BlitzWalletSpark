@@ -1581,9 +1581,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@buildonspark/lrc20-sdk@npm:0.0.50":
-  version: 0.0.50
-  resolution: "@buildonspark/lrc20-sdk@npm:0.0.50"
+"@buildonspark/lrc20-sdk@npm:0.0.51":
+  version: 0.0.51
+  resolution: "@buildonspark/lrc20-sdk@npm:0.0.51"
   dependencies:
     "@bitcoinerlab/secp256k1": ^1.1.1
     "@bufbuild/protobuf": ^2.2.5
@@ -1601,16 +1601,16 @@ __metadata:
     stream: ^0.0.3
     ts-proto: ^2.6.1
     varuint-bitcoin: ^1.1.2
-  checksum: e3e6916cfa0bf4acc4e0f8a765808a2d30285616df46a37963544ee9e1af8d60b244fe8840b723dd470f06d7e2e91efe6bfbe6bae5320377ec912b9dcd3d4782
+  checksum: fea5bb212688734608fe52350a4510a565d6110ada3d512e766fc942c77ba4d1b2ee0d533178eb8ad72dfc68d4dd2460210153d434c98cebf938bb85efb19268
   languageName: node
   linkType: hard
 
-"@buildonspark/spark-sdk@npm:0.1.27":
-  version: 0.1.27
-  resolution: "@buildonspark/spark-sdk@npm:0.1.27"
+"@buildonspark/spark-sdk@npm:^0.1.28":
+  version: 0.1.28
+  resolution: "@buildonspark/spark-sdk@npm:0.1.28"
   dependencies:
     "@bufbuild/protobuf": ^2.2.5
-    "@buildonspark/lrc20-sdk": 0.0.50
+    "@buildonspark/lrc20-sdk": 0.0.51
     "@lightsparkdev/core": ^1.4.0
     "@noble/curves": ^1.8.0
     "@noble/hashes": ^1.7.1
@@ -1639,7 +1639,7 @@ __metadata:
     react-native-get-random-values: ^1.11.0
     ts-proto: ^2.6.1
     uuidv7: ^1.0.2
-  checksum: eb7e51f7df4db43ac75398d4c16dae651ee746d6637bbfc42ffed58f4e8a62e77195ac128593b1337b6dd5a2de3858b5e9b0e6c31c42e8018630334e116c1bb9
+  checksum: 352a47d45bd9781ce3ad97b5e9e4d4f7afeb3cbbb877ea04278be3c006131af464c8c9e3e23a31ad13c347305b712bf38364ba034166482c0438d7c124a77818
   languageName: node
   linkType: hard
 
@@ -4504,7 +4504,7 @@ __metadata:
     "@babel/runtime": ^7.25.0
     "@bitcoinerlab/secp256k1": ^1.2.0
     "@breeztech/react-native-breez-sdk-liquid": ^0.9.1
-    "@buildonspark/spark-sdk": 0.1.27
+    "@buildonspark/spark-sdk": ^0.1.28
     "@cashu/cashu-ts": ^2.5.2
     "@craftzdog/react-native-buffer": ^6.0.5
     "@miblanchard/react-native-slider": ^2.6.0
