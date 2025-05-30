@@ -6,6 +6,7 @@ import {
   HIDDEN_BALANCE_TEXT,
   ICONS,
   SIZES,
+  SKELETON_ANIMATION_SPEED,
 } from '../constants';
 import {ThemeText} from './CustomElements';
 import FormattedSatText from './CustomElements/satTextDisplay';
@@ -13,6 +14,7 @@ import {useTranslation} from 'react-i18next';
 import Icon from './CustomElements/Icon';
 import {memo, useMemo} from 'react';
 import {crashlyticsLogReport} from './crashlyticsLogs';
+import SkeletonPlaceholder from './CustomElements/skeletonView';
 
 export default function getFormattedHomepageTxsForSpark({
   currentTime,
@@ -31,6 +33,7 @@ export default function getFormattedHomepageTxsForSpark({
   theme,
   darkModeType,
   userBalanceDenomination,
+  numberOfCachedTxs,
 }) {
   crashlyticsLogReport('Starting re-rendering of formatted transactions');
   const sparkTransactions = sparkInformation?.transactions;
@@ -38,6 +41,53 @@ export default function getFormattedHomepageTxsForSpark({
 
   console.log(sparkTransactionsLength);
   console.log('re-rendering transactions');
+
+  if (!sparkInformation.didConnect && numberOfCachedTxs) {
+    const arraryLength = numberOfCachedTxs >= 20 ? 20 : numberOfCachedTxs;
+    const loadingTxElements = Array.from(
+      {length: arraryLength},
+      (_, i) => i + 1,
+    ).map(item => {
+      return (
+        <View
+          key={item}
+          style={{
+            ...styles.transactionContainer,
+            width: '85%',
+            ...CENTER,
+            backgroundColor: 'green',
+          }}>
+          <View
+            style={{
+              height: 50,
+              width: 50,
+              marginRight: 10,
+              borderRadius: 100,
+            }}
+          />
+          <View style={{flex: 1, height: 30}}>
+            <View style={{flex: 1, marginBottom: 10, borderRadius: 100}} />
+            <View style={{flex: 1, borderRadius: 100}} />
+          </View>
+        </View>
+      );
+    });
+    return [
+      <SkeletonPlaceholder
+        highlightColor={
+          theme
+            ? darkModeType
+              ? COLORS.lightsOutBackground
+              : COLORS.darkModeBackground
+            : COLORS.lightModeBackground
+        }
+        backgroundColor={COLORS.opaicityGray}
+        enabled={true}
+        speed={SKELETON_ANIMATION_SPEED}>
+        {loadingTxElements}
+      </SkeletonPlaceholder>,
+    ];
+  }
 
   if (!sparkTransactionsLength) {
     return [

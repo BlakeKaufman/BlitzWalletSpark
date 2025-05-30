@@ -55,7 +55,7 @@ export default function ConnectingToNodeLoadingScreen({
   const {onLiquidBreezEvent} = useLiquidEvent();
   const {toggleMasterInfoObject, masterInfoObject, setMasterInfoObject} =
     useGlobalContextProvider();
-  const {setSparkInformation} = useSparkWallet();
+  const {setNumberOfCachedTxs} = useSparkWallet();
   const {toggleContactsPrivateKey} = useKeysContext();
   const {toggleLiquidNodeInformation, toggleFiatStats} = useNodeContext();
   const {theme, darkModeType} = useGlobalThemeContext();
@@ -185,23 +185,22 @@ export default function ConnectingToNodeLoadingScreen({
 
     try {
       crashlyticsLogReport('Trying to connect to nodes');
-      const [didConnectToLiquidNode, didConnectToSpark] = await Promise.all([
-        connectToLiquidNode(onLiquidBreezEvent),
-        initializeSparkWallet(), // Connect to spark node here
+      const [didConnectToLiquidNode, txs] = await Promise.all([
+        await connectToLiquidNode(onLiquidBreezEvent),
+        getCachedSparkTransactions(),
       ]);
 
+      console.log(txs, 'CACHED TRANSACTIONS');
+      setNumberOfCachedTxs(txs?.length || 0);
       // We only care about the spark connection here. If liquid fails, continue since its not the main node
-      if (didConnectToSpark.isConnected) {
+      if (didConnectToLiquidNode.isConnected) {
         crashlyticsLogReport('Loading node balances for session');
-        const [didSetLiquid, didSetSpark] = await Promise.all([
-          setLiquidNodeInformationForSession(
-            didConnectToLiquidNode?.liquid_node_info,
-          ),
-          initializeSparkSession(), // need to write function
-        ]);
+        const didSetLiquid = await setLiquidNodeInformationForSession(
+          didConnectToLiquidNode?.liquid_node_info,
+        );
 
         // Same thing for here, if liquid does not set continue on in the process
-        if (didSetSpark) {
+        if (didSetLiquid) {
           requestAnimationFrame(() => {
             requestAnimationFrame(() => {
               replace('HomeAdmin', {screen: 'Home'});
@@ -209,11 +208,11 @@ export default function ConnectingToNodeLoadingScreen({
           });
         } else
           throw new Error(
-            'Spark wallet information was not set properly, please try again.',
+            'Wallet information was not set properly, please try again.',
           );
       } else {
         throw new Error(
-          'We were unable to connect to the spark node. Please try again.',
+          'We were unable to set up your wallet. Please try again.',
         );
       }
     } catch (err) {
@@ -351,47 +350,58 @@ export default function ConnectingToNodeLoadingScreen({
       });
     }
   }
-  async function initializeSparkSession() {
-    try {
-      // Clean DB state but do not hold up process
-      cleanStalePendingSparkLightningTransactions();
-      const [balance, transactions, sparkAddress, identityPubKey] =
-        await Promise.all([
-          getSparkBalance(),
-          getCachedSparkTransactions(),
-          getSparkAddress(),
-          getSparkIdentityPubKey(),
-        ]);
+  // async function initializeSparkSession() {
+  //   try {
+  //     // Clean DB state but do not hold up process
+  //     cleanStalePendingSparkLightningTransactions();
+  //     const storageObject = {
+  //       balance: 0,
+  //       transactions: [],
+  //       identityPubKey: '',
+  //       sparkAddress: '',
+  //       didConnect: true,
+  //     };
+  //     console.log('Spark storage object', storageObject);
+  //     setSparkInformation(storageObject);
+  //     return storageObject;
+  //     return;
+  //     const [balance, transactions, sparkAddress, identityPubKey] =
+  //       await Promise.all([
+  //         getSparkBalance(),
+  //         getCachedSparkTransactions(),
+  //         getSparkAddress(),
+  //         getSparkIdentityPubKey(),
+  //       ]);
 
-      if (balance === undefined || transactions === undefined)
-        throw new Error('Unable to initialize spark from history');
+  //     if (balance === undefined || transactions === undefined)
+  //       throw new Error('Unable to initialize spark from history');
 
-      if (!globalContactsInformation.myProfile.sparkAddress) {
-        toggleGlobalContactsInformation(
-          {
-            myProfile: {
-              ...globalContactsInformation.myProfile,
-              sparkAddress: sparkAddress,
-            },
-          },
-          true,
-        );
-      }
-      const storageObject = {
-        balance: balance.balance,
-        transactions: transactions,
-        identityPubKey,
-        sparkAddress,
-        didConnect: true,
-      };
-      console.log('Spark storage object', storageObject);
-      setSparkInformation(storageObject);
-      return storageObject;
-    } catch (err) {
-      console.log('Set spark error', err);
-      return false;
-    }
-  }
+  //     if (!globalContactsInformation.myProfile.sparkAddress) {
+  //       toggleGlobalContactsInformation(
+  //         {
+  //           myProfile: {
+  //             ...globalContactsInformation.myProfile,
+  //             sparkAddress: sparkAddress,
+  //           },
+  //         },
+  //         true,
+  //       );
+  //     }
+  //     // const storageObject = {
+  //     //   balance: balance.balance,
+  //     //   transactions: transactions,
+  //     //   identityPubKey,
+  //     //   sparkAddress,
+  //     //   didConnect: true,
+  //     // };
+  //     // console.log('Spark storage object', storageObject);
+  //     // setSparkInformation(storageObject);
+  //     return storageObject;
+  //   } catch (err) {
+  //     console.log('Set spark error', err);
+  //     return false;
+  //   }
+  // }
 }
 
 const styles = StyleSheet.create({

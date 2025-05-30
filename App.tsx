@@ -74,6 +74,7 @@ import {navigationRef} from './navigation/navigationService';
 import {ImageCacheProvider} from './context-store/imageCache';
 import {SparkWalletProvider} from './context-store/sparkContext';
 import HandleLNURLPayments from './context-store/lnurl';
+import {SparkConnectionListener} from './context-store/connectToNode';
 
 const Stack = createNativeStackNavigator();
 
@@ -81,17 +82,17 @@ function App(): JSX.Element {
   return (
     <GestureHandlerRootView>
       <KeysContextProvider>
-        <GlobalContextProvider>
-          <AppStatusProvider>
-            <GlobalThemeProvider>
-              <GlobaleCashVariables>
-                <SparkWalletProvider>
-                  <GLobalNodeContextProider>
-                    {/* <GlobalConbinedTxContextProvider> */}
-                    <GlobalAppDataProvider>
-                      <POSTransactionsProvider>
-                        <WebViewProvider>
-                          <GlobalContactsList>
+        <GlobalContactsList>
+          <GlobalContextProvider>
+            <AppStatusProvider>
+              <GlobalThemeProvider>
+                <GlobaleCashVariables>
+                  <SparkWalletProvider>
+                    <GLobalNodeContextProider>
+                      {/* <GlobalConbinedTxContextProvider> */}
+                      <GlobalAppDataProvider>
+                        <POSTransactionsProvider>
+                          <WebViewProvider>
                             <PushNotificationManager>
                               <LiquidEventProvider>
                                 <ImageCacheProvider>
@@ -102,18 +103,18 @@ function App(): JSX.Element {
                                 </ImageCacheProvider>
                               </LiquidEventProvider>
                             </PushNotificationManager>
-                          </GlobalContactsList>
-                        </WebViewProvider>
-                      </POSTransactionsProvider>
-                    </GlobalAppDataProvider>
-                    {/* <BreezTest /> */}
-                    {/* </GlobalConbinedTxContextProvider> */}
-                  </GLobalNodeContextProider>
-                </SparkWalletProvider>
-              </GlobaleCashVariables>
-            </GlobalThemeProvider>
-          </AppStatusProvider>
-        </GlobalContextProvider>
+                          </WebViewProvider>
+                        </POSTransactionsProvider>
+                      </GlobalAppDataProvider>
+                      {/* <BreezTest /> */}
+                      {/* </GlobalConbinedTxContextProvider> */}
+                    </GLobalNodeContextProider>
+                  </SparkWalletProvider>
+                </GlobaleCashVariables>
+              </GlobalThemeProvider>
+            </AppStatusProvider>
+          </GlobalContextProvider>
+        </GlobalContactsList>
       </KeysContextProvider>
     </GestureHandlerRootView>
   );
@@ -331,6 +332,7 @@ function ResetStack(): JSX.Element | null {
       <HandleLNURLPayments />
       <SparkNavigationListener />
       <EcashNavigationListener />
+      <SparkConnectionListener />
       <Stack.Navigator screenOptions={screenOptions}>
         <Stack.Screen
           name="Home"

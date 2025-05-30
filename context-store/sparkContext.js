@@ -30,6 +30,8 @@ import {
   updateSparkTxStatus,
 } from '../app/functions/spark/restore';
 import {transformTxToPaymentObject} from '../app/functions/spark/transformTxToPayment';
+import {useGlobalContacts} from './globalContacts';
+import {initWallet} from '../app/functions/initiateWalletConnection';
 
 // Initiate context
 const SparkWalletManager = createContext(null);
@@ -43,6 +45,8 @@ const SparkWalletProvider = ({children}) => {
     sparkAddress: '',
     didConnect: null,
   });
+  const {toggleGlobalContactsInformation, globalContactsInformation} =
+    useGlobalContacts();
   const [numberOfIncomingLNURLPayments, setNumberOfIncomingLNURLPayments] =
     useState(0);
   const [pendingNavigation, setPendingNavigation] = useState(null);
@@ -52,6 +56,8 @@ const SparkWalletProvider = ({children}) => {
   const [blockedIdentityPubKeys, setBlockedIdentityPubKeys] = useState([]);
   const blockedIdentityPubKeysRef = useRef([]);
   const isFirstSparkUpdateStateInterval = useRef(true);
+  const [numberOfCachedTxs, setNumberOfCachedTxs] = useState(0);
+  const [numberOfConnectionTries, setNumberOfConnectionTries] = useState(0);
 
   useEffect(() => {
     blockedIdentityPubKeysRef.current = blockedIdentityPubKeys;
@@ -335,6 +341,35 @@ const SparkWalletProvider = ({children}) => {
     restoreTxState();
   }, [didGetToHomepage]);
 
+  // This function connects to the spark node and sets the session up
+  useEffect(() => {
+    async function initProcess() {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(async () => {
+          const {didWork} = await initWallet({
+            setSparkInformation,
+            toggleGlobalContactsInformation,
+            globalContactsInformation,
+          });
+          console.log(didWork, 'did connect to spark wallet in context');
+        });
+      });
+
+      if (didWork) return;
+      setNumberOfConnectionTries(prev => (prev += 1));
+      await new Promise(
+        () =>
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              initProcess();
+            });
+          }),
+        2000,
+      );
+    }
+    initProcess();
+  }, []);
+
   const contextValue = useMemo(
     () => ({
       sparkInformation,
@@ -344,6 +379,9 @@ const SparkWalletProvider = ({children}) => {
       setPendingNavigation,
       numberOfIncomingLNURLPayments,
       setNumberOfIncomingLNURLPayments,
+      numberOfConnectionTries,
+      numberOfCachedTxs,
+      setNumberOfCachedTxs,
     }),
     [
       sparkInformation,
@@ -353,6 +391,9 @@ const SparkWalletProvider = ({children}) => {
       setPendingNavigation,
       numberOfIncomingLNURLPayments,
       setNumberOfIncomingLNURLPayments,
+      numberOfConnectionTries,
+      numberOfCachedTxs,
+      setNumberOfCachedTxs,
     ],
   );
 

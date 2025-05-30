@@ -1,5 +1,5 @@
-import {StyleSheet, TouchableOpacity, View} from 'react-native';
-import {COLORS, SIZES} from '../../../../constants';
+import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {COLORS, SIZES, SKELETON_ANIMATION_SPEED} from '../../../../constants';
 import {useGlobalContextProvider} from '../../../../../context-store/context';
 import FormattedSatText from '../../../../functions/CustomElements/satTextDisplay';
 import {memo, useCallback, useEffect, useRef, useState} from 'react';
@@ -9,6 +9,8 @@ import {useNavigation} from '@react-navigation/native';
 import {crashlyticsLogReport} from '../../../../functions/crashlyticsLogs';
 import {useSparkWallet} from '../../../../../context-store/sparkContext';
 import {ThemeText} from '../../../../functions/CustomElements';
+import SkeletonTextPlaceholder from '../../../../functions/CustomElements/skeletonTextView';
+import GetThemeColors from '../../../../hooks/themeColors';
 
 export const UserSatAmount = memo(function UserSatAmount({
   isConnectedToTheInternet,
@@ -20,6 +22,7 @@ export const UserSatAmount = memo(function UserSatAmount({
 
   const {masterInfoObject, toggleMasterInfoObject, setMasterInfoObject} =
     useGlobalContextProvider();
+  const {backgroundColor} = GetThemeColors();
 
   const saveTimeoutRef = useRef(null);
   const navigate = useNavigation();
@@ -39,6 +42,22 @@ export const UserSatAmount = memo(function UserSatAmount({
     },
     [didMount],
   );
+  //  <SkeletonPlaceholder borderRadius={4} enabled={skeletonEnabled}>
+  //       <View style={styles.container}>
+  //         <Image
+  //           style={styles.image}
+  //           resizeMode="contain"
+  //           source={require('./assets/react-native-icon.png')}
+  //         />
+  //         <View style={styles.titleContainer}>
+  //           <Text style={styles.title}>Lorem ipsum</Text>
+  //           <Text style={styles.subtitle} numberOfLines={2}>
+  //             Dolor sit amet, consectetur adipiscing elit, sed do eiusmod
+  //             tempor.
+  //           </Text>
+  //         </View>
+  //       </View>
+  //     </SkeletonPlaceholder>
 
   return (
     <TouchableOpacity
@@ -74,38 +93,46 @@ export const UserSatAmount = memo(function UserSatAmount({
             saveTimeoutRef,
           );
       }}>
-      <View style={styles.valueContainer}>
-        <FormattedSatText styles={styles.valueText} balance={userBalance} />
-      </View>
-      {!!numberOfIncomingLNURLPayments && (
-        <TouchableOpacity
-          onPress={() => {
-            crashlyticsLogReport(
-              'Navigating to information popup page from user sat amount',
-            );
-            navigate.navigate('InformationPopup', {
-              CustomTextComponent: () => {
-                return (
-                  <ThemeText
-                    styles={styles.informationText}
-                    content={`You have ${numberOfIncomingLNURLPayments} lightning address payment${
-                      numberOfIncomingLNURLPayments > 1 ? 's' : ''
-                    } waiting to confirm.`}
-                  />
-                );
-              },
-              buttonText: 'I understand',
-            });
-          }}
-          style={{...styles.pendingBalanceChange, left: balanceWidth + 5}}>
-          <Icon
-            color={darkModeType && theme ? COLORS.darkModeText : COLORS.primary}
-            width={25}
-            height={25}
-            name={'pendingTxIcon'}
-          />
-        </TouchableOpacity>
-      )}
+      <SkeletonTextPlaceholder
+        highlightColor={backgroundColor}
+        backgroundColor={COLORS.opaicityGray}
+        speed={SKELETON_ANIMATION_SPEED}
+        enabled={!sparkInformation.didConnect}>
+        <View style={styles.valueContainer}>
+          <FormattedSatText styles={styles.valueText} balance={userBalance} />
+        </View>
+        {!!numberOfIncomingLNURLPayments && (
+          <TouchableOpacity
+            onPress={() => {
+              crashlyticsLogReport(
+                'Navigating to information popup page from user sat amount',
+              );
+              navigate.navigate('InformationPopup', {
+                CustomTextComponent: () => {
+                  return (
+                    <ThemeText
+                      styles={styles.informationText}
+                      content={`You have ${numberOfIncomingLNURLPayments} lightning address payment${
+                        numberOfIncomingLNURLPayments > 1 ? 's' : ''
+                      } waiting to confirm.`}
+                    />
+                  );
+                },
+                buttonText: 'I understand',
+              });
+            }}
+            style={{...styles.pendingBalanceChange, left: balanceWidth + 5}}>
+            <Icon
+              color={
+                darkModeType && theme ? COLORS.darkModeText : COLORS.primary
+              }
+              width={25}
+              height={25}
+              name={'pendingTxIcon'}
+            />
+          </TouchableOpacity>
+        )}
+      </SkeletonTextPlaceholder>
     </TouchableOpacity>
   );
 });

@@ -18,7 +18,7 @@ export const initializeSparkWallet = async () => {
         mnemonicOrSeed: storedMnemoinc,
         options: {network: 'MAINNET'},
       }).then(res => ['wallet', res]),
-      new Promise(res => setTimeout(() => res(['timeout', false]), 15000)),
+      new Promise(res => setTimeout(() => res(['timeout', false]), 30000)),
     ]);
 
     if (type === 'wallet') {
@@ -235,7 +235,6 @@ export const getSparkTransactions = async (
 };
 export const getCachedSparkTransactions = async () => {
   try {
-    if (!sparkWallet) throw new Error('sparkWallet not initialized');
     const txResponse = await getAllSparkTransactions();
     if (!txResponse) throw new Error('Unable to get cached spark transactins');
     return txResponse;

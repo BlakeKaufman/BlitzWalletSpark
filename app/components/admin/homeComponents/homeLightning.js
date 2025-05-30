@@ -17,7 +17,7 @@ import getFormattedHomepageTxsForSpark from '../../../functions/combinedTransact
 
 export default function HomeLightning() {
   console.log('HOME LIGHTNING PAGE');
-  const {sparkInformation} = useSparkWallet();
+  const {sparkInformation, numberOfCachedTxs} = useSparkWallet();
   const {theme, darkModeType, toggleTheme} = useGlobalThemeContext();
   const {masterInfoObject} = useGlobalContextProvider();
   const {toggleDidGetToHomepage, isConnectedToTheInternet} = useAppStatus();
@@ -49,6 +49,7 @@ export default function HomeLightning() {
       theme,
       darkModeType,
       userBalanceDenomination,
+      numberOfCachedTxs,
     });
   }, [
     sparkInformation.transactions,
@@ -58,6 +59,7 @@ export default function HomeLightning() {
     theme,
     darkModeType,
     userBalanceDenomination,
+    numberOfCachedTxs,
   ]);
 
   return (
