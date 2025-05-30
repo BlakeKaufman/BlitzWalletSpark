@@ -165,7 +165,7 @@ export async function fullRestoreSparkState({sparkAddress}) {
       bulkUpdateSparkTransactions(newPaymentObjects);
     }
 
-    return true;
+    return newPaymentObjects.length;
   } catch (err) {
     console.log('full restore spark state error', err);
     return false;

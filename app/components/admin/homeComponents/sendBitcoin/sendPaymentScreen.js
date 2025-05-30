@@ -433,6 +433,9 @@ export default function SendPaymentScreen(props) {
       formmateedSparkPaymentInfo.address = paymentInfo?.data?.invoice;
       formmateedSparkPaymentInfo.paymentType = 'lightning';
       console.log(paymentInfo?.boltzData);
+    } else if (paymentInfo?.type === 'Bitcoin') {
+      formmateedSparkPaymentInfo.address = paymentInfo?.address;
+      formmateedSparkPaymentInfo.paymentType = 'bitcoin';
     }
     console.log(formmateedSparkPaymentInfo, 'manual spark information');
 

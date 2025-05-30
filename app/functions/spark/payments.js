@@ -1,4 +1,5 @@
 import {
+  getSparkBitcoinPaymentRequest,
   getSparkLightningSendRequest,
   getSparkTransactions,
   sendSparkPayment,
@@ -126,28 +127,54 @@ export const sparkPaymenWrapper = async ({
       await addSingleSparkTransaction(tx);
     } else if (paymentType === 'bitcoin') {
       // make sure to import exist speed
-      const [onChainPayResponse, supportFeeRes] = await Promise.all([
-        sparkWallet.withdraw({
-          onchainAddress: address,
-          exitSpeed,
-          amountSats,
-        }),
-        masterInfoObject?.enabledDeveloperSupport?.isEnabled
-          ? sendSparkPayment({
-              receiverSparkAddress: process.env.BLITZ_SPARK_SUPPORT_ADDRESSS,
-              amountSats: supportFee,
-            })
-          : Promise.resolve(null),
-      ]);
-      supportFeeResponse = supportFeeRes;
-      response = await updatePaymentsState(
-        onChainPayResponse,
-        supportFeeRes,
-        fee,
-        memo,
-        address,
-        'BITCOIN_WITHDRAWAL',
+      const onChainPayResponse = await sparkWallet.withdraw({
+        onchainAddress: address,
+        exitSpeed,
+        amountSats,
+      });
+      if (!onChainPayResponse)
+        throw new Error('Error when sending bitcoin payment');
+
+      console.log(onChainPayResponse, 'on-chain pay response');
+      let sparkQueryResponse = null;
+      let count = 0;
+      while (!sparkQueryResponse && count < 5) {
+        const sparkResponse = await getSparkBitcoinPaymentRequest(
+          onChainPayResponse.id,
+        );
+
+        if (sparkResponse.transfer) {
+          sparkQueryResponse = sparkResponse;
+        } else {
+          console.log('Waiting for response...');
+          await new Promise(res => setTimeout(res, 2000));
+        }
+        count += 1;
+      }
+
+      console.log(
+        sparkQueryResponse,
+        'on-chain query response after confirmation',
       );
+      const tx = {
+        id: sparkQueryResponse
+          ? sparkQueryResponse.transfer.sparkId
+          : onChainPayResponse.id,
+        paymentStatus: 'pending',
+        paymentType: 'bitcoin',
+        accountId: sparkInformation.identityPubKey,
+        details: {
+          fee: fee,
+          amount: amountSats,
+          address: address,
+          time: new Date(onChainPayResponse.updatedAt).getTime(),
+          direction: 'OUTGOING',
+          description: memo || '',
+          onchainTxid: onChainPayResponse.coopExitTxid,
+        },
+      };
+      response = tx;
+      await addSingleSparkTransaction(tx);
     } else {
       const sparkPayResponse = await sendSparkPayment({
         receiverSparkAddress: address,

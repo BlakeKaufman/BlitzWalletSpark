@@ -153,6 +153,15 @@ export const getSparkLightningPaymentFeeEstimate = async invoice => {
   }
 };
 
+export const getSparkBitcoinPaymentRequest = async paymentId => {
+  try {
+    if (!sparkWallet) throw new Error('sparkWallet not initialized');
+    return await sparkWallet.getCoopExitRequest(paymentId);
+  } catch (err) {
+    console.log('Get bitcoin payment fee estimate error', err);
+  }
+};
+
 export const getSparkBitcoinPaymentFeeEstimate = async ({
   amountSats,
   withdrawalAddress,
