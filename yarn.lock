@@ -3605,6 +3605,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-native-masked-view/masked-view@npm:^0.3.2":
+  version: 0.3.2
+  resolution: "@react-native-masked-view/masked-view@npm:0.3.2"
+  peerDependencies:
+    react: ">=16"
+    react-native: ">=0.57"
+  checksum: e35ab882148df3f9b71f04355d2fb1b24d6f2aaf29043f80758f398bdf905eed67734b36b072fa8b934923ff4e3d80ccb5e37d8376cb1825272078b96a21dadc
+  languageName: node
+  linkType: hard
+
 "@react-native/assets-registry@npm:0.79.2":
   version: 0.79.2
   resolution: "@react-native/assets-registry@npm:0.79.2"
@@ -4513,6 +4523,7 @@ __metadata:
     "@react-native-firebase/functions": ^22.2.0
     "@react-native-firebase/messaging": ^22.2.0
     "@react-native-firebase/storage": ^22.2.0
+    "@react-native-masked-view/masked-view": ^0.3.2
     "@react-native/babel-preset": 0.79.2
     "@react-native/eslint-config": 0.79.2
     "@react-native/metro-config": 0.79.2
@@ -4538,6 +4549,7 @@ __metadata:
     expo-crypto: ~14.1.4
     expo-file-system: ~18.1.10
     expo-image-manipulator: ~13.1.7
+    expo-linear-gradient: ~14.1.4
     expo-local-authentication: ~16.0.4
     expo-network: ~7.1.5
     expo-notifications: ~0.31.2
@@ -7586,6 +7598,17 @@ __metadata:
     expo: "*"
     react: "*"
   checksum: fd3adfd3f1bacb06c244c4c21452de892c55fe2ee0eed9e9912292ceafb1cdb0ea58941c4f77395032f37321113321d23ac142d63b9d0d214b7821d78b74d60e
+  languageName: node
+  linkType: hard
+
+"expo-linear-gradient@npm:~14.1.4":
+  version: 14.1.4
+  resolution: "expo-linear-gradient@npm:14.1.4"
+  peerDependencies:
+    expo: "*"
+    react: "*"
+    react-native: "*"
+  checksum: eab8d01fcce1b8b42ea401c681b5151c3b161666fa3a00181fddae4fb64c23f65945afc60176f9c367fe6963fdd4192e5de86a8b50203581f99bcea872b11451
   languageName: node
   linkType: hard
 
