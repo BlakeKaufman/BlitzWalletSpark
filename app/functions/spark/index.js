@@ -1,10 +1,10 @@
 import {
   SparkWallet,
   ReactNativeSparkSigner,
+  getLatestDepositTxId,
 } from '@buildonspark/spark-sdk/native';
 import {retrieveData} from '../secureStore';
 import {getAllSparkTransactions} from './transactions';
-import {getLatestDepositTxId} from '@buildonspark/spark-sdk';
 
 export let sparkWallet = null;
 

@@ -23,6 +23,10 @@ export default async function connectToLiquidNode(breezLiquidEvent) {
   // setLogger(logHandler);
 
   if (didConnect) {
+    return {
+      isConnected: true,
+      reason: null,
+    };
     console.log('RUNNING IN DID CONNECT');
     let ableToRetrive = false;
     let runcount = 0;
@@ -88,14 +92,23 @@ export default async function connectToLiquidNode(breezLiquidEvent) {
     await connect({mnemonic, config});
     addEventListener(breezLiquidEvent);
 
-    return new Promise(resolve => {
-      resolve({
-        isConnected: true,
-        reason: null,
-      });
-    });
+    return {
+      isConnected: true,
+      reason: null,
+    };
+
+    // return new Promise(resolve => {
+    //   resolve({
+    //     isConnected: true,
+    //     reason: null,
+    //   });
+    // });
   } catch (err) {
     console.log(err, 'connect to node err LIQUID');
+    return {
+      isConnected: false,
+      reason: null,
+    };
     return new Promise(resolve => {
       resolve({
         isConnected: false,

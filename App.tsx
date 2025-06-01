@@ -49,7 +49,6 @@ import {COLORS, LOGIN_SECUITY_MODE_KEY} from './app/constants';
 import {LiquidEventProvider} from './context-store/liquidEventContext';
 import {
   EcashNavigationListener,
-  LiquidNavigationListener,
   SparkNavigationListener,
 } from './context-store/SDKNavigation';
 // import {LightningEventProvider} from './context-store/lightningEventContext';
@@ -328,7 +327,6 @@ function ResetStack(): JSX.Element | null {
 
   return (
     <NavigationContainer theme={navigationTheme} ref={navigationRef}>
-      <LiquidNavigationListener />
       <HandleLNURLPayments />
       <SparkNavigationListener />
       <EcashNavigationListener />

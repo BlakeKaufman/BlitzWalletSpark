@@ -40,7 +40,7 @@ export default function EditReceivePaymentInformation(props) {
   const navigate = useNavigation();
   const {masterInfoObject} = useGlobalContextProvider();
   // const {ecashWalletInformation} = useGlobaleCash();
-  const {nodeInformation, fiatStats} = useNodeContext();
+  const {fiatStats} = useNodeContext();
   // const {minMaxLiquidSwapAmounts} = useAppStatus();
   const [amountValue, setAmountValue] = useState('');
   const [isKeyboardFocused, setIsKeyboardFocused] = useState(false);

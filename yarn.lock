@@ -1581,36 +1581,30 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@buildonspark/lrc20-sdk@npm:0.0.50":
-  version: 0.0.50
-  resolution: "@buildonspark/lrc20-sdk@npm:0.0.50"
+"@buildonspark/lrc20-sdk@npm:0.0.52":
+  version: 0.0.52
+  resolution: "@buildonspark/lrc20-sdk@npm:0.0.52"
   dependencies:
     "@bitcoinerlab/secp256k1": ^1.1.1
-    "@bufbuild/protobuf": ^2.2.5
-    "@lightsparkdev/core": ^1.4.0
     "@sapphire/utilities": ^3.17.0
     bignumber.js: ^9.1.2
     bitcoinjs-lib: ^6.1.5
     buffer: ^6.0.3
     class-transformer: ^0.5.1
     ecpair: ^2.1.0
-    nice-grpc: ^2.1.10
-    nice-grpc-client-middleware-retry: ^3.1.10
-    nice-grpc-common: ^2.0.2
-    nice-grpc-web: ^3.3.5
     stream: ^0.0.3
     ts-proto: ^2.6.1
     varuint-bitcoin: ^1.1.2
-  checksum: e3e6916cfa0bf4acc4e0f8a765808a2d30285616df46a37963544ee9e1af8d60b244fe8840b723dd470f06d7e2e91efe6bfbe6bae5320377ec912b9dcd3d4782
+  checksum: c4f68a3ccd71b83c7a52b225266d9f760f022a2185bb31f079907183e5713117e0b7b676548cc524ea21fd9ab3666b7dc265e2681b2ddbbf58f940e0b09b92d1
   languageName: node
   linkType: hard
 
-"@buildonspark/spark-sdk@npm:^0.1.27":
-  version: 0.1.27
-  resolution: "@buildonspark/spark-sdk@npm:0.1.27"
+"@buildonspark/spark-sdk@npm:^0.1.29":
+  version: 0.1.29
+  resolution: "@buildonspark/spark-sdk@npm:0.1.29"
   dependencies:
     "@bufbuild/protobuf": ^2.2.5
-    "@buildonspark/lrc20-sdk": 0.0.50
+    "@buildonspark/lrc20-sdk": 0.0.52
     "@lightsparkdev/core": ^1.4.0
     "@noble/curves": ^1.8.0
     "@noble/hashes": ^1.7.1
@@ -1635,11 +1629,13 @@ __metadata:
     nice-grpc-common: ^2.0.2
     nice-grpc-opentelemetry: ^0.1.18
     nice-grpc-web: ^3.3.5
-    react-native: ">=0.71.0"
-    react-native-get-random-values: ^1.11.0
     ts-proto: ^2.6.1
     uuidv7: ^1.0.2
-  checksum: eb7e51f7df4db43ac75398d4c16dae651ee746d6637bbfc42ffed58f4e8a62e77195ac128593b1337b6dd5a2de3858b5e9b0e6c31c42e8018630334e116c1bb9
+  peerDependencies:
+    react: ">=18.2.0"
+    react-native: ">=0.71.0"
+    react-native-get-random-values: ">=1.11.0"
+  checksum: 7f7f656904e4869811ee2f7ebf3453c940260b4d9f88206b3fc8e42b4fd4883a84717bab45a3f79985739531d354d80e3812a712a073cde632d4f500883d3aa2
   languageName: node
   linkType: hard
 
@@ -4507,7 +4503,7 @@ __metadata:
     "@babel/runtime": ^7.25.0
     "@bitcoinerlab/secp256k1": ^1.2.0
     "@breeztech/react-native-breez-sdk-liquid": ^0.9.1
-    "@buildonspark/spark-sdk": ^0.1.27
+    "@buildonspark/spark-sdk": ^0.1.29
     "@cashu/cashu-ts": ^2.5.2
     "@craftzdog/react-native-buffer": ^6.0.5
     "@miblanchard/react-native-slider": ^2.6.0
@@ -12087,7 +12083,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-get-random-values@npm:^1.11.0, react-native-get-random-values@npm:~1.11.0":
+"react-native-get-random-values@npm:~1.11.0":
   version: 1.11.0
   resolution: "react-native-get-random-values@npm:1.11.0"
   dependencies:
@@ -12289,7 +12285,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native@npm:0.79.2, react-native@npm:>=0.71.0":
+"react-native@npm:0.79.2":
   version: 0.79.2
   resolution: "react-native@npm:0.79.2"
   dependencies:

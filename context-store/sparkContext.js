@@ -58,6 +58,7 @@ const SparkWalletProvider = ({children}) => {
   const isFirstSparkUpdateStateInterval = useRef(true);
   const [numberOfCachedTxs, setNumberOfCachedTxs] = useState(0);
   const [numberOfConnectionTries, setNumberOfConnectionTries] = useState(0);
+  const [startConnectingToSpark, setStartConnectingToSpark] = useState(false);
 
   useEffect(() => {
     blockedIdentityPubKeysRef.current = blockedIdentityPubKeys;
@@ -351,24 +352,26 @@ const SparkWalletProvider = ({children}) => {
             toggleGlobalContactsInformation,
             globalContactsInformation,
           });
+
           console.log(didWork, 'did connect to spark wallet in context');
+
+          if (didWork) return;
+          setNumberOfConnectionTries(prev => (prev += 1));
+          await new Promise(
+            () =>
+              requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                  initProcess();
+                });
+              }),
+            2000,
+          );
         });
       });
-
-      if (didWork) return;
-      setNumberOfConnectionTries(prev => (prev += 1));
-      await new Promise(
-        () =>
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              initProcess();
-            });
-          }),
-        2000,
-      );
     }
+    if (!startConnectingToSpark) return;
     initProcess();
-  }, []);
+  }, [startConnectingToSpark]);
 
   const contextValue = useMemo(
     () => ({
@@ -382,6 +385,7 @@ const SparkWalletProvider = ({children}) => {
       numberOfConnectionTries,
       numberOfCachedTxs,
       setNumberOfCachedTxs,
+      setStartConnectingToSpark,
     }),
     [
       sparkInformation,
@@ -394,6 +398,7 @@ const SparkWalletProvider = ({children}) => {
       numberOfConnectionTries,
       numberOfCachedTxs,
       setNumberOfCachedTxs,
+      setStartConnectingToSpark,
     ],
   );
 

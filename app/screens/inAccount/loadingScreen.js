@@ -55,7 +55,7 @@ export default function ConnectingToNodeLoadingScreen({
   const {onLiquidBreezEvent} = useLiquidEvent();
   const {toggleMasterInfoObject, masterInfoObject, setMasterInfoObject} =
     useGlobalContextProvider();
-  const {setNumberOfCachedTxs} = useSparkWallet();
+  const {setNumberOfCachedTxs, setStartConnectingToSpark} = useSparkWallet();
   const {toggleContactsPrivateKey} = useKeysContext();
   const {toggleLiquidNodeInformation, toggleFiatStats} = useNodeContext();
   const {theme, darkModeType} = useGlobalThemeContext();
@@ -184,9 +184,10 @@ export default function ConnectingToNodeLoadingScreen({
     console.log('HOME RENDER BREEZ EVENT FIRST LOAD');
 
     try {
+      setStartConnectingToSpark(true);
       crashlyticsLogReport('Trying to connect to nodes');
       const [didConnectToLiquidNode, txs] = await Promise.all([
-        await connectToLiquidNode(onLiquidBreezEvent),
+        connectToLiquidNode(onLiquidBreezEvent),
         getCachedSparkTransactions(),
       ]);
 
@@ -243,10 +244,10 @@ export default function ConnectingToNodeLoadingScreen({
       crashlyticsLogReport('Starting liquid node lookup process');
       const [parsedInformation, payments, fiat_rate, addressResponse] =
         await Promise.all([
-          retrivedLiquidNodeInfo
-            ? Promise.resolve(retrivedLiquidNodeInfo)
-            : getInfo(),
-          listPayments({}),
+          // retrivedLiquidNodeInfo
+          //   ? Promise.resolve(retrivedLiquidNodeInfo)
+          //   : getInfo(),
+          // listPayments({}),
           setupFiatCurrencies(),
           masterInfoObject.offlineReceiveAddresses.addresses.length !== 7 ||
           isMoreThan7DaysPast(
@@ -258,8 +259,8 @@ export default function ConnectingToNodeLoadingScreen({
             : Promise.resolve(null),
         ]);
 
-      const info = parsedInformation.walletInfo;
-      const balanceSat = info.balanceSat;
+      // const info = parsedInformation.walletInfo;
+      // const balanceSat = info.balanceSat;
 
       if (addressResponse) {
         const {destination, receiveFeesSat} = addressResponse;
@@ -295,59 +296,57 @@ export default function ConnectingToNodeLoadingScreen({
         });
       }
 
-      let liquidNodeObject = {
-        transactions: payments,
-        userBalance: balanceSat,
-        pendingReceive: info.pendingReceiveSat,
-        pendingSend: info.pendingSendSat,
-      };
+      // let liquidNodeObject = {
+      //   transactions: payments,
+      //   userBalance: balanceSat,
+      //   pendingReceive: info.pendingReceiveSat,
+      //   pendingSend: info.pendingSendSat,
+      // };
 
       toggleFiatStats({...fiat_rate});
 
-      console.log(
-        didRestoreWallet,
-        payments.length,
-        !payments.length,
-        'CHEKCING RETRY LOGIC',
-      );
+      // console.log(
+      //   didRestoreWallet,
+      //   payments.length,
+      //   !payments.length,
+      //   'CHEKCING RETRY LOGIC',
+      // );
 
-      if (didRestoreWallet) {
-        console.log('RETRYING LIQUID INFORMATION, LOADING....');
-        await new Promise(resolve => setTimeout(resolve, 10000));
-        console.log('FINISHED WAITING');
+      // if (didRestoreWallet) {
+      //   console.log('RETRYING LIQUID INFORMATION, LOADING....');
+      //   await new Promise(resolve => setTimeout(resolve, 10000));
+      //   console.log('FINISHED WAITING');
 
-        const [restoreWalletInfo, restoreWalletPayments] = await Promise.all([
-          getInfo(),
-          listPayments({}),
-        ]);
+      //   const [restoreWalletInfo, restoreWalletPayments] = await Promise.all([
+      //     getInfo(),
+      //     listPayments({}),
+      //   ]);
 
-        const restoreWalletBalance = restoreWalletInfo.walletInfo.balanceSat;
+      //   const restoreWalletBalance = restoreWalletInfo.walletInfo.balanceSat;
 
-        console.log(
-          restoreWalletInfo.walletInfo.balanceSat,
-          restoreWalletPayments.length,
-          'RETRY INFO',
-        );
+      //   console.log(
+      //     restoreWalletInfo.walletInfo.balanceSat,
+      //     restoreWalletPayments.length,
+      //     'RETRY INFO',
+      //   );
 
-        liquidNodeObject = {
-          transactions: restoreWalletPayments,
-          userBalance: restoreWalletBalance,
-          pendingReceive: restoreWalletInfo.walletInfo.pendingReceiveSat,
-          pendingSend: restoreWalletInfo.walletInfo.pendingSendSat,
-        };
-      }
+      //   liquidNodeObject = {
+      //     transactions: restoreWalletPayments,
+      //     userBalance: restoreWalletBalance,
+      //     pendingReceive: restoreWalletInfo.walletInfo.pendingReceiveSat,
+      //     pendingSend: restoreWalletInfo.walletInfo.pendingSendSat,
+      //   };
+      // }
 
       toggleLiquidNodeInformation({
-        ...liquidNodeObject,
+        // ...liquidNodeObject,
         didConnectToNode: true,
       });
 
-      return liquidNodeObject;
+      return true;
     } catch (err) {
       console.log(err, 'LIQUID INFORMATION ERROR');
-      return new Promise(resolve => {
-        resolve(false);
-      });
+      return false;
     }
   }
   // async function initializeSparkSession() {

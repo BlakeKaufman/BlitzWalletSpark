@@ -1,4 +1,4 @@
-import {createContext, useCallback, useContext, useRef, useState} from 'react';
+import {createContext, useCallback, useContext, useRef} from 'react';
 import {SdkEventVariant} from '@breeztech/react-native-breez-sdk-liquid';
 import startLiquidUpdateInterval from '../app/functions/liquidBackupUpdate';
 import {useNodeContext} from './nodeContext';
@@ -9,7 +9,6 @@ export function LiquidEventProvider({children}) {
   const {toggleLiquidNodeInformation} = useNodeContext();
   const intervalId = useRef(null);
   const debounceTimer = useRef(null);
-  const [pendingNavigation, setPendingNavigation] = useState(null);
 
   const isInitialSync = useRef(true);
   const syncRunCounter = useRef(1);
@@ -59,8 +58,6 @@ export function LiquidEventProvider({children}) {
     <LiquidEventContext.Provider
       value={{
         onLiquidBreezEvent,
-        pendingNavigation,
-        setPendingNavigation, // Include this so we can clear it after navigation
       }}>
       {children}
     </LiquidEventContext.Provider>
