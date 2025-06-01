@@ -11,6 +11,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import {LinearGradient} from 'expo-linear-gradient';
+import {SKELETON_ANIMATION_SPEED} from '../../constants';
 
 const WINDOW_WIDTH = Dimensions.get('window').width;
 
@@ -21,7 +22,7 @@ const SkeletonPlaceholder = ({
   enabled = true,
   backgroundColor = '#E1E9EE',
   highlightColor = '#F2F8FC',
-  speed = 800,
+  speed = SKELETON_ANIMATION_SPEED,
   direction = 'right',
   borderRadius,
   shimmerWidth,

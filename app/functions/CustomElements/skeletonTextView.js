@@ -9,7 +9,7 @@ import {
   Text,
 } from 'react-native';
 import {LinearGradient} from 'expo-linear-gradient';
-import {COLORS} from '../../constants';
+import {COLORS, SKELETON_ANIMATION_SPEED} from '../../constants';
 
 const WINDOW_WIDTH = Dimensions.get('window').width;
 
@@ -18,7 +18,7 @@ const SkeletonTextPlaceholder = ({
   enabled = true,
   backgroundColor = COLORS.offsetBackground,
   highlightColor = '#F2F8FC',
-  speed = 800,
+  speed = SKELETON_ANIMATION_SPEED,
   direction = 'right',
   shimmerWidth,
 }) => {
