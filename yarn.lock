@@ -1581,9 +1581,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@buildonspark/lrc20-sdk@npm:0.0.52":
-  version: 0.0.52
-  resolution: "@buildonspark/lrc20-sdk@npm:0.0.52"
+"@buildonspark/lrc20-sdk@npm:0.0.53":
+  version: 0.0.53
+  resolution: "@buildonspark/lrc20-sdk@npm:0.0.53"
   dependencies:
     "@bitcoinerlab/secp256k1": ^1.1.1
     "@sapphire/utilities": ^3.17.0
@@ -1595,16 +1595,16 @@ __metadata:
     stream: ^0.0.3
     ts-proto: ^2.6.1
     varuint-bitcoin: ^1.1.2
-  checksum: c4f68a3ccd71b83c7a52b225266d9f760f022a2185bb31f079907183e5713117e0b7b676548cc524ea21fd9ab3666b7dc265e2681b2ddbbf58f940e0b09b92d1
+  checksum: e5a5f1c81ec7b876833d961e4f859a6c9dd2a719bdb5cadd9a4f832cdb2cd7a58cecf301855c365909d9fb529ae37e4731579182a6cc9e97ebb528c0ba2e06ee
   languageName: node
   linkType: hard
 
-"@buildonspark/spark-sdk@npm:^0.1.29":
-  version: 0.1.29
-  resolution: "@buildonspark/spark-sdk@npm:0.1.29"
+"@buildonspark/spark-sdk@npm:^0.1.30":
+  version: 0.1.30
+  resolution: "@buildonspark/spark-sdk@npm:0.1.30"
   dependencies:
     "@bufbuild/protobuf": ^2.2.5
-    "@buildonspark/lrc20-sdk": 0.0.52
+    "@buildonspark/lrc20-sdk": 0.0.53
     "@lightsparkdev/core": ^1.4.0
     "@noble/curves": ^1.8.0
     "@noble/hashes": ^1.7.1
@@ -1635,7 +1635,7 @@ __metadata:
     react: ">=18.2.0"
     react-native: ">=0.71.0"
     react-native-get-random-values: ">=1.11.0"
-  checksum: 7f7f656904e4869811ee2f7ebf3453c940260b4d9f88206b3fc8e42b4fd4883a84717bab45a3f79985739531d354d80e3812a712a073cde632d4f500883d3aa2
+  checksum: 764d1ce2de98cf82263f5f762f3b8ff40a7ecc8b7f69a7ddf7d0a504babb1313ef08f5c730cf193f4bb32d4c92873a10432ab47168ec31b67e1bafccde630706
   languageName: node
   linkType: hard
 
@@ -4503,7 +4503,7 @@ __metadata:
     "@babel/runtime": ^7.25.0
     "@bitcoinerlab/secp256k1": ^1.2.0
     "@breeztech/react-native-breez-sdk-liquid": ^0.9.1
-    "@buildonspark/spark-sdk": ^0.1.29
+    "@buildonspark/spark-sdk": ^0.1.30
     "@cashu/cashu-ts": ^2.5.2
     "@craftzdog/react-native-buffer": ^6.0.5
     "@miblanchard/react-native-slider": ^2.6.0
