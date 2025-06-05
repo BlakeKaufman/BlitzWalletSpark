@@ -36,9 +36,12 @@ function CustomFlatList({style, ...props}) {
         sparkAddress: sparkInformation.sparkAddress,
       });
       if (restoredLengh) return;
-      const balance = getSparkBalance();
+      const balance = await getSparkBalance();
       if (!balance) return;
-      setSparkInformation(prev => ({...prev, balance: balance.balance}));
+      setSparkInformation(prev => ({
+        ...prev,
+        balance: Number(balance.balance),
+      }));
     } catch (err) {
       console.log('error refreshing on homepage', err);
       crashlyticsRecordErrorReport(err.message);
