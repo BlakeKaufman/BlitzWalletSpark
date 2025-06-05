@@ -32,6 +32,9 @@ import {transformTxToPaymentObject} from '../app/functions/spark/transformTxToPa
 import {useGlobalContacts} from './globalContacts';
 import {initWallet} from '../app/functions/initiateWalletConnection';
 import {useNodeContext} from './nodeContext';
+import {calculateBoltzFeeNew} from '../app/functions/boltz/boltzFeeNew';
+import {sparkReceivePaymentWrapper} from '../app/functions/spark/payments';
+import {breezLiquidPaymentWrapper} from '../app/functions/breezLiquid';
 
 // Initiate context
 const SparkWalletManager = createContext(null);
@@ -339,12 +342,12 @@ const SparkWalletProvider = ({children}) => {
       }
     }, 30000); // every 30 seconds
 
-    async function restoreTxState() {
-      await fullRestoreSparkState({
-        sparkAddress: sparkInformation.sparkAddress,
-      });
-    }
-    restoreTxState();
+    // async function restoreTxState() {
+    //   await fullRestoreSparkState({
+    //     sparkAddress: sparkInformation.sparkAddress,
+    //   });
+    // }
+    // restoreTxState();
   }, [didGetToHomepage, sparkInformation.didConnect]);
 
   // This function connects to the spark node and sets the session up
@@ -380,41 +383,56 @@ const SparkWalletProvider = ({children}) => {
 
   // This function checks to see if there are any liquid funds that need to be sent to spark
   useEffect(() => {
-    if (!didGetToHomepage) return;
-    if (!sparkInformation.didConnect) return;
     async function swapLiquidToSpark() {
-      if (liquidNodeInformation.userBalance > 500) {
-        const liquidFee = calculateBoltzFeeNew(
+      try {
+        console.log(
           liquidNodeInformation.userBalance,
-          'liquid-ln',
-          minMaxLiquidSwapAmounts.submarineSwapStats,
+          minMaxLiquidSwapAmounts.min,
         );
-        const feeBuffer = liquidFee * 3.5;
+        if (liquidNodeInformation.userBalance > minMaxLiquidSwapAmounts.min) {
+          const liquidFee = calculateBoltzFeeNew(
+            liquidNodeInformation.userBalance,
+            'liquid-ln',
+            minMaxLiquidSwapAmounts.submarineSwapStats,
+          );
+          console.log(liquidFee);
+          const feeBuffer = liquidFee * 3.5;
 
-        const sendAmount = Math.round(
-          liquidNodeInformation.userBalance - feeBuffer,
-        );
+          const sendAmount = Math.round(
+            liquidNodeInformation.userBalance - feeBuffer,
+          );
+          console.log(liquidFee, 'liquid fee');
+          console.log(sendAmount, 'send amount');
+          console.log(liquidNodeInformation.userBalance, 'user balance');
+          if (sendAmount < minMaxLiquidSwapAmounts.min) return;
 
-        if (sendAmount < minMaxLiquidSwapAmounts.min) return;
-        console.log(liquidFee, 'liquid fee');
-        console.log(sendAmount, 'send amount');
-        console.log(liquidNodeInformation.userBalance, 'user balance');
+          const sparkLnReceiveAddress = await sparkReceivePaymentWrapper({
+            amountSats: sendAmount,
+            memo: 'Liquid to Spark Swap',
+            paymentType: 'lightning',
+          });
 
-        const sparkLnReceiveAddress = await sparkReceivePaymentWrapper({
-          amountSats: sendAmount,
-          memo: 'Liquid to Spark Swap',
-          paymentType: 'lightning',
-        });
+          if (!sparkLnReceiveAddress.didWork) return;
 
-        if (!sparkLnReceiveAddress.didWork) return;
-
-        await breezLiquidPaymentWrapper({
-          paymentType: 'lightning',
-          sendAmount: sendAmount,
-          invoice: sparkLnReceiveAddress.invoice,
-        });
+          await breezLiquidPaymentWrapper({
+            paymentType: 'lightning',
+            sendAmount: sendAmount,
+            invoice: sparkLnReceiveAddress.invoice,
+          });
+        }
+      } catch (err) {
+        console.log('transfering liquid to spark error', err);
       }
     }
+    console.log(
+      didGetToHomepage,
+      liquidNodeInformation,
+      minMaxLiquidSwapAmounts,
+      sparkInformation.didConnect,
+      'testing in sspark',
+    );
+    if (!didGetToHomepage) return;
+    if (!sparkInformation.didConnect) return;
     swapLiquidToSpark();
   }, [
     didGetToHomepage,
