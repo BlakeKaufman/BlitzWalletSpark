@@ -13,7 +13,6 @@ import {
   SPARK_TO_SPARK_FEE,
 } from '../../constants/math';
 import {
-  addSingleSparkTransaction,
   addSingleUnpaidSparkLightningTransaction,
   bulkUpdateSparkTransactions,
 } from './transactions';
@@ -93,7 +92,7 @@ export const sparkPaymenWrapper = async ({
           lightningPayResponse.id,
         );
 
-        if (sparkResponse.transfer) {
+        if (sparkResponse?.transfer) {
           sparkQueryResponse = sparkResponse;
         } else {
           console.log('Waiting for response...');
@@ -124,7 +123,7 @@ export const sparkPaymenWrapper = async ({
       };
       response = tx;
 
-      await addSingleSparkTransaction(tx);
+      await bulkUpdateSparkTransactions([tx]);
     } else if (paymentType === 'bitcoin') {
       // make sure to import exist speed
       const onChainPayResponse = await sparkWallet.withdraw({
@@ -143,7 +142,7 @@ export const sparkPaymenWrapper = async ({
           onChainPayResponse.id,
         );
 
-        if (sparkResponse.transfer) {
+        if (sparkResponse?.transfer) {
           sparkQueryResponse = sparkResponse;
         } else {
           console.log('Waiting for response...');
@@ -174,7 +173,7 @@ export const sparkPaymenWrapper = async ({
         },
       };
       response = tx;
-      await addSingleSparkTransaction(tx);
+      await bulkUpdateSparkTransactions([tx]);
     } else {
       const sparkPayResponse = await sendSparkPayment({
         receiverSparkAddress: address,
@@ -209,7 +208,7 @@ export const sparkPaymenWrapper = async ({
         },
       };
       response = tx;
-      await addSingleSparkTransaction(tx);
+      await bulkUpdateSparkTransactions([tx]);
     }
     console.log(response, 'resonse in send function');
     return {didWork: true, response};
@@ -264,61 +263,5 @@ export const sparkReceivePaymentWrapper = async ({
   } catch (err) {
     console.log('Receive spark payment error', err);
     return {didWork: false, error: err.message};
-  }
-};
-
-const updatePaymentsState = async (
-  outgoinPayment,
-  supportFeePayment,
-  fee,
-  memo,
-  address,
-  type,
-) => {
-  try {
-    await new Promise(res => setTimeout(res, 1000));
-    const transactions = await getSparkTransactions(5);
-    const txHistoryOutgoing =
-      transactions.find(
-        tx =>
-          new Date(tx.createdTime).getTime() ===
-          new Date(outgoinPayment.createdAt).getTime(),
-      ) || {};
-    const txHistorySupport = supportFeePayment
-      ? transactions.find(
-          tx =>
-            new Date(tx.createdTime).getTime() ===
-            new Date(supportFeePayment.createdTime).getTime(),
-        ) || {}
-      : null;
-
-    const storedPayment = {
-      ...outgoinPayment,
-      ...txHistoryOutgoing,
-      fee: fee,
-      address,
-      description: memo,
-    };
-
-    const supportStoredPayment = supportFeePayment
-      ? {
-          ...supportFeePayment,
-          ...txHistorySupport,
-          description: BLITZ_SUPPORT_DEFAULT_PAYMENT_DESCRIPTION,
-          address: process.env.BLITZ_SPARK_SUPPORT_ADDRESSS,
-          fee: SPARK_TO_SPARK_FEE,
-        }
-      : null;
-
-    const updates = supportStoredPayment
-      ? [storedPayment, supportStoredPayment]
-      : [storedPayment];
-
-    await bulkUpdateSparkTransactions(updates);
-
-    return storedPayment;
-  } catch (err) {
-    console.log('update payment state error', err);
-    return outgoinPayment;
   }
 };

@@ -31,7 +31,7 @@ export default async function processSparkAddress(input, context) {
     !!amountMsat &&
     Number(amountMsat / 1000) / (SATSPERBITCOIN / (fiatStats?.value || 65000));
 
-  if (!paymentInfo.paymentFee || paymentInfo?.supportFee) {
+  if ((!paymentInfo.paymentFee || paymentInfo?.supportFee) && !!amountMsat) {
     const fee = await sparkPaymenWrapper({
       getFee: true,
       address: addressInfo.address,
