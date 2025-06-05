@@ -298,7 +298,7 @@ export default function HandleLNURLPayments() {
       if (newQueue.length > 0) {
         timeoutRef.current = setTimeout(() => {
           processQueue();
-        }, 5000);
+        }, 10000);
       }
     } catch (error) {
       console.error('Error in processQueue:', error);

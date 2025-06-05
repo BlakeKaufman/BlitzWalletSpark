@@ -72,12 +72,11 @@ export default function SendPaymentScreen(props) {
   } = props.route.params;
 
   const {sparkInformation} = useSparkWallet();
-  console.log(sparkInformation, 'SPARK INFO');
   const {masterInfoObject, toggleMasterInfoObject} = useGlobalContextProvider();
   const {nodeInformation, liquidNodeInformation, fiatStats} = useNodeContext();
   const {minMaxLiquidSwapAmounts} = useAppStatus();
   const {theme, darkModeType} = useGlobalThemeContext();
-  const {ecashWalletInformation} = useGlobaleCash();
+  // const {ecashWalletInformation} = useGlobaleCash();
   const {textColor, backgroundOffset, backgroundColor} = GetThemeColors();
   const {
     webViewRef,
@@ -161,6 +160,7 @@ export default function SendPaymentScreen(props) {
     sendingAmount,
     paymentFee,
     sendingAmount,
+    paymentInfo,
   ); //ecash is built into ln);
   const isUsingSwapWithZeroInvoice =
     paymentInfo?.paymentNetwork === 'lightning' &&
@@ -422,12 +422,7 @@ export default function SendPaymentScreen(props) {
       formmateedSparkPaymentInfo.address = paymentInfo?.data?.address;
       formmateedSparkPaymentInfo.paymentType = 'spark';
     } else if (paymentInfo.type === 'lnUrlPay') {
-      const invoice = await getLNAddressForLiquidPayment(
-        paymentInfo,
-        Number(paymentInfo?.sendAmount),
-        paymentDescription || paymentInfo?.data.message || '',
-      );
-      formmateedSparkPaymentInfo.address = invoice;
+      formmateedSparkPaymentInfo.address = paymentInfo?.data?.invoice;
       formmateedSparkPaymentInfo.paymentType = 'lightning';
     } else if (paymentInfo.type === 'liquid') {
       formmateedSparkPaymentInfo.address = paymentInfo?.data?.invoice;

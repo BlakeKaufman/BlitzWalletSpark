@@ -191,7 +191,7 @@ async function processInputType(input, context) {
       return await processLNUrlAuth(input, context);
 
     case InputTypeVariant.LN_URL_PAY:
-      return processLNUrlPay(input, context);
+      return await processLNUrlPay(input, context);
 
     case InputTypeVariant.LN_URL_WITHDRAW:
       return await processLNUrlWithdraw(input, context);
