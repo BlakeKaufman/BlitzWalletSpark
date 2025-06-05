@@ -154,7 +154,12 @@ export async function fullRestoreSparkState({sparkAddress}) {
     const newPaymentObjects = [];
 
     for (const tx of restored.txs) {
-      const paymentObject = await transformTxToPaymentObject(tx, sparkAddress);
+      const paymentObject = await transformTxToPaymentObject(
+        tx,
+        sparkAddress,
+        undefined,
+        true,
+      );
       if (paymentObject) {
         newPaymentObjects.push(paymentObject);
       }

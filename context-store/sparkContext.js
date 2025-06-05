@@ -16,7 +16,6 @@ import {
   useSparkPaymentType,
 } from '../app/functions/spark';
 import {
-  addSingleSparkTransaction,
   bulkUpdateSparkTransactions,
   deleteUnpaidSparkLightningTransaction,
   getAllSparkTransactions,
@@ -108,7 +107,7 @@ const SparkWalletProvider = ({children}) => {
             });
 
             // If transfer is defined, assign and break out of while loop
-            if (result.transfer !== undefined) {
+            if (result?.transfer !== undefined) {
               paymentDetials = result;
               break;
             }
@@ -146,7 +145,7 @@ const SparkWalletProvider = ({children}) => {
             address: matchedUnpaidInvoice?.invoice?.encodedInvoice || '',
             time: new Date().getTime(),
             direction: 'INCOMING',
-            description: savedInvoice.description || '',
+            description: savedInvoice?.description || '',
             preimage: matchedUnpaidInvoice?.paymentPreimage || '',
           },
         };
@@ -174,7 +173,7 @@ const SparkWalletProvider = ({children}) => {
       if (!selectedSparkTransaction)
         throw new Error('Not able to get recent transfer');
 
-      await addSingleSparkTransaction(paymentObject);
+      await bulkUpdateSparkTransactions([paymentObject]);
 
       const savedTxs = await getAllSparkTransactions();
 
@@ -192,23 +191,26 @@ const SparkWalletProvider = ({children}) => {
     const isLNURLPayment = blockedIdentityPubKeysRef.current.find(
       blocked => blocked.transferResponse.id === transferId,
     );
+    const selectedStoredPayment = storedTransaction.txs.find(
+      tx => tx.sparkID === transferId,
+    );
     console.log(isLNURLPayment, 'isLNURL PAYMNET');
     if (!!isLNURLPayment) {
-      const selectedLNURL = storedTransaction.txs.find(
-        tx => tx.sparkID === transferId,
-      );
       const dbLNURL = isLNURLPayment.db;
 
       const newPayent = {
-        ...selectedLNURL,
+        ...selectedStoredPayment,
         details: {description: dbLNURL.description},
-        id: selectedLNURL.sparkID,
+        id: selectedStoredPayment.sparkID,
       };
 
       await bulkUpdateSparkTransactions([newPayent]);
 
       if (!isLNURLPayment.shouldNavigate) return;
     }
+    const details = JSON.parse(selectedStoredPayment.details);
+
+    if (details.isRestore) return;
     // Handle confirm animation here
     setPendingNavigation({
       routes: [

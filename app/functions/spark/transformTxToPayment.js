@@ -12,6 +12,7 @@ export async function transformTxToPaymentObject(
   tx,
   sparkAddress,
   forcePaymentType,
+  isRestore,
 ) {
   const paymentType = forcePaymentType
     ? forcePaymentType
@@ -57,8 +58,9 @@ export async function transformTxToPaymentObject(
               ? new Date(tx.updatedTime).getTime()
               : new Date().getTime(),
             direction: tx.transferDirection,
-            description: invoice.description || '',
+            description: invoice?.description || '',
             preimage: paymentDetails?.paymentPreimage || '',
+            isRestore,
           },
         };
       }
@@ -78,6 +80,7 @@ export async function transformTxToPaymentObject(
         direction: tx.transferDirection,
         description: '',
         preimage: '',
+        isRestore,
       },
     };
   }
@@ -98,6 +101,7 @@ export async function transformTxToPaymentObject(
         direction: tx.transferDirection,
         senderIdentityPublicKey: tx.senderIdentityPublicKey,
         description: '',
+        isRestore,
       },
     };
   }
@@ -119,6 +123,7 @@ export async function transformTxToPaymentObject(
         description: '',
         onChainTxid: tx.txid,
         refundTx: tx.refundTx,
+        isRestore,
       },
     };
   }
