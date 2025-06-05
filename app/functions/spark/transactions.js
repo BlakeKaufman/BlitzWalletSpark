@@ -141,6 +141,7 @@ export const bulkUpdateSparkTransactions = async transactions => {
     await sqlLiteDB.execAsync('BEGIN TRANSACTION');
 
     for (const tx of transactions) {
+      const tempSparkId = tx.useTempId ? tx.tempId : tx.id;
       const sparkID = tx.id;
 
       // Check if transaction exists
@@ -148,7 +149,7 @@ export const bulkUpdateSparkTransactions = async transactions => {
         `SELECT * FROM ${SPARK_TRANSACTIONS_TABLE_NAME} 
          WHERE sparkID = ? 
          LIMIT 1`,
-        [sparkID],
+        [tempSparkId],
       );
 
       const newDetails = tx.details;
@@ -166,14 +167,15 @@ export const bulkUpdateSparkTransactions = async transactions => {
 
         await sqlLiteDB.runAsync(
           `UPDATE ${SPARK_TRANSACTIONS_TABLE_NAME}
-           SET paymentStatus = ?, paymentType = ?, accountId = ?, details = ?
+           SET sparkID = ? paymentStatus = ?, paymentType = ?, accountId = ?, details = ?
            WHERE sparkID = ?`,
           [
+            sparkID,
             tx.paymentStatus,
             tx.paymentType ?? 'unknown',
             tx.accountId ?? 'unknown',
             JSON.stringify(mergedDetails),
-            sparkID,
+            tempSparkId,
           ],
         );
       } else {
