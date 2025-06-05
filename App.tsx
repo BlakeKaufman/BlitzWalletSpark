@@ -86,8 +86,8 @@ function App(): JSX.Element {
             <AppStatusProvider>
               <GlobalThemeProvider>
                 <GlobaleCashVariables>
-                  <SparkWalletProvider>
-                    <GLobalNodeContextProider>
+                  <GLobalNodeContextProider>
+                    <SparkWalletProvider>
                       {/* <GlobalConbinedTxContextProvider> */}
                       <GlobalAppDataProvider>
                         <POSTransactionsProvider>
@@ -107,8 +107,8 @@ function App(): JSX.Element {
                       </GlobalAppDataProvider>
                       {/* <BreezTest /> */}
                       {/* </GlobalConbinedTxContextProvider> */}
-                    </GLobalNodeContextProider>
-                  </SparkWalletProvider>
+                    </SparkWalletProvider>
+                  </GLobalNodeContextProider>
                 </GlobaleCashVariables>
               </GlobalThemeProvider>
             </AppStatusProvider>

@@ -32,12 +32,14 @@ import {
 import {transformTxToPaymentObject} from '../app/functions/spark/transformTxToPayment';
 import {useGlobalContacts} from './globalContacts';
 import {initWallet} from '../app/functions/initiateWalletConnection';
+import {useNodeContext} from './nodeContext';
 
 // Initiate context
 const SparkWalletManager = createContext(null);
 
 const SparkWalletProvider = ({children}) => {
-  const {didGetToHomepage} = useAppStatus();
+  const {didGetToHomepage, minMaxLiquidSwapAmounts} = useAppStatus();
+  const {liquidNodeInformation} = useNodeContext();
   const [sparkInformation, setSparkInformation] = useState({
     balance: 0,
     transactions: [],
@@ -317,6 +319,7 @@ const SparkWalletProvider = ({children}) => {
 
   useEffect(() => {
     // This function runs once per load and check to see if a user received any payments while offline. It also starts a timeout to update payment status of paymetns every 30 seconds.
+    if (!sparkInformation.didConnect) return;
     if (!didGetToHomepage) return;
     if (restoreOffllineStateRef.current) return;
     restoreOffllineStateRef.current = true;
@@ -340,7 +343,7 @@ const SparkWalletProvider = ({children}) => {
       });
     }
     restoreTxState();
-  }, [didGetToHomepage]);
+  }, [didGetToHomepage, sparkInformation.didConnect]);
 
   // This function connects to the spark node and sets the session up
   useEffect(() => {
@@ -372,6 +375,51 @@ const SparkWalletProvider = ({children}) => {
     if (!startConnectingToSpark) return;
     initProcess();
   }, [startConnectingToSpark]);
+
+  // This function checks to see if there are any liquid funds that need to be sent to spark
+  useEffect(() => {
+    if (!didGetToHomepage) return;
+    if (!sparkInformation.didConnect) return;
+    async function swapLiquidToSpark() {
+      if (liquidNodeInformation.userBalance > 500) {
+        const liquidFee = calculateBoltzFeeNew(
+          liquidNodeInformation.userBalance,
+          'liquid-ln',
+          minMaxLiquidSwapAmounts.submarineSwapStats,
+        );
+        const feeBuffer = liquidFee * 3.5;
+
+        const sendAmount = Math.round(
+          liquidNodeInformation.userBalance - feeBuffer,
+        );
+
+        if (sendAmount < minMaxLiquidSwapAmounts.min) return;
+        console.log(liquidFee, 'liquid fee');
+        console.log(sendAmount, 'send amount');
+        console.log(liquidNodeInformation.userBalance, 'user balance');
+
+        const sparkLnReceiveAddress = await sparkReceivePaymentWrapper({
+          amountSats: sendAmount,
+          memo: 'Liquid to Spark Swap',
+          paymentType: 'lightning',
+        });
+
+        if (!sparkLnReceiveAddress.didWork) return;
+
+        await breezLiquidPaymentWrapper({
+          paymentType: 'lightning',
+          sendAmount: sendAmount,
+          invoice: sparkLnReceiveAddress.invoice,
+        });
+      }
+    }
+    swapLiquidToSpark();
+  }, [
+    didGetToHomepage,
+    liquidNodeInformation,
+    minMaxLiquidSwapAmounts,
+    sparkInformation.didConnect,
+  ]);
 
   const contextValue = useMemo(
     () => ({
