@@ -35,6 +35,8 @@ import {useNodeContext} from './nodeContext';
 import {calculateBoltzFeeNew} from '../app/functions/boltz/boltzFeeNew';
 import {sparkReceivePaymentWrapper} from '../app/functions/spark/payments';
 import {breezLiquidPaymentWrapper} from '../app/functions/breezLiquid';
+import {getLocalStorageItem, setLocalStorageItem} from '../app/functions';
+import {AppState} from 'react-native';
 
 // Initiate context
 const SparkWalletManager = createContext(null);
@@ -90,6 +92,7 @@ const SparkWalletProvider = ({children}) => {
 
       if (paymentType === 'lightning') {
         const unpaidInvoices = await getAllUnpaidSparkLightningInvoices();
+        console.log(unpaidInvoices);
         const posibleOptions = unpaidInvoices.filter(
           unpaidInvoice =>
             unpaidInvoice.amount == selectedSparkTransaction.totalValue,
@@ -150,8 +153,13 @@ const SparkWalletProvider = ({children}) => {
             direction: 'INCOMING',
             description: savedInvoice?.description || '',
             preimage: matchedUnpaidInvoice?.paymentPreimage || '',
+            shouldNavigate:
+              savedInvoice?.shouldNavigate === undefined
+                ? 0 //if not specified navigate to confirm screen
+                : savedInvoice?.shouldNavigate,
           },
         };
+        console.log('lightning payment object', paymentObject);
       } else if (paymentType === 'spark') {
         paymentObject = {
           id: recevedTxId,
@@ -190,29 +198,28 @@ const SparkWalletProvider = ({children}) => {
     let storedTransaction = await handleTransactionUpdate(transferId);
 
     // block incoming paymetns here
-    console.log(blockedIdentityPubKeysRef.current, 'blocked identy puib keys');
-    const isLNURLPayment = blockedIdentityPubKeysRef.current.find(
-      blocked => blocked.transferResponse.id === transferId,
-    );
+    // console.log(blockedIdentityPubKeysRef.current, 'blocked identy puib keys');
+    // const isLNURLPayment = blockedIdentityPubKeysRef.current.find(
+    //   blocked => blocked.transferResponse.id === transferId,
+    // );
     const selectedStoredPayment = storedTransaction.txs.find(
       tx => tx.sparkID === transferId,
     );
-    console.log(isLNURLPayment, 'isLNURL PAYMNET');
-    if (!!isLNURLPayment) {
-      const dbLNURL = isLNURLPayment.db;
+    // console.log(isLNURLPayment, 'isLNURL PAYMNET');
+    // if (!!isLNURLPayment) {
+    //   const dbLNURL = isLNURLPayment.db;
 
-      const newPayent = {
-        ...selectedStoredPayment,
-        details: {description: dbLNURL.description},
-        id: selectedStoredPayment.sparkID,
-      };
+    //   const newPayent = {
+    //     ...selectedStoredPayment,
+    //     details: {description: dbLNURL.description},
+    //     id: selectedStoredPayment.sparkID,
+    //   };
 
-      await bulkUpdateSparkTransactions([newPayent]);
+    //   await bulkUpdateSparkTransactions([newPayent]);
 
-      if (!isLNURLPayment.shouldNavigate) return;
-    }
+    // }
     const details = JSON.parse(selectedStoredPayment.details);
-
+    if (details?.shouldNavigate) return;
     if (details.isRestore) return;
     // Handle confirm animation here
     setPendingNavigation({
@@ -234,12 +241,8 @@ const SparkWalletProvider = ({children}) => {
   // Add event listeners to listen for bitcoin and lightning or spark transfers when receiving does not handle sending
   useEffect(() => {
     if (!sparkInformation.didConnect) return;
-    if (sparkPaymentActionsRef.current) return;
-    sparkPaymentActionsRef.current = true;
 
-    console.log('Running add spark listneers');
-
-    async function handleUpdate(updateType) {
+    const handleUpdate = async updateType => {
       try {
         console.log(
           'running update in spark context from db changes',
@@ -247,29 +250,62 @@ const SparkWalletProvider = ({children}) => {
         );
         const balance = (await getSparkBalance()) || {balance: 0};
         const txs = await getAllSparkTransactions();
-        setSparkInformation(prev => {
-          return {
-            ...prev,
-            balance: balance.balance,
-            transactions: txs ? txs : prev.transactions,
-          };
-        });
+        setSparkInformation(prev => ({
+          ...prev,
+          balance: balance.balance,
+          transactions: txs ? txs : prev.transactions,
+        }));
       } catch (err) {
         console.log('error in spark handle db update function', err);
       }
-    }
+    };
 
-    sparkTransactionsEventEmitter.on(SPARK_TX_UPDATE_ENVENT_NAME, handleUpdate);
-
-    sparkWallet.on('transfer:claimed', (transferId, balance) => {
+    const transferHandler = (transferId, balance) => {
       console.log(`Transfer ${transferId} claimed. New balance: ${balance}`);
       handleIncomingPayment(transferId);
-    });
+    };
 
-    // sparkWallet.on('deposit:confirmed', (transferId, balance) => {
-    //   console.log(`Transfer ${transferId} claimed. New balance: ${balance}`);
-    //   handleIncomingPayment(transferId);
-    // });
+    const addListeners = () => {
+      if (sparkPaymentActionsRef.current) return;
+      sparkPaymentActionsRef.current = true;
+      console.log('Adding spark listeners');
+
+      sparkTransactionsEventEmitter.on(
+        SPARK_TX_UPDATE_ENVENT_NAME,
+        handleUpdate,
+      );
+      sparkWallet.on('transfer:claimed', transferHandler);
+      sparkWallet.on('deposit:confirmed', transferHandler);
+    };
+
+    const removeListeners = () => {
+      if (!sparkPaymentActionsRef.current) return;
+      sparkPaymentActionsRef.current = false;
+      console.log('Removing spark listeners');
+
+      sparkTransactionsEventEmitter.off(
+        SPARK_TX_UPDATE_ENVENT_NAME,
+        handleUpdate,
+      );
+      sparkWallet.off('transfer:claimed', transferHandler);
+      sparkWallet.off('deposit:confirmed', transferHandler);
+    };
+
+    const handleAppStateChange = nextAppState => {
+      console.log(nextAppState);
+      if (nextAppState === 'active') {
+        addListeners();
+      } else if (nextAppState.match(/inactive|background/)) {
+        removeListeners();
+      }
+    };
+
+    AppState.addEventListener('change', handleAppStateChange);
+
+    // Add on mount if app is already active
+    if (AppState.currentState === 'active') {
+      addListeners();
+    }
   }, [sparkInformation.didConnect]);
 
   useEffect(() => {
@@ -324,30 +360,65 @@ const SparkWalletProvider = ({children}) => {
 
   useEffect(() => {
     // This function runs once per load and check to see if a user received any payments while offline. It also starts a timeout to update payment status of paymetns every 30 seconds.
-    if (!sparkInformation.didConnect) return;
-    if (!didGetToHomepage) return;
+    if (!sparkInformation.didConnect || !didGetToHomepage) return;
     if (restoreOffllineStateRef.current) return;
     restoreOffllineStateRef.current = true;
 
-    setInterval(async () => {
-      try {
-        console.log(
-          'Is first interval',
-          isFirstSparkUpdateStateInterval.current,
-        );
-        updateSparkTxStatus(50, isFirstSparkUpdateStateInterval.current);
-        isFirstSparkUpdateStateInterval.current = false;
-      } catch (err) {
-        console.error('Error during periodic restore:', err);
-      }
-    }, 30000); // every 30 seconds
+    let intervalId = null;
 
-    // async function restoreTxState() {
-    //   await fullRestoreSparkState({
-    //     sparkAddress: sparkInformation.sparkAddress,
-    //   });
-    // }
-    // restoreTxState();
+    const startInterval = () => {
+      if (intervalId) return;
+      console.log('Starting spark update interval');
+      intervalId = setInterval(async () => {
+        try {
+          console.log(
+            'Is first interval',
+            isFirstSparkUpdateStateInterval.current,
+          );
+          await updateSparkTxStatus(
+            50,
+            isFirstSparkUpdateStateInterval.current,
+          );
+          isFirstSparkUpdateStateInterval.current = false;
+        } catch (err) {
+          console.error('Error during periodic restore:', err);
+        }
+      }, 30000);
+    };
+
+    const clearIntervalIfNeeded = () => {
+      if (intervalId) {
+        console.log('Clearing spark update interval');
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+    };
+
+    const handleAppStateChange = nextAppState => {
+      if (nextAppState === 'active') {
+        startInterval();
+      } else if (nextAppState.match(/inactive|background/)) {
+        clearIntervalIfNeeded();
+      }
+    };
+
+    // Run restore logic once
+    const restoreTxState = async () => {
+      const isFirstWalletLoad = await getLocalStorageItem('isFirstWalletLoad');
+      if (isFirstWalletLoad === 'true') return;
+      await setLocalStorageItem('isFirstWalletLoad', 'true');
+      await fullRestoreSparkState({
+        sparkAddress: sparkInformation.sparkAddress,
+      });
+    };
+    restoreTxState();
+
+    // Start interval immediately if app is active
+    if (AppState.currentState === 'active') {
+      startInterval();
+    }
+
+    AppState.addEventListener('change', handleAppStateChange);
   }, [didGetToHomepage, sparkInformation.didConnect]);
 
   // This function connects to the spark node and sets the session up
