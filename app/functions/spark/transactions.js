@@ -37,7 +37,9 @@ export const initializeSparkDatabase = async () => {
         sparkID TEXT NOT NULL,
         amount INTEGER NOT NULL,
         expiration INTEGER NOT NULL,
-        description TEXT NOT NULL
+        description TEXT NOT NULL,
+        shouldNavigate INTEGER NOT NULL,
+        details TEXT
       );
     `);
 
@@ -96,9 +98,16 @@ export const addSingleUnpaidSparkLightningTransaction = async tx => {
   try {
     await sqlLiteDB.runAsync(
       `INSERT INTO ${LIGHTNING_REQUEST_IDS_TABLE_NAME}
-       (sparkID, amount, expiration, description)
-       VALUES (?, ?, ?, ?)`,
-      [tx.id, Number(tx.amount), tx.expiration, tx.description],
+       (sparkID, amount, expiration, description, shouldNavigate, details)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        tx.id,
+        Number(tx.amount),
+        tx.expiration,
+        tx.description,
+        tx.shouldNavigate !== undefined ? (tx.shouldNavigate ? 0 : 1) : 1,
+        JSON.stringify(tx.details),
+      ],
     );
     return true;
   } catch (error) {
@@ -167,7 +176,7 @@ export const bulkUpdateSparkTransactions = async transactions => {
 
         await sqlLiteDB.runAsync(
           `UPDATE ${SPARK_TRANSACTIONS_TABLE_NAME}
-           SET sparkID = ? paymentStatus = ?, paymentType = ?, accountId = ?, details = ?
+           SET sparkID = ?, paymentStatus = ?, paymentType = ?, accountId = ?, details = ?
            WHERE sparkID = ?`,
           [
             sparkID,
