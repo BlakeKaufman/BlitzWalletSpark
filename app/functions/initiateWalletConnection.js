@@ -20,16 +20,14 @@ export async function initWallet({
     crashlyticsLogReport('Trying to connect to nodes');
     const didConnectToSpark = await initializeSparkWallet();
 
-    // We only care about the spark connection here. If liquid fails, continue since its not the main node
     if (didConnectToSpark.isConnected) {
       crashlyticsLogReport('Loading node balances for session');
       const didSetSpark = await initializeSparkSession({
         setSparkInformation,
         globalContactsInformation,
         toggleGlobalContactsInformation,
-      }); // need to write function
+      });
 
-      // Same thing for here, if liquid does not set continue on in the process
       if (!didSetSpark)
         throw new Error(
           'Spark wallet information was not set properly, please try again.',
@@ -66,12 +64,16 @@ async function initializeSparkSession({
     if (balance === undefined || transactions === undefined)
       throw new Error('Unable to initialize spark from history');
 
-    if (!globalContactsInformation.myProfile.sparkAddress) {
+    if (
+      !globalContactsInformation.myProfile.sparkAddress ||
+      !globalContactsInformation.myProfile.sparkIdentityPubKey
+    ) {
       toggleGlobalContactsInformation(
         {
           myProfile: {
             ...globalContactsInformation.myProfile,
             sparkAddress: sparkAddress,
+            sparkIdentityPubKey: identityPubKey,
           },
         },
         true,
