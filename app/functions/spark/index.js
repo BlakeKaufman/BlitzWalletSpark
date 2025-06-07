@@ -119,7 +119,12 @@ export const getSparkAddress = async () => {
 export const sendSparkPayment = async ({receiverSparkAddress, amountSats}) => {
   try {
     if (!sparkWallet) throw new Error('sparkWallet not initialized');
-    return await sparkWallet.transfer({receiverSparkAddress, amountSats});
+    const response = await sparkWallet.transfer({
+      receiverSparkAddress,
+      amountSats,
+    });
+    console.log('spark payment response', response);
+    return response;
   } catch (err) {
     console.log('Send spark payment error', err);
   }
@@ -221,6 +226,22 @@ export const sendSparkLightningPayment = async ({invoice, maxFeeSats}) => {
     console.log('Send lightning payment error', err);
   }
 };
+export const sendSparkBitcoinPayment = async ({
+  onchainAddress,
+  exitSpeed,
+  amountSats,
+}) => {
+  try {
+    if (!sparkWallet) throw new Error('sparkWallet not initialized');
+    return await sparkWallet.withdraw({
+      onchainAddress,
+      exitSpeed,
+      amountSats,
+    });
+  } catch (err) {
+    console.log('Send Bitcoin payment error', err);
+  }
+};
 
 export const getSparkTransactions = async (
   transferCount = 100,
@@ -230,7 +251,7 @@ export const getSparkTransactions = async (
     if (!sparkWallet) throw new Error('sparkWallet not initialized');
     return await sparkWallet.getTransfers(transferCount, offsetIndex);
   } catch (err) {
-    console.log('Send lightning payment error', err);
+    console.log('get spark transactions error', err);
   }
 };
 export const getCachedSparkTransactions = async () => {
@@ -239,7 +260,7 @@ export const getCachedSparkTransactions = async () => {
     if (!txResponse) throw new Error('Unable to get cached spark transactins');
     return txResponse;
   } catch (err) {
-    console.log('Send lightning payment error', err);
+    console.log('get cached spark transaction error', err);
   }
 };
 export const useSparkPaymentType = tx => {
