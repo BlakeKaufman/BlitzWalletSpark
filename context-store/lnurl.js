@@ -12,10 +12,11 @@ import {initializeTempSparkWallet} from '../app/functions/spark';
 import {getBitcoinKeyPair, getSharedKey} from '../app/functions/lnurl';
 import {useSparkWallet} from './sparkContext';
 import {retrieveData} from '../app/functions';
+import {addSingleUnpaidSparkLightningTransaction} from '../app/functions/spark/transactions';
 
 export default function HandleLNURLPayments() {
   const {
-    setBlockedIdentityPubKeys,
+    // setBlockedIdentityPubKeys,
     sparkInformation,
     setNumberOfIncomingLNURLPayments,
   } = useSparkWallet();
@@ -88,9 +89,6 @@ export default function HandleLNURLPayments() {
           });
         }
 
-        setNumberOfIncomingLNURLPayments(
-          prev => (prev += paymentQueueRef.current.length),
-        );
         processQueue();
       } catch (error) {
         console.error('Error loading saved LNURL payments:', error);
@@ -142,9 +140,6 @@ export default function HandleLNURLPayments() {
           });
 
           if (hasNewPayments) {
-            setNumberOfIncomingLNURLPayments(
-              prev => (prev += paymentQueueRef.current.length),
-            );
             processQueue();
           }
         },
@@ -171,97 +166,109 @@ export default function HandleLNURLPayments() {
 
     try {
       const currentQueue = [...paymentQueueRef.current];
-      setNumberOfIncomingLNURLPayments(currentQueue.length);
       console.log(`Processing ${currentQueue.length} LNURL payments`);
-
       if (currentQueue.length === 0) return;
 
       const newQueue = [];
       const processedIds = [];
 
       for (const payment of currentQueue) {
-        console.log(`Processing LNURL payment ${payment.id}`);
-        try {
-          // Skip if run count exceeds limit
-          if (payment.runCount >= 5) {
-            console.log(`Payment ${payment.id} exceeded retry limit`);
-            continue;
-          }
+        console.log(`Processing LNURL payment ${payment.id}`, payment);
+        await addSingleUnpaidSparkLightningTransaction({
+          id: payment.sparkID,
+          amount: payment.amountSats,
+          expiration: payment.expiredTime,
+          description: payment.description,
+          shouldNavigate: payment.shouldNavigate,
+          details: {
+            sharedPublicKey: payment.sharedPublicKey,
+            sparkPubKey: payment.sparkPubKey,
+          },
+        });
+        processedIds.push(payment.id);
+        deleteActiveLNURLPaymentsRef.current.push(payment.id);
+        // return;
+        // try {
+        //   // Skip if run count exceeds limit
+        //   if (payment.runCount >= 5) {
+        //     console.log(`Payment ${payment.id} exceeded retry limit`);
+        //     continue;
+        //   }
 
-          const derivedMnemonic = getSharedKey(
-            privateKey,
-            payment.sharedPublicKey,
-          );
+        //   const derivedMnemonic = getSharedKey(
+        //     privateKey,
+        //     payment.sharedPublicKey,
+        //   );
 
-          let cached = tempWalletCacheRef.current.get(derivedMnemonic);
-          let tempSparkWallet = cached?.wallet;
+        //   let cached = tempWalletCacheRef.current.get(derivedMnemonic);
+        //   let tempSparkWallet = cached?.wallet;
 
-          if (!tempSparkWallet) {
-            tempSparkWallet = await initializeTempSparkWallet(derivedMnemonic);
-            if (!tempSparkWallet) {
-              newQueue.push({...payment, runCount: payment.runCount + 1});
-              continue;
-            }
+        //   if (!tempSparkWallet) {
+        //     tempSparkWallet = await initializeTempSparkWallet(derivedMnemonic);
+        //     if (!tempSparkWallet) {
+        //       newQueue.push({...payment, runCount: payment.runCount + 1});
+        //       continue;
+        //     }
 
-            tempWalletCacheRef.current.set(derivedMnemonic, {
-              wallet: tempSparkWallet,
-              timestamp: Date.now(),
-            });
-          }
+        //     tempWalletCacheRef.current.set(derivedMnemonic, {
+        //       wallet: tempSparkWallet,
+        //       timestamp: Date.now(),
+        //     });
+        //   }
 
-          console.log(`Initialized LNULR wallet for ${payment.id}`);
+        //   console.log(`Initialized LNULR wallet for ${payment.id}`);
 
-          const balance = await tempSparkWallet.getBalance();
+        //   const balance = await tempSparkWallet.getBalance();
 
-          console.log(`Has a balance of ${Number(balance.balance)}`);
+        //   console.log(`Has a balance of ${Number(balance.balance)}`);
 
-          if (Number(balance.balance) === 0) {
-            const now = new Date().getTime();
+        //   if (Number(balance.balance) === 0) {
+        //     const now = new Date().getTime();
 
-            if (payment.expiredTime < now) {
-              processedIds.push(payment.id);
-              deleteActiveLNURLPaymentsRef.current.push(payment.id);
-              continue;
-            }
-            newQueue.push({...payment, runCount: payment.runCount + 1});
-            continue;
-          }
+        //     if (payment.expiredTime < now) {
+        //       processedIds.push(payment.id);
+        //       deleteActiveLNURLPaymentsRef.current.push(payment.id);
+        //       continue;
+        //     }
+        //     newQueue.push({...payment, runCount: payment.runCount + 1});
+        //     continue;
+        //   }
 
-          const paymentResponse = await tempSparkWallet.transfer({
-            amountSats: Number(balance.balance),
-            receiverSparkAddress: sparkAddress,
-          });
+        //   const paymentResponse = await tempSparkWallet.transfer({
+        //     amountSats: Number(balance.balance),
+        //     receiverSparkAddress: sparkAddress,
+        //   });
 
-          if (!paymentResponse) {
-            newQueue.push({...payment, runCount: payment.runCount + 1});
-            continue;
-          }
+        //   if (!paymentResponse) {
+        //     newQueue.push({...payment, runCount: payment.runCount + 1});
+        //     continue;
+        //   }
 
-          const shouldNavigate =
-            payment.shouldNavigate &&
-            !processedIds.some(
-              id => currentQueue.find(p => p.id === id)?.shouldNavigate,
-            );
+        //   const shouldNavigate =
+        //     payment.shouldNavigate &&
+        //     !processedIds.some(
+        //       id => currentQueue.find(p => p.id === id)?.shouldNavigate,
+        //     );
 
-          setBlockedIdentityPubKeys(prev => {
-            if (prev.some(p => p.transferResponse?.id === paymentResponse.id))
-              return prev;
-            return [
-              ...prev,
-              {
-                transferResponse: {...paymentResponse},
-                db: payment,
-                shouldNavigate,
-              },
-            ];
-          });
+        //   setBlockedIdentityPubKeys(prev => {
+        //     if (prev.some(p => p.transferResponse?.id === paymentResponse.id))
+        //       return prev;
+        //     return [
+        //       ...prev,
+        //       {
+        //         transferResponse: {...paymentResponse},
+        //         db: payment,
+        //         shouldNavigate,
+        //       },
+        //     ];
+        //   });
 
-          processedIds.push(payment.id);
-          deleteActiveLNURLPaymentsRef.current.push(payment.id);
-        } catch (err) {
-          console.error('Error processing payment:', payment.id, err);
-          newQueue.push({...payment, runCount: payment.runCount + 1});
-        }
+        //   processedIds.push(payment.id);
+        //   deleteActiveLNURLPaymentsRef.current.push(payment.id);
+        // } catch (err) {
+        //   console.error('Error processing payment:', payment.id, err);
+        //   newQueue.push({...payment, runCount: payment.runCount + 1});
+        // }
       }
 
       // Update queue and clean up processed payments
@@ -273,7 +280,7 @@ export default function HandleLNURLPayments() {
         )
         .concat(newQueue);
 
-      setNumberOfIncomingLNURLPayments(paymentQueueRef.current.length);
+      // setNumberOfIncomingLNURLPayments(paymentQueueRef.current.length);
 
       if (deleteActiveLNURLPaymentsRef.current.length > 0) {
         try {
@@ -287,13 +294,13 @@ export default function HandleLNURLPayments() {
         }
       }
 
-      const now = Date.now();
-      const oneHour = 60 * 60 * 1000;
-      for (const [key, value] of tempWalletCacheRef.current.entries()) {
-        if (now - value.timestamp > oneHour) {
-          tempWalletCacheRef.current.delete(key);
-        }
-      }
+      // const now = Date.now();
+      // const oneHour = 60 * 60 * 1000;
+      // for (const [key, value] of tempWalletCacheRef.current.entries()) {
+      //   if (now - value.timestamp > oneHour) {
+      //     tempWalletCacheRef.current.delete(key);
+      //   }
+      // }
 
       if (newQueue.length > 0) {
         timeoutRef.current = setTimeout(() => {
@@ -310,7 +317,7 @@ export default function HandleLNURLPayments() {
     sparkAddress,
     masterInfoObject.uuid,
     setNumberOfIncomingLNURLPayments,
-    setBlockedIdentityPubKeys,
+    // setBlockedIdentityPubKeys,
   ]);
 
   return null;
