@@ -105,7 +105,7 @@ export const addSingleUnpaidSparkLightningTransaction = async tx => {
         Number(tx.amount),
         tx.expiration,
         tx.description,
-        tx.shouldNavigate !== undefined ? (tx.shouldNavigate ? 0 : 1) : 1,
+        tx.shouldNavigate !== undefined ? (tx.shouldNavigate ? 0 : 1) : 0,
         JSON.stringify(tx.details),
       ],
     );
