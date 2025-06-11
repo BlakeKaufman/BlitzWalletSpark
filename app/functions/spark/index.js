@@ -76,6 +76,58 @@ export const getSparkBitcoinL1Address = async () => {
   }
 };
 
+export const getSparkStaticBitcoinL1Address = async () => {
+  try {
+    if (!sparkWallet) throw new Error('sparkWallet not initialized');
+    return await sparkWallet.getStaticDepositAddress();
+  } catch (err) {
+    console.log('Get reusable Bitcoin mainchain address error', err);
+  }
+};
+
+export const getSparkStaticBitcoinL1AddressQuote = async txid => {
+  try {
+    if (!sparkWallet) throw new Error('sparkWallet not initialized');
+    return await sparkWallet.getClaimStaticDepositQuote(txid);
+  } catch (err) {
+    console.log('Get reusable Bitcoin mainchain address quote error', err);
+  }
+};
+export const refundSparkStaticBitcoinL1AddressQuote = async ({
+  depositTransactionId,
+  destinationAddress,
+  fee,
+}) => {
+  try {
+    if (!sparkWallet) throw new Error('sparkWallet not initialized');
+    return await sparkWallet.refundStaticDeposit({
+      depositTransactionId,
+      destinationAddress,
+      fee,
+    });
+  } catch (err) {
+    console.log('refund reusable Bitcoin mainchain address error', err);
+  }
+};
+
+export const claimnSparkStaticDepositAddress = async ({
+  creditAmountSats,
+  outputIndex,
+  sspSignature,
+  transactionId,
+}) => {
+  try {
+    if (!sparkWallet) throw new Error('sparkWallet not initialized');
+    return await sparkWallet.claimStaticDeposit({
+      creditAmountSats,
+      sspSignature,
+      transactionId,
+    });
+  } catch (err) {
+    console.log('claim static deposit address error', err);
+  }
+};
+
 export const getUnusedSparkBitcoinL1Address = async () => {
   try {
     if (!sparkWallet) throw new Error('sparkWallet not initialized');
