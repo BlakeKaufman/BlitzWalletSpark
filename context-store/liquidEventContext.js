@@ -42,13 +42,13 @@ export function LiquidEventProvider({children}) {
         console.log(
           `Running in sync else statment for liquiid on sync count:${syncRunCounter.current} and is initiail sync ${isInitialSync.current}`,
         );
-        if (syncRunCounter.current >= (isInitialSync.current ? 2 : 6)) {
-          if (isInitialSync.current) isInitialSync.current = false;
-          console.log('running debounce sync else statment for liquiid');
-          debouncedStartInterval(0);
-          syncRunCounter.current = 0;
-        }
-        syncRunCounter.current = syncRunCounter.current + 1;
+        // if (syncRunCounter.current >= (isInitialSync.current ? 2 : 6)) {
+        //   if (isInitialSync.current) isInitialSync.current = false;
+        //   console.log('running debounce sync else statment for liquiid');
+        //   debouncedStartInterval(0);
+        //   syncRunCounter.current = 0;
+        // }
+        // syncRunCounter.current = syncRunCounter.current + 1;
       }
     },
     [syncRunCounter, isInitialSync],
