@@ -84,8 +84,17 @@ export default function AddContactsHalfModal(props) {
   const handleSearch = term => {
     setSearchInput(term);
     if (term.includes('@')) return;
-    term && setIsSearching(true);
-    debouncedSearch(term);
+
+    if (term.length < 1) {
+      setUsers([]);
+      setIsSearching(false);
+      return;
+    }
+
+    if (term.length >= 1) {
+      setIsSearching(true);
+      debouncedSearch(term);
+    }
   };
 
   const parseContact = data => {
@@ -162,6 +171,7 @@ export default function AddContactsHalfModal(props) {
             textInputRef={keyboardRef}
             blurOnSubmit={false}
             containerStyles={{justifyContent: 'center'}}
+            textInputStyles={{paddingRight: 40}}
             onSubmitEditingFunction={() => {
               clearHalfModalForLNURL();
             }}
@@ -237,9 +247,9 @@ export default function AddContactsHalfModal(props) {
                   content={
                     isSearching
                       ? ''
-                      : searchInput
+                      : searchInput.length >= 1
                       ? 'No profiles match this search'
-                      : 'Start typing to search for a profile'
+                      : 'Start typing to search for a profile (min 2 chars)'
                   }
                 />
               )}
