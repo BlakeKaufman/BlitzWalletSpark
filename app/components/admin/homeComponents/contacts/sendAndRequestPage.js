@@ -81,115 +81,6 @@ export default function SendAndRequestPage(props) {
     [amountValue, fiatStats, isBTCdenominated],
   );
 
-  // const boltzFee = useMemo(() => {
-  //   return (
-  //     minMaxLiquidSwapAmounts.reverseSwapStats?.fees?.minerFees?.claim +
-  //     minMaxLiquidSwapAmounts.reverseSwapStats?.fees?.minerFees?.lockup +
-  //     Math.round(convertedSendAmount * 0.0025)
-  //   );
-  // }, [convertedSendAmount, minMaxLiquidSwapAmounts]);
-
-  // const lnFee = useMemo(() => {
-  //   return convertedSendAmount * 0.005 + 4;
-  // }, [convertedSendAmount]);
-
-  // const canUseLiquid = useMemo(
-  //   () =>
-  //     selectedContact?.isLNURL
-  //       ? Number(convertedSendAmount) >= minMaxLiquidSwapAmounts.min &&
-  //         Number(convertedSendAmount) <= minMaxLiquidSwapAmounts.max &&
-  //         liquidNodeInformation.userBalance >= Number(convertedSendAmount)
-  //       : liquidNodeInformation.userBalance >= Number(convertedSendAmount) &&
-  //         Number(convertedSendAmount) >= DUST_LIMIT_FOR_LBTC_CHAIN_PAYMENTS,
-  //   [
-  //     convertedSendAmount,
-  //     selectedContact,
-  //     liquidNodeInformation,
-  //     minMaxLiquidSwapAmounts,
-  //   ],
-  // );
-
-  // const canUseLightning = useMemo(
-  //   () =>
-  //     masterInfoObject.liquidWalletSettings.isLightningEnabled
-  //       ? selectedContact?.isLNURL
-  //         ? nodeInformation.userBalance >= Number(convertedSendAmount)
-  //         : nodeInformation.userBalance >=
-  //             Number(convertedSendAmount) + lnFee &&
-  //           Number(convertedSendAmount) >= minMaxLiquidSwapAmounts.min &&
-  //           Number(convertedSendAmount) <= minMaxLiquidSwapAmounts.max
-  //       : false,
-  //   [
-  //     convertedSendAmount,
-  //     boltzFee,
-  //     minMaxLiquidSwapAmounts,
-  //     nodeInformation,
-  //     masterInfoObject,
-  //     selectedContact,
-  //     lnFee,
-  //   ],
-  // );
-
-  // const usedEcashProofs = useMemo(() => {
-  //   const proofsToUse = getProofsToUse(
-  //     ecashWalletInformation.proofs,
-  //     convertedSendAmount,
-  //   );
-  //   return proofsToUse
-  //     ? proofsToUse?.proofsToUse
-  //     : ecashWalletInformation.proofs;
-  // }, [convertedSendAmount, ecashWalletInformation]);
-
-  // const canUseEcash = useMemo(
-  //   () =>
-  //     masterInfoObject.enabledEcash
-  //       ? selectedContact?.isLNURL
-  //         ? eCashBalance >= Number(convertedSendAmount) + lnFee
-  //         : eCashBalance >= Number(convertedSendAmount) + lnFee &&
-  //           Number(convertedSendAmount) >= minMaxLiquidSwapAmounts.min &&
-  //           Number(convertedSendAmount) <= minMaxLiquidSwapAmounts.max
-  //       : false,
-  //   [
-  //     selectedContact,
-  //     eCashBalance,
-  //     convertedSendAmount,
-  //     masterInfoObject,
-  //     ecashWalletInformation,
-  //     usedEcashProofs,
-  //     lnFee,
-  //   ],
-  // );
-
-  // const canSendToLNURL = useMemo(
-  //   () =>
-  //     !!selectedContact?.isLNURL &&
-  //     (nodeInformation.userBalance >=
-  //       Number(convertedSendAmount) + LIGHTNINGAMOUNTBUFFER ||
-  //       canUseEcash ||
-  //       (canUseLiquid &&
-  //         Number(convertedSendAmount) >= minMaxLiquidSwapAmounts.min)) &&
-  //     !!Number(convertedSendAmount),
-  //   [
-  //     selectedContact,
-  //     nodeInformation,
-  //     convertedSendAmount,
-  //     LIGHTNINGAMOUNTBUFFER,
-  //     canUseEcash,
-  //     canUseLiquid,
-  //     minMaxLiquidSwapAmounts,
-  //   ],
-  // );
-
-  // console.log(
-  //   canUseLiquid,
-  //   canUseEcash,
-  //   canUseLightning,
-  //   canSendToLNURL,
-  //   convertedSendAmount,
-  //   minMaxLiquidSwapAmounts.min,
-  //   'CAN USE LIQUID',
-  // );
-
   const canSendPayment = useMemo(
     () =>
       paymentType === 'request'
@@ -220,24 +111,25 @@ export default function SendAndRequestPage(props) {
       const sendingAmountMsat = convertedSendAmount * 1000;
       const address = selectedContact.receiveAddress;
       let receiveAddress;
+      let retrivedContact;
       if (selectedContact.isLNURL) {
         receiveAddress = address;
         // note do not need to set an amount for lnurl taken care of down below with entered payment information object
       } else {
-        const payingContact = await getDataFromCollection(
+        retrivedContact = await getDataFromCollection(
           'blitzWalletUsers',
           selectedContact.uuid,
         );
-        console.log('Retrived selected contact', payingContact);
-        if (!payingContact) {
+        console.log('Retrived selected contact', retrivedContact);
+        if (!retrivedContact) {
           navigate.navigate('ErrorScreen', {
             errorMessage: 'Error retrieving contact information',
           });
           return;
         } else {
-          if (payingContact?.contacts?.myProfile?.sparkAddress) {
+          if (retrivedContact?.contacts?.myProfile?.sparkAddress) {
             receiveAddress = formatBip21SparkAddress({
-              address: payingContact?.contacts?.myProfile?.sparkAddress,
+              address: retrivedContact?.contacts?.myProfile?.sparkAddress,
               amount: convertedSendAmount,
               message: `Paying ${
                 selectedContact.name || selectedContact.uniqueName
@@ -282,6 +174,7 @@ export default function SendAndRequestPage(props) {
               fiatCurrencies,
               isLNURLPayment: selectedContact?.isLNURL,
               privateKey: contactsPrivateKey,
+              retrivedContact,
             }),
         });
       } else {
@@ -301,6 +194,7 @@ export default function SendAndRequestPage(props) {
           fiatCurrencies,
           isLNURLPayment: selectedContact?.isLNURL,
           privateKey: contactsPrivateKey,
+          retrivedContact,
         });
         navigate.goBack();
       }
