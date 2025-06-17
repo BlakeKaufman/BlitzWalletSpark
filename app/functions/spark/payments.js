@@ -1,17 +1,14 @@
 import {
   getSparkBitcoinPaymentRequest,
   getSparkLightningSendRequest,
-  getSparkTransactions,
+  getSparkStaticBitcoinL1Address,
+  sendSparkBitcoinPayment,
+  sendSparkLightningPayment,
   sendSparkPayment,
   sparkWallet,
 } from '.';
-import {BLITZ_SUPPORT_DEFAULT_PAYMENT_DESCRIPTION} from '../../constants';
-import {
-  BLITZ_FEE_PERCET,
-  BLITZ_FEE_SATS,
-  SPARK_TO_LN_FEE,
-  SPARK_TO_SPARK_FEE,
-} from '../../constants/math';
+
+import {SPARK_TO_LN_FEE, SPARK_TO_SPARK_FEE} from '../../constants/math';
 import {
   addSingleUnpaidSparkLightningTransaction,
   bulkUpdateSparkTransactions,
@@ -71,18 +68,13 @@ export const sparkPaymenWrapper = async ({
     let supportFeeResponse;
 
     if (paymentType === 'lightning') {
-      const lightningPayResponse = await sparkWallet.payLightningInvoice({
+      const lightningPayResponse = await sendSparkLightningPayment({
         invoice: address,
       });
       if (!lightningPayResponse)
         throw new Error('Error when sending lightning payment');
 
-      // if (masterInfoObject?.enabledDeveloperSupport?.isEnabled) {
-      //   sendSparkPayment({
-      //     receiverSparkAddress: process.env.BLITZ_SPARK_SUPPORT_ADDRESSS,
-      //     amountSats: supportFee,
-      //   });
-      // }
+      handleSupportPayment(masterInfoObject, supportFee);
 
       console.log(lightningPayResponse, 'lightning pay response');
       let sparkQueryResponse = null;
@@ -126,13 +118,14 @@ export const sparkPaymenWrapper = async ({
       await bulkUpdateSparkTransactions([tx]);
     } else if (paymentType === 'bitcoin') {
       // make sure to import exist speed
-      const onChainPayResponse = await sparkWallet.withdraw({
+      const onChainPayResponse = await sendSparkBitcoinPayment({
         onchainAddress: address,
         exitSpeed,
         amountSats,
       });
       if (!onChainPayResponse)
         throw new Error('Error when sending bitcoin payment');
+      handleSupportPayment(masterInfoObject, supportFee);
 
       console.log(onChainPayResponse, 'on-chain pay response');
       let sparkQueryResponse = null;
@@ -179,18 +172,10 @@ export const sparkPaymenWrapper = async ({
         receiverSparkAddress: address,
         amountSats,
       });
-
       if (!sparkPayResponse)
         throw new Error('Error when sending spark payment');
 
-      console.log('Spark payment response', sparkPayResponse);
-
-      // if (masterInfoObject?.enabledDeveloperSupport?.isEnabled) {
-      //   sendSparkPayment({
-      //     receiverSparkAddress: process.env.BLITZ_SPARK_SUPPORT_ADDRESSS,
-      //     amountSats: supportFee,
-      //   });
-      // }
+      await handleSupportPayment(masterInfoObject, supportFee);
 
       const tx = {
         id: sparkPayResponse.id,
@@ -247,7 +232,7 @@ export const sparkReceivePaymentWrapper = async ({
       };
     } else if (paymentType === 'bitcoin') {
       // Handle storage of tx when claiming in spark context
-      const depositAddress = await sparkWallet.getSingleUseDepositAddress();
+      const depositAddress = await getSparkStaticBitcoinL1Address();
       return {
         didWork: true,
         invoice: depositAddress,
@@ -265,3 +250,16 @@ export const sparkReceivePaymentWrapper = async ({
     return {didWork: false, error: err.message};
   }
 };
+
+async function handleSupportPayment(masterInfoObject, supportFee) {
+  try {
+    if (masterInfoObject?.enabledDeveloperSupport?.isEnabled) {
+      await sendSparkPayment({
+        receiverSparkAddress: process.env.BLITZ_SPARK_SUPPORT_ADDRESSS,
+        amountSats: supportFee,
+      });
+    }
+  } catch (err) {
+    console.log('Error sending support payment', err);
+  }
+}
