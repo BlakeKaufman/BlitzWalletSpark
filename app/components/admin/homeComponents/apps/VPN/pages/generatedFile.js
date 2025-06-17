@@ -59,7 +59,6 @@ export default function GeneratedVPNFile(props) {
 }
 
 function VPNFileDisplay({generatedFile}) {
-  const {myProfileImage} = useGlobalContacts();
   const navigate = useNavigation();
   const {backgroundOffset} = GetThemeColors();
 
