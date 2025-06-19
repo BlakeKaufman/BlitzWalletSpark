@@ -172,7 +172,14 @@ export const bulkUpdateSparkTransactions = async transactions => {
           existingDetails = {};
         }
 
-        const mergedDetails = {...existingDetails, ...newDetails};
+        let mergedDetails = {...existingDetails};
+
+        for (const key in newDetails) {
+          const value = newDetails[key];
+          if (value !== '' && value !== null && value !== undefined) {
+            mergedDetails[key] = value;
+          }
+        }
 
         await sqlLiteDB.runAsync(
           `UPDATE ${SPARK_TRANSACTIONS_TABLE_NAME}
