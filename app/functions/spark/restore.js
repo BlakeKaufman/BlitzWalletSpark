@@ -98,7 +98,7 @@ export const updateSparkTxStatus = async () => {
           accountId: txStateUpdate.accountId,
           details: {
             ...details,
-            preImage: sparkResponse ? sparkResponse.paymentPreimage : '',
+            preimage: sparkResponse ? sparkResponse.paymentPreimage : '',
           },
         };
         updatedTxs.push(tx);

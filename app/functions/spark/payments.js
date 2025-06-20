@@ -108,7 +108,7 @@ export const sparkPaymenWrapper = async ({
           time: new Date(lightningPayResponse.updatedAt).getTime(),
           direction: 'OUTGOING',
           description: memo || '',
-          preImage: sparkQueryResponse
+          preimage: sparkQueryResponse
             ? sparkQueryResponse.paymentPreimage
             : '',
         },
