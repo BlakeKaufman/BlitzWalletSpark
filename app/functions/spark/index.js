@@ -85,6 +85,14 @@ export const getSparkStaticBitcoinL1Address = async () => {
   }
 };
 
+export const queryAllStaticDepositAddresses = async () => {
+  try {
+    if (!sparkWallet) throw new Error('sparkWallet not initialized');
+    return await sparkWallet.queryStaticDepositAddresses();
+  } catch (err) {
+    console.log('refund reusable Bitcoin mainchain address error', err);
+  }
+};
 export const getSparkStaticBitcoinL1AddressQuote = async txid => {
   try {
     if (!sparkWallet) throw new Error('sparkWallet not initialized');
