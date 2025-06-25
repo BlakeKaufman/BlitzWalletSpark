@@ -61,14 +61,14 @@ const GENERALOPTIONS = [
     iconWhite: ICONS.navigationIconWhite,
     arrowIcon: ICONS.leftCheveronIcon,
   },
-  {
-    for: 'general',
-    name: 'Support Our Work',
-    svgName: 'crashDebugIcon',
-    svgIcon: true,
-    svgName: 'developerSupportIcon',
-    arrowIcon: ICONS.leftCheveronIcon,
-  },
+  // {
+  //   for: 'general',
+  //   name: 'Support Our Work',
+  //   svgName: 'crashDebugIcon',
+  //   svgIcon: true,
+  //   svgName: 'developerSupportIcon',
+  //   arrowIcon: ICONS.leftCheveronIcon,
+  // },
   // {
   //   for: 'general',
   //   name: 'Send On-chain',

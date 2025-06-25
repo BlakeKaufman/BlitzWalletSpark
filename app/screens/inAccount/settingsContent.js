@@ -117,9 +117,9 @@ export default function SettingsContentIndex(props) {
             {selectedPage?.toLowerCase() === 'display options' && (
               <DisplayOptions theme={theme} />
             )}
-            {selectedPage?.toLowerCase() === 'support our work' && (
+            {/* {selectedPage?.toLowerCase() === 'support our work' && (
               <SupportWorkPage />
-            )}
+            )} */}
 
             {selectedPage?.toLowerCase() === 'balance info' && (
               <WalletInformation theme={theme} />
