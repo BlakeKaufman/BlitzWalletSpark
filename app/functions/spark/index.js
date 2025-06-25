@@ -5,6 +5,7 @@ import {
 } from '@buildonspark/spark-sdk/native';
 import {retrieveData} from '../secureStore';
 import {getAllSparkTransactions} from './transactions';
+import {SPARK_TO_SPARK_FEE} from '../../constants/math';
 
 export let sparkWallet = null;
 
@@ -327,7 +328,7 @@ export const getCachedSparkTransactions = async () => {
     console.log('get cached spark transaction error', err);
   }
 };
-export const useSparkPaymentType = tx => {
+export const sparkPaymentType = tx => {
   try {
     const isLightningPayment = tx.type === 'PREIMAGE_SWAP';
     const isBitcoinPayment = tx.type == 'COOPERATIVE_EXIT';

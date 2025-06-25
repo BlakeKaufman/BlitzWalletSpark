@@ -1,7 +1,7 @@
 import {
   getSparkLightningPaymentStatus,
   getSparkPaymentStatus,
-  useSparkPaymentType,
+  sparkPaymentType,
 } from '.';
 import {
   deleteUnpaidSparkLightningTransaction,
@@ -16,7 +16,7 @@ export async function transformTxToPaymentObject(
 ) {
   const paymentType = forcePaymentType
     ? forcePaymentType
-    : useSparkPaymentType(tx);
+    : sparkPaymentType(tx);
 
   if (paymentType === 'lightning') {
     const unpaidInvoices = await getAllUnpaidSparkLightningInvoices();

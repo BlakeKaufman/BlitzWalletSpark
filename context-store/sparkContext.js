@@ -18,7 +18,7 @@ import {
   queryAllStaticDepositAddresses,
   querySparkBitcoinL1Transaction,
   sparkWallet,
-  useSparkPaymentType,
+  sparkPaymentType,
 } from '../app/functions/spark';
 import {
   addSingleSparkTransaction,
@@ -97,7 +97,7 @@ const SparkWalletProvider = ({children}) => {
         'received transaction from spark tx list',
       );
       let paymentObject = {};
-      const paymentType = useSparkPaymentType(selectedSparkTransaction);
+      const paymentType = sparkPaymentType(selectedSparkTransaction);
 
       if (paymentType === 'lightning') {
         const unpaidInvoices = await getAllUnpaidSparkLightningInvoices();

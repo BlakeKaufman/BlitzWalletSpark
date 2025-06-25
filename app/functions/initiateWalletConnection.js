@@ -39,7 +39,7 @@ export async function initWallet({
     }
     return {didWork: true};
   } catch (err) {
-    setHasError(String(err.message));
+    console.log('initialize spark wallet error', err);
     crashlyticsLogReport(err.message);
     return {didWork: false, error: err.message};
   }

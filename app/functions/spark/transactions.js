@@ -137,7 +137,7 @@ export const updateSingleSparkTransaction = async (saved_spark_id, updates) => {
     );
     return true;
   } catch (error) {
-    console.error(`Error updating transaction at ${created_at_time}:`, error);
+    console.error(`Error updating transaction:`, error);
     return false;
   }
 };

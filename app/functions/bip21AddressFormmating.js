@@ -1,4 +1,5 @@
 import * as bip21 from 'bip21';
+import {crashlyticsLogReport} from './crashlyticsLogs';
 export function formatBip21Address({
   address = '',
   amount = 0,

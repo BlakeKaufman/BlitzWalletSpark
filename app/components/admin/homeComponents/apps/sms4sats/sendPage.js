@@ -348,11 +348,11 @@ export default function SMSMessagingSendPage({SMSprices}) {
         phone: `${selectedAreaCode[0].cc}${phoneNumber}`,
       });
 
-      const parsedInput = await parse(data.payreq);
+      const parsedInput = await parse(orderInformation.payreq);
       const sendingAmountSat = parsedInput.invoice.amountMsat / 1000;
       setSendingMessage('Paying...');
       const paymentResponse = await sendStorePayment({
-        invoice: data.payreq,
+        invoice: orderInformation.payreq,
         masterInfoObject,
         sendingAmountSats: sendingAmountSat,
         paymentType: 'lightning',
@@ -370,7 +370,7 @@ export default function SMSMessagingSendPage({SMSprices}) {
       }
 
       listenForConfirmation(
-        data,
+        orderInformation,
         savedMessages,
         paymentResponse.response,
         paymentResponse.formattingType,

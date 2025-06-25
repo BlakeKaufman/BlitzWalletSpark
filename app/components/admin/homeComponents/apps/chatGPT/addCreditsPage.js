@@ -238,6 +238,7 @@ export default function AddChatGPTCredits({confirmationSliderData}) {
       setIsPaying(true);
       let invoice = '';
       let fee;
+      let creditPrice;
 
       if (invoiceInformation.invoice) {
         invoice = invoiceInformation.invoice;
@@ -245,8 +246,7 @@ export default function AddChatGPTCredits({confirmationSliderData}) {
         const [selectedPlan] = selectedSubscription.filter(
           subscription => subscription.isSelected,
         );
-
-        let creditPrice = selectedPlan.price;
+        creditPrice = selectedPlan.price;
         creditPrice += 150; //blitz flat fee
         creditPrice += Math.ceil(creditPrice * 0.005);
 
@@ -264,7 +264,7 @@ export default function AddChatGPTCredits({confirmationSliderData}) {
       if (invoiceInformation.fee && invoiceInformation.supportFee) {
         fee = invoiceInformation.fee + invoiceInformation.supportFee;
       } else {
-        const fee = await sparkPaymenWrapper({
+        const feeResponse = await sparkPaymenWrapper({
           getFee: true,
           address: invoice,
           paymentType: 'lightning',
@@ -274,9 +274,9 @@ export default function AddChatGPTCredits({confirmationSliderData}) {
           userBalance: sparkInformation.balance,
         });
 
-        if (!fee.didWork) throw new Error(fee.error);
+        if (!feeResponse.didWork) throw new Error(feeResponse.error);
 
-        fee = fee.fee + fee.supportFee;
+        fee = feeResponse.fee + feeResponse.supportFee;
       }
 
       if (sparkInformation.balance < fee)

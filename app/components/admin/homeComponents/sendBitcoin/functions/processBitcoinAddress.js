@@ -43,7 +43,6 @@ export default async function processBitcoinAddress(input, context) {
     address: input.address.address,
     paymentFee: paymentFee,
     supportFee: supportFee,
-    address: input.address.address,
     sendAmount: !amountSat
       ? ''
       : `${
