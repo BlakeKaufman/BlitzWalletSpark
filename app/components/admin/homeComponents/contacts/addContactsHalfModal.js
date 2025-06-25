@@ -28,6 +28,7 @@ import {useGlobalThemeContext} from '../../../../../context-store/theme';
 import sha256Hash from '../../../../functions/hash';
 import ContactProfileImage from './internalComponents/profileImage';
 import {getCachedProfileImage} from '../../../../functions/cachedImage';
+import {useImageCache} from '../../../../../context-store/imageCache';
 
 export default function AddContactsHalfModal(props) {
   const {contactsPrivateKey} = useKeysContext();
@@ -39,6 +40,7 @@ export default function AddContactsHalfModal(props) {
   const sliderHight = props.slideHeight;
   const navigate = useNavigation();
   const keyboardRef = useRef(null);
+  const {refreshCacheObject} = useImageCache();
 
   const debouncedSearch = useDebounce(async term => {
     const results = await searchUsers(term);
@@ -73,6 +75,7 @@ export default function AddContactsHalfModal(props) {
       )
     ).filter(Boolean);
     console.log(newUsers, 'test');
+    refreshCacheObject();
     unstable_batchedUpdates(() => {
       setIsSearching(false);
       setUsers(newUsers);

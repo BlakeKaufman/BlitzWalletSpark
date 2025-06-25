@@ -23,28 +23,30 @@ export function ImageCacheProvider({children}) {
 
   console.log(cache, 'imgaes cache');
 
+  const refreshCacheObject = async () => {
+    try {
+      const keys = await AsyncStorage.getAllKeys();
+      const imgKeys = keys.filter(k =>
+        k.startsWith(BLITZ_PROFILE_IMG_STORAGE_REF),
+      );
+      const stores = await AsyncStorage.multiGet(imgKeys);
+      const initialCache = {};
+      stores.forEach(([key, value]) => {
+        if (value) {
+          const uuid = key.replace(BLITZ_PROFILE_IMG_STORAGE_REF + '/', '');
+          const parsed = JSON.parse(value);
+          initialCache[uuid] = parsed;
+        }
+      });
+      setCache(initialCache);
+    } catch (e) {
+      console.error('Error loading image cache from storage', e);
+    }
+  };
+
   useEffect(() => {
-    (async () => {
-      try {
-        const keys = await AsyncStorage.getAllKeys();
-        const imgKeys = keys.filter(k =>
-          k.startsWith(BLITZ_PROFILE_IMG_STORAGE_REF),
-        );
-        const stores = await AsyncStorage.multiGet(imgKeys);
-        const initialCache = {};
-        stores.forEach(([key, value]) => {
-          if (value) {
-            const uuid = key.replace(BLITZ_PROFILE_IMG_STORAGE_REF + '/', '');
-            const parsed = JSON.parse(value);
-            initialCache[uuid] = parsed;
-          }
-        });
-        setCache(initialCache);
-      } catch (e) {
-        console.error('Error loading image cache from storage', e);
-      }
-    })();
-  }, []);
+    refreshCacheObject();
+  }, [decodedAddedContacts]); //rerun the cache when adding or removing contacts
 
   useEffect(() => {
     if (!didGetToHomepage) return;
@@ -128,7 +130,12 @@ export function ImageCacheProvider({children}) {
 
   return (
     <ImageCacheContext.Provider
-      value={{cache, refreshCache, removeProfileImageFromCache}}>
+      value={{
+        cache,
+        refreshCache,
+        removeProfileImageFromCache,
+        refreshCacheObject,
+      }}>
       {children}
     </ImageCacheContext.Provider>
   );
