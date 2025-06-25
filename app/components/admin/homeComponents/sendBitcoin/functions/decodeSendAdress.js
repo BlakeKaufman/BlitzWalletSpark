@@ -16,6 +16,7 @@ import getLiquidAddressFromSwap from '../../../../../functions/boltz/magicRoutin
 import {crashlyticsLogReport} from '../../../../../functions/crashlyticsLogs';
 import processSparkAddress from './processSparkAddress';
 import {decodeBip21SparkAddress} from '../../../../../functions/spark/handleBip21SparkAddress';
+import {SATSPERBITCOIN} from '../../../../../constants';
 // import processBolt12Offer from './processBolt12Offer';
 
 export default async function decodeSendAddress(props) {
