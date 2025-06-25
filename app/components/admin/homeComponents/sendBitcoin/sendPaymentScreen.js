@@ -437,7 +437,10 @@ export default function SendPaymentScreen(props) {
     const paymentObject = {
       getFee: false,
       ...formmateedSparkPaymentInfo,
-      amountSats: convertedSendAmount,
+      amountSats:
+        paymentInfo?.type === 'Bitcoin'
+          ? convertedSendAmount + paymentFee
+          : convertedSendAmount,
       masterInfoObject,
       fee: paymentFee,
       memo: paymentDescription || paymentInfo?.data.message || '',
