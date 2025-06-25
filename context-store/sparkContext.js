@@ -15,6 +15,7 @@ import {
   getSparkStaticBitcoinL1AddressQuote,
   getSparkTransactions,
   getUnusedSparkBitcoinL1Address,
+  queryAllStaticDepositAddresses,
   querySparkBitcoinL1Transaction,
   sparkWallet,
   useSparkPaymentType,
@@ -563,6 +564,7 @@ const SparkWalletProvider = ({children}) => {
             amountSats: sendAmount,
             memo: 'Liquid to Spark Swap',
             paymentType: 'lightning',
+            shouldNavigate: false,
           });
 
           if (!sparkLnReceiveAddress.didWork) return;

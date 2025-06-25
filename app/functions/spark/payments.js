@@ -207,6 +207,7 @@ export const sparkReceivePaymentWrapper = async ({
   amountSats,
   memo,
   paymentType,
+  shouldNavigate,
 }) => {
   try {
     if (!sparkWallet) throw new Error('sparkWallet not initialized');
@@ -223,6 +224,7 @@ export const sparkReceivePaymentWrapper = async ({
         amount: amountSats,
         expiration: invoice.invoice.expiresAt,
         description: memo || '',
+        shouldNavigate,
       };
       await addSingleUnpaidSparkLightningTransaction(tempTransaction);
       return {
