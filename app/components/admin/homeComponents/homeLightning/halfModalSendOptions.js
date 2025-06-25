@@ -17,6 +17,7 @@ export default function HalfModalSendOptions(props) {
   const {theme} = useGlobalThemeContext();
   const {bottomPadding} = useAppInsets();
   const {t} = useTranslation();
+  const {decodedAddedContacts} = useGlobalContacts();
 
   const sendOptionElements = ['img', 'clipboard', 'manual'].map((item, key) => {
     const lightIcon =

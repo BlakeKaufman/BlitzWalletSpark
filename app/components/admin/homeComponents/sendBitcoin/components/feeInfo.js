@@ -1,3 +1,4 @@
+import {ThemeText} from '../../../../../functions/CustomElements';
 import FormattedSatText from '../../../../../functions/CustomElements/satTextDisplay';
 
 export default function SendTransactionFeeInfo({
@@ -8,15 +9,18 @@ export default function SendTransactionFeeInfo({
   isSparkPayment,
 }) {
   return (
-    <FormattedSatText
-      backText={` & ${
-        isLightningPayment || isLiquidPayment || isSparkPayment
-          ? 'instant'
-          : ' 10 minutes'
-      }`}
-      neverHideBalance={true}
-      styles={{includeFontPadding: false}}
-      balance={paymentFee}
-    />
+    <>
+      <ThemeText styles={{marginTop: 30}} content={'Fee & Speed'} />
+      <FormattedSatText
+        backText={` & ${
+          isLightningPayment || isLiquidPayment || isSparkPayment
+            ? 'instant'
+            : ' 10 minutes'
+        }`}
+        neverHideBalance={true}
+        styles={{includeFontPadding: false}}
+        balance={paymentFee}
+      />
+    </>
   );
 }
