@@ -244,10 +244,10 @@ export default function ConnectingToNodeLoadingScreen({
       crashlyticsLogReport('Starting liquid node lookup process');
       const [parsedInformation, payments, fiat_rate, addressResponse] =
         await Promise.all([
-          // retrivedLiquidNodeInfo
-          //   ? Promise.resolve(retrivedLiquidNodeInfo)
-          //   : getInfo(),
-          // listPayments({}),
+          retrivedLiquidNodeInfo
+            ? Promise.resolve(retrivedLiquidNodeInfo)
+            : getInfo(),
+          listPayments({}),
           setupFiatCurrencies(),
           masterInfoObject.offlineReceiveAddresses.addresses.length !== 7 ||
           isMoreThan7DaysPast(
@@ -259,8 +259,8 @@ export default function ConnectingToNodeLoadingScreen({
             : Promise.resolve(null),
         ]);
 
-      // const info = parsedInformation.walletInfo;
-      // const balanceSat = info.balanceSat;
+      const info = parsedInformation.walletInfo;
+      const balanceSat = info.balanceSat;
 
       if (addressResponse) {
         const {destination, receiveFeesSat} = addressResponse;
@@ -296,13 +296,13 @@ export default function ConnectingToNodeLoadingScreen({
         });
       }
 
-      // let liquidNodeObject = {
-      //   transactions: payments,
-      //   userBalance: balanceSat,
-      //   pendingReceive: info.pendingReceiveSat,
-      //   pendingSend: info.pendingSendSat,
-      // };
-
+      let liquidNodeObject = {
+        transactions: payments,
+        userBalance: balanceSat,
+        pendingReceive: info.pendingReceiveSat,
+        pendingSend: info.pendingSendSat,
+      };
+      console.log(fiat_rate, 'fiat rate');
       toggleFiatStats({...fiat_rate});
 
       // console.log(
@@ -339,7 +339,7 @@ export default function ConnectingToNodeLoadingScreen({
       // }
 
       toggleLiquidNodeInformation({
-        // ...liquidNodeObject,
+        ...liquidNodeObject,
         didConnectToNode: true,
       });
 
