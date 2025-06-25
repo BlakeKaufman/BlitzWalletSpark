@@ -4568,6 +4568,7 @@ __metadata:
     react-native-gesture-handler: ~2.24.0
     react-native-get-random-values: ~1.11.0
     react-native-image-picker: ^8.2.1
+    react-native-keyboard-controller: ^1.17.5
     react-native-pager-view: 6.7.1
     react-native-qrcode-svg: ^6.3.15
     react-native-quick-base64: ^2.1.2
@@ -12082,13 +12083,26 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-is-edge-to-edge@npm:1.1.7":
+"react-native-is-edge-to-edge@npm:1.1.7, react-native-is-edge-to-edge@npm:^1.1.6":
   version: 1.1.7
   resolution: "react-native-is-edge-to-edge@npm:1.1.7"
   peerDependencies:
     react: "*"
     react-native: "*"
   checksum: 4cdf2b2fb5b131f2015c26d2cb7688b4a0c5f3c8474b1bf0ddfa9eabb0263df440c87262ae8f812a6ecab0d5310df0373bddad4b51f53dabb2ffee01e9ef0f44
+  languageName: node
+  linkType: hard
+
+"react-native-keyboard-controller@npm:^1.17.5":
+  version: 1.17.5
+  resolution: "react-native-keyboard-controller@npm:1.17.5"
+  dependencies:
+    react-native-is-edge-to-edge: ^1.1.6
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-reanimated: ">=3.0.0"
+  checksum: b88bc3b29fb08a2ceaba32e3f36e64405fc5fc5379b75cb53997c16f277bb46380cb791f626b02b6be3d55cba74a87e994d2a8debf96b5e3e628259267e7169a
   languageName: node
   linkType: hard
 

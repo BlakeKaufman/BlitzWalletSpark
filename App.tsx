@@ -74,47 +74,50 @@ import {ImageCacheProvider} from './context-store/imageCache';
 import {SparkWalletProvider} from './context-store/sparkContext';
 import HandleLNURLPayments from './context-store/lnurl';
 import {SparkConnectionListener} from './context-store/connectToNode';
+import {KeyboardProvider} from 'react-native-keyboard-controller';
 
 const Stack = createNativeStackNavigator();
 
 function App(): JSX.Element {
   return (
     <GestureHandlerRootView>
-      <KeysContextProvider>
-        <GlobalContactsList>
-          <GlobalContextProvider>
-            <AppStatusProvider>
-              <GlobalThemeProvider>
-                <GlobaleCashVariables>
-                  <GLobalNodeContextProider>
-                    <SparkWalletProvider>
-                      {/* <GlobalConbinedTxContextProvider> */}
-                      <GlobalAppDataProvider>
-                        <POSTransactionsProvider>
-                          <WebViewProvider>
-                            <PushNotificationManager>
-                              <LiquidEventProvider>
-                                <ImageCacheProvider>
-                                  {/* <Suspense
+      <KeyboardProvider>
+        <KeysContextProvider>
+          <GlobalContactsList>
+            <GlobalContextProvider>
+              <AppStatusProvider>
+                <GlobalThemeProvider>
+                  <GlobaleCashVariables>
+                    <GLobalNodeContextProider>
+                      <SparkWalletProvider>
+                        {/* <GlobalConbinedTxContextProvider> */}
+                        <GlobalAppDataProvider>
+                          <POSTransactionsProvider>
+                            <WebViewProvider>
+                              <PushNotificationManager>
+                                <LiquidEventProvider>
+                                  <ImageCacheProvider>
+                                    {/* <Suspense
                     fallback={<FullLoadingScreen text={'Loading Page'} />}> */}
-                                  <ResetStack />
-                                  {/* </Suspense> */}
-                                </ImageCacheProvider>
-                              </LiquidEventProvider>
-                            </PushNotificationManager>
-                          </WebViewProvider>
-                        </POSTransactionsProvider>
-                      </GlobalAppDataProvider>
-                      {/* <BreezTest /> */}
-                      {/* </GlobalConbinedTxContextProvider> */}
-                    </SparkWalletProvider>
-                  </GLobalNodeContextProider>
-                </GlobaleCashVariables>
-              </GlobalThemeProvider>
-            </AppStatusProvider>
-          </GlobalContextProvider>
-        </GlobalContactsList>
-      </KeysContextProvider>
+                                    <ResetStack />
+                                    {/* </Suspense> */}
+                                  </ImageCacheProvider>
+                                </LiquidEventProvider>
+                              </PushNotificationManager>
+                            </WebViewProvider>
+                          </POSTransactionsProvider>
+                        </GlobalAppDataProvider>
+                        {/* <BreezTest /> */}
+                        {/* </GlobalConbinedTxContextProvider> */}
+                      </SparkWalletProvider>
+                    </GLobalNodeContextProider>
+                  </GlobaleCashVariables>
+                </GlobalThemeProvider>
+              </AppStatusProvider>
+            </GlobalContextProvider>
+          </GlobalContactsList>
+        </KeysContextProvider>
+      </KeyboardProvider>
     </GestureHandlerRootView>
   );
 }

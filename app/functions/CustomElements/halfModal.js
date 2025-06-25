@@ -3,13 +3,13 @@ import {PanResponder} from 'react-native';
 import {
   Animated,
   Keyboard,
-  KeyboardAvoidingView,
   Platform,
   StyleSheet,
   TouchableWithoutFeedback,
   View,
   useWindowDimensions,
 } from 'react-native';
+import {KeyboardAvoidingView} from 'react-native-keyboard-controller';
 import {useNavigation} from '@react-navigation/native';
 import {COLORS, CONTENT_KEYBOARD_OFFSET} from '../../constants';
 import {HalfModalSendOptions} from '../../components/admin';
@@ -235,7 +235,7 @@ export default function CustomHalfModal(props) {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : null}
+      behavior={'padding'}
       style={styles.keyboardAvoidingView}>
       <TouchableWithoutFeedback onPress={handleBackPressFunction}>
         <View style={styles.container} />
