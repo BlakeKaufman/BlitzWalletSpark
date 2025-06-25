@@ -18,10 +18,12 @@ import {useAppStatus} from '../../../context-store/appStatus';
 import useHandleBackPressNew from '../../hooks/useHandleBackPressNew';
 import CustomButton from '../../functions/CustomElements/button';
 import {crashlyticsLogReport} from '../../functions/crashlyticsLogs';
+import {useGlobalContacts} from '../../../context-store/globalContacts';
 
 export default function ReceivePaymentHome(props) {
   const navigate = useNavigation();
   const {masterInfoObject} = useGlobalContextProvider();
+  const {globalContactsInformation} = useGlobalContacts();
   const {minMaxLiquidSwapAmounts} = useAppStatus();
   const {ecashWalletInformation} = useGlobaleCash();
   const currentMintURL = ecashWalletInformation.mintURL;
@@ -35,7 +37,7 @@ export default function ReceivePaymentHome(props) {
   const [addressState, setAddressState] = useState({
     selectedRecieveOption: selectedRecieveOption,
     isReceivingSwap: false,
-    generatedAddress: '',
+    generatedAddress: `${globalContactsInformation.myProfile.uniqueName}@blitz-wallet.com`,
     isGeneratingInvoice: false,
     minMaxSwapAmount: {
       min: 0,
@@ -52,6 +54,11 @@ export default function ReceivePaymentHome(props) {
 
   useEffect(() => {
     crashlyticsLogReport('Begining adddress initialization');
+    if (
+      !initialSendAmount &&
+      selectedRecieveOption.toLowerCase() === 'lightning'
+    )
+      return;
     initializeAddressProcess({
       userBalanceDenomination: masterInfoObject.userBalanceDenomination,
       receivingAmount: initialSendAmount,

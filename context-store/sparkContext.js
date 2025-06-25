@@ -240,7 +240,8 @@ const SparkWalletProvider = ({children}) => {
         {
           name: 'ConfirmTxPage',
           params: {
-            transaction: storedTransaction.paymentObject,
+            for: 'invoicePaid',
+            transaction: {...selectedStoredPayment, details},
           },
         },
       ],
