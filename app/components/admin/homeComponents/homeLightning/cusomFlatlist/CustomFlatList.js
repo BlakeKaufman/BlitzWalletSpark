@@ -32,10 +32,10 @@ function CustomFlatList({style, ...props}) {
   const handleRefresh = useCallback(async () => {
     crashlyticsLogReport(`Running in handle refresh function on homepage`);
     try {
-      const restoredLengh = await fullRestoreSparkState({
-        sparkAddress: sparkInformation.sparkAddress,
-      });
-      if (restoredLengh) return;
+      // const restoredLengh = await fullRestoreSparkState({
+      //   sparkAddress: sparkInformation.sparkAddress,
+      // });
+      // if (restoredLengh) return;
       const balance = await getSparkBalance();
       if (!balance) return;
       setSparkInformation(prev => ({
@@ -81,16 +81,16 @@ function CustomFlatList({style, ...props}) {
       </Animated.View>
 
       <Animated.FlatList
-        refreshControl={
-          <RefreshControl
-            colors={[colors]}
-            tintColor={
-              darkModeType && theme ? COLORS.darkModeText : COLORS.primary
-            }
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-          />
-        }
+        // refreshControl={
+        //   <RefreshControl
+        //     colors={[colors]}
+        //     tintColor={
+        //       darkModeType && theme ? COLORS.darkModeText : COLORS.primary
+        //     }
+        //     refreshing={refreshing}
+        //     onRefresh={handleRefresh}
+        //   />
+        // }
         ref={flatListRef}
         initialNumToRender={10}
         maxToRenderPerBatch={5}
