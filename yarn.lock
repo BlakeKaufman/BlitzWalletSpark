@@ -1601,9 +1601,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@buildonspark/spark-sdk@npm:^0.1.40":
-  version: 0.1.40
-  resolution: "@buildonspark/spark-sdk@npm:0.1.40"
+"@buildonspark/spark-sdk@npm:^0.1.41":
+  version: 0.1.41
+  resolution: "@buildonspark/spark-sdk@npm:0.1.41"
   dependencies:
     "@bitcoinerlab/secp256k1": ^1.1.1
     "@bufbuild/protobuf": ^2.2.5
@@ -1637,7 +1637,7 @@ __metadata:
     react: ">=18.2.0"
     react-native: ">=0.71.0"
     react-native-get-random-values: ">=1.11.0"
-  checksum: de803f4c813e656e54842e0ea0910b78480f4fa9976bcc0d9a27df174ba1370d1aeeec62e43c15e846361b896e3a41612f7459303858a67186a16b1f7cbfde76
+  checksum: 27a4ac5240afc4767533691a1253e7ed55bc281493b316de8c94da150fe82d5e38d8db56ba048b2882863a59e10b3cb65a423cd7d1395a4e3a360a8ecc9c4642
   languageName: node
   linkType: hard
 
@@ -4497,7 +4497,7 @@ __metadata:
     "@babel/runtime": ^7.25.0
     "@bitcoinerlab/secp256k1": ^1.2.0
     "@breeztech/react-native-breez-sdk-liquid": ^0.9.1
-    "@buildonspark/spark-sdk": ^0.1.40
+    "@buildonspark/spark-sdk": ^0.1.41
     "@cashu/cashu-ts": ^2.5.2
     "@craftzdog/react-native-buffer": ^6.0.5
     "@miblanchard/react-native-slider": ^2.6.0
