@@ -353,6 +353,7 @@ const SparkWalletProvider = ({children}) => {
 
               continue;
             }
+
             if (claimedTxs?.includes(quote.signature)) {
               await handleTxIdState(txid, true, address);
               continue;
@@ -394,7 +395,7 @@ const SparkWalletProvider = ({children}) => {
               );
             }
             await new Promise(res => setTimeout(res, 2000));
-            const incomingTxs = await getSparkTransactions(10);
+            const incomingTxs = await getSparkTransactions(999);
             const bitcoinTransfer = incomingTxs.transfers.find(
               tx => tx.id === claimTx.transferId,
             );
@@ -489,6 +490,7 @@ const SparkWalletProvider = ({children}) => {
     // Run restore logic once
     const restoreTxState = async () => {
       const isFirstWalletLoad = await getLocalStorageItem('isFirstWalletLoad');
+      console.log(isFirstWalletLoad, 'is first wallet load');
       if (isFirstWalletLoad === 'true') return;
       await setLocalStorageItem('isFirstWalletLoad', 'true');
       await fullRestoreSparkState({

@@ -70,10 +70,10 @@ export const updateSparkTxStatus = async () => {
 
     console.log('pending tx list', savedTxs);
     let updatedTxs = [];
-    for (txStateUpdate of savedTxs) {
+    for (const txStateUpdate of savedTxs) {
+      const details = JSON.parse(txStateUpdate.details);
       // no need to do spark here since it wont ever be shown as pending
       if (txStateUpdate.paymentType === 'lightning') {
-        const details = JSON.parse(txStateUpdate.details);
         let sparkResponse;
         if (details.direction === 'INCOMING') {
           sparkResponse = await getSparkLightningPaymentStatus({
@@ -103,26 +103,42 @@ export const updateSparkTxStatus = async () => {
         };
         updatedTxs.push(tx);
       } else {
-        const sparkResponse = await getSparkBitcoinPaymentRequest(
-          txStateUpdate.sparkID,
-        );
-        if (!sparkResponse?.transfer) continue;
-        const details = JSON.parse(txStateUpdate.details);
-        const tx = {
-          useTempId: true,
-          tempId: txStateUpdate.sparkID,
-          id: sparkResponse
-            ? sparkResponse.transfer.sparkId
-            : txStateUpdate.sparkID,
-          paymentStatus: 'completed',
-          paymentType: 'bitcoin',
-          accountId: sparkInformation.identityPubKey,
-          details: {
-            ...details,
-            onchainTxid: sparkResponse.coopExitTxid,
-          },
-        };
-        updatedTxs.push(tx);
+        if (details.direction === 'INCOMING') {
+          const incomingTxs = await getSparkTransactions(999);
+          const bitcoinTransfer = incomingTxs.transfers.find(
+            tx => tx.id === txStateUpdate.sparkID,
+          );
+          console.log(bitcoinTransfer, 'bitocin transfer in pending');
+          if (!bitcoinTransfer) continue;
+          const tx = {
+            id: txStateUpdate.sparkID,
+            paymentStatus: 'completed',
+            paymentType: 'bitcoin',
+            accountId: txStateUpdate.accountId,
+          };
+          updatedTxs.push(tx);
+        } else {
+          const sparkResponse = await getSparkBitcoinPaymentRequest(
+            txStateUpdate.sparkID,
+          );
+          if (!sparkResponse?.transfer) continue;
+          const details = JSON.parse(txStateUpdate.details);
+          const tx = {
+            useTempId: true,
+            tempId: txStateUpdate.sparkID,
+            id: sparkResponse
+              ? sparkResponse.transfer.sparkId
+              : txStateUpdate.sparkID,
+            paymentStatus: 'completed',
+            paymentType: 'bitcoin',
+            accountId: txStateUpdate.accountId,
+            details: {
+              ...details,
+              onchainTxid: sparkResponse.coopExitTxid,
+            },
+          };
+          updatedTxs.push(tx);
+        }
       }
     }
 
