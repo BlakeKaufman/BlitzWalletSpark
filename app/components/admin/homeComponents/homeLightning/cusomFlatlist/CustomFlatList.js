@@ -37,7 +37,7 @@ function CustomFlatList({style, ...props}) {
       // });
       // if (restoredLengh) return;
       const balance = await getSparkBalance();
-      if (!balance) return;
+      if (!balance || !Number(balance.balance)) return;
       setSparkInformation(prev => ({
         ...prev,
         balance: Number(balance.balance),
@@ -81,16 +81,16 @@ function CustomFlatList({style, ...props}) {
       </Animated.View>
 
       <Animated.FlatList
-        // refreshControl={
-        //   <RefreshControl
-        //     colors={[colors]}
-        //     tintColor={
-        //       darkModeType && theme ? COLORS.darkModeText : COLORS.primary
-        //     }
-        //     refreshing={refreshing}
-        //     onRefresh={handleRefresh}
-        //   />
-        // }
+        refreshControl={
+          <RefreshControl
+            colors={[colors]}
+            tintColor={
+              darkModeType && theme ? COLORS.darkModeText : COLORS.primary
+            }
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+          />
+        }
         ref={flatListRef}
         initialNumToRender={10}
         maxToRenderPerBatch={5}
