@@ -68,7 +68,7 @@ export default function HandleLNURLPayments() {
               paymentQueueRef.current.push({
                 ...payment,
                 id: change.doc.id,
-                shouldNavigate: true,
+                shouldNavigate: false,
                 runCount: 0,
               });
             }
