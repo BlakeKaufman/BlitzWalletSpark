@@ -1,5 +1,5 @@
-import {FlatList, StyleSheet, TouchableOpacity, Platform} from 'react-native';
-import {CENTER, COLORS, CONTENT_KEYBOARD_OFFSET} from '../../../../constants';
+import {FlatList, StyleSheet, TouchableOpacity} from 'react-native';
+import {COLORS, CONTENT_KEYBOARD_OFFSET} from '../../../../constants';
 import {fetchFiatRates} from '@breeztech/react-native-breez-sdk-liquid';
 import {useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
@@ -14,10 +14,9 @@ import CustomSettingsTopBar from '../../../../functions/CustomElements/settingsT
 import FullLoadingScreen from '../../../../functions/CustomElements/loadingScreen';
 import {useGlobalThemeContext} from '../../../../../context-store/theme';
 import {useNodeContext} from '../../../../../context-store/nodeContext';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {ANDROIDSAFEAREA} from '../../../../constants/styles';
 import {INSET_WINDOW_WIDTH} from '../../../../constants/theme';
 import CheckMarkCircle from '../../../../functions/CustomElements/checkMarkCircle';
+import useAppInsets from '../../../../hooks/useAppInsets';
 
 export default function FiatCurrencyPage() {
   const {masterInfoObject, toggleMasterInfoObject} = useGlobalContextProvider();
@@ -28,11 +27,7 @@ export default function FiatCurrencyPage() {
   const currentCurrency = masterInfoObject?.fiatCurrency;
 
   const [isKeyboardActive, setIsKeyboardActive] = useState(false);
-  const insets = useSafeAreaInsets();
-  const paddingBottom = Platform.select({
-    ios: insets.bottom,
-    android: ANDROIDSAFEAREA,
-  });
+  const {bottomPadding} = useAppInsets();
 
   const navigate = useNavigation();
 
@@ -135,7 +130,7 @@ export default function FiatCurrencyPage() {
           paddingTop: 20,
           paddingBottom: isKeyboardActive
             ? CONTENT_KEYBOARD_OFFSET
-            : paddingBottom,
+            : bottomPadding,
         }}
         stickyHeaderIndices={[0]}
         ListHeaderComponent={

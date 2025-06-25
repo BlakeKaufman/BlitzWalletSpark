@@ -1,23 +1,21 @@
 import {ScrollView, StyleSheet, TouchableOpacity, View} from 'react-native';
 import {CENTER, COLORS, ICONS, SIZES} from '../../../../constants';
 import {useNavigation} from '@react-navigation/native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {navigateToSendUsingClipboard, getQRImage} from '../../../../functions';
 import {ThemeText} from '../../../../functions/CustomElements';
 
 import {useGlobalContacts} from '../../../../../context-store/globalContacts';
 import {useTranslation} from 'react-i18next';
 import ThemeImage from '../../../../functions/CustomElements/themeImage';
-import {ANDROIDSAFEAREA} from '../../../../constants/styles';
 import {crashlyticsLogReport} from '../../../../functions/crashlyticsLogs';
 import Icon from '../../../../functions/CustomElements/Icon';
 import {useGlobalThemeContext} from '../../../../../context-store/theme';
+import useAppInsets from '../../../../hooks/useAppInsets';
 
 export default function HalfModalSendOptions(props) {
   const navigate = useNavigation();
   const {theme} = useGlobalThemeContext();
-  const insets = useSafeAreaInsets();
-  const {decodedAddedContacts} = useGlobalContacts();
+  const {bottomPadding} = useAppInsets();
   const {t} = useTranslation();
 
   const sendOptionElements = ['img', 'clipboard', 'manual'].map((item, key) => {
@@ -125,7 +123,7 @@ export default function HalfModalSendOptions(props) {
         )}
         <View
           style={{
-            height: insets.bottom < 20 ? ANDROIDSAFEAREA : insets.bottom,
+            height: bottomPadding,
           }}
         />
       </ScrollView>

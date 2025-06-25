@@ -19,8 +19,6 @@ import {
 import SuggestedWordContainer from '../../../components/login/suggestedWords';
 import CustomButton from '../../../functions/CustomElements/button';
 import FullLoadingScreen from '../../../functions/CustomElements/loadingScreen';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {ANDROIDSAFEAREA} from '../../../constants/styles';
 import {WINDOWWIDTH} from '../../../constants/theme';
 import {useGlobalThemeContext} from '../../../../context-store/theme';
 import useHandleBackPressNew from '../../../hooks/useHandleBackPressNew';
@@ -30,6 +28,7 @@ import {
   crashlyticsLogReport,
   crashlyticsRecordErrorReport,
 } from '../../../functions/crashlyticsLogs';
+import useAppInsets from '../../../hooks/useAppInsets';
 
 const NUMARRAY = Array.from({length: 12}, (_, i) => i + 1);
 const INITIAL_KEY_STATE = NUMARRAY.reduce((acc, num) => {
@@ -42,11 +41,7 @@ export default function RestoreWallet({navigation: {reset}, route: {params}}) {
   const navigate = useNavigation();
   const {t} = useTranslation();
   const {theme, darkModeType} = useGlobalThemeContext();
-  const insets = useSafeAreaInsets();
-  const bottomOffset = Platform.select({
-    ios: insets.bottom,
-    android: ANDROIDSAFEAREA,
-  });
+  const {bottomPadding} = useAppInsets();
   const [isValidating, setIsValidating] = useState(false);
   const [currentFocused, setCurrentFocused] = useState(null);
   const keyRefs = useRef({});
@@ -305,7 +300,7 @@ export default function RestoreWallet({navigation: {reset}, route: {params}}) {
           <View
             style={{
               ...styles.mainBTCContainer,
-              paddingBottom: bottomOffset,
+              paddingBottom: bottomPadding,
             }}>
             <CustomButton
               buttonStyles={{

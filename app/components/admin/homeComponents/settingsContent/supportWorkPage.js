@@ -11,8 +11,6 @@ import {
 } from '../../../../functions/CustomElements';
 import {useCallback} from 'react';
 import {useNavigation} from '@react-navigation/native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {ANDROIDSAFEAREA} from '../../../../constants/styles';
 import CustomSettingsTopBar from '../../../../functions/CustomElements/settingsTopBar';
 
 export default function SupportWorkPage() {
@@ -22,12 +20,6 @@ export default function SupportWorkPage() {
 
   const developerSupportObject = masterInfoObject.enabledDeveloperSupport;
   const balanceDenomination = masterInfoObject.userBalanceDenomination;
-  const insets = useSafeAreaInsets();
-
-  const bottomPadding = Platform.select({
-    ios: insets.bottom,
-    android: ANDROIDSAFEAREA,
-  });
 
   console.log(developerSupportObject, 'TSET', balanceDenomination, fiatStats);
   const handleBaseFeeSettings = useCallback(

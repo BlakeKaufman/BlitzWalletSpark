@@ -1,10 +1,9 @@
 import {useNavigation} from '@react-navigation/native';
 import {FlatList, Platform, View} from 'react-native';
 import {ICONS} from '../../constants';
-import {ANDROIDSAFEAREA} from '../../constants/styles';
 import {GlobalThemeView} from '../../functions/CustomElements';
 import {useTranslation} from 'react-i18next';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+
 import {useGlobalThemeContext} from '../../../context-store/theme';
 import useHandleBackPressNew from '../../hooks/useHandleBackPressNew';
 import CustomSettingsTopBar from '../../functions/CustomElements/settingsTopBar';
@@ -14,6 +13,7 @@ import {useEffect, useState} from 'react';
 import FullLoadingScreen from '../../functions/CustomElements/loadingScreen';
 import getFormattedHomepageTxsForSpark from '../../functions/combinedTransactionsSpark';
 import {useSparkWallet} from '../../../context-store/sparkContext';
+import useAppInsets from '../../hooks/useAppInsets';
 
 export default function ViewAllTxPage() {
   const navigate = useNavigation();
@@ -22,15 +22,10 @@ export default function ViewAllTxPage() {
   const {theme, darkModeType} = useGlobalThemeContext();
   const [txs, setTxs] = useState([]);
   const currentTime = useUpdateHomepageTransactions();
-  const insets = useSafeAreaInsets();
   const {t} = useTranslation();
   useHandleBackPressNew();
   const userBalanceDenomination = masterInfoObject.userBalanceDenomination;
-
-  const bottomPadding = Platform.select({
-    ios: insets.bottom,
-    android: ANDROIDSAFEAREA,
-  });
+  const {bottomPadding} = useAppInsets();
 
   useEffect(() => {
     const txs = getFormattedHomepageTxsForSpark({

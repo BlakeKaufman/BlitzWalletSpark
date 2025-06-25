@@ -8,7 +8,6 @@ import {
   View,
 } from 'react-native';
 
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {COLORS, ICONS, SIZES} from '../../app/constants';
 import {useMemo} from 'react';
 import {CENTER} from '../../app/constants/styles';
@@ -18,19 +17,16 @@ import {ContactsPage} from '../../app/components/admin';
 import GetThemeColors from '../../app/hooks/themeColors';
 import {useGlobalThemeContext} from '../../context-store/theme';
 import ExploreUsers from '../../app/screens/inAccount/explorePage';
+import useAppInsets from '../../app/hooks/useAppInsets';
 
 const Tab = createBottomTabNavigator();
 
 function MyTabBar({state, descriptors, navigation}) {
-  const insets = useSafeAreaInsets();
   const {theme, darkModeType} = useGlobalThemeContext();
   const {contactsMessags} = useGlobalContacts();
   const {backgroundOffset, backgroundColor} = GetThemeColors();
 
-  const paddingBottom = Platform.select({
-    ios: insets.bottom,
-    android: 0,
-  });
+  const {bottomPadding} = useAppInsets();
 
   const hasUnlookedTransactions = useMemo(() => {
     return (
@@ -63,7 +59,7 @@ function MyTabBar({state, descriptors, navigation}) {
         }}>
         <View
           style={{
-            paddingBottom: paddingBottom,
+            paddingBottom: bottomPadding,
             ...styles.tabsInnerContainer,
           }}>
           {state.routes.map((route, index) => {

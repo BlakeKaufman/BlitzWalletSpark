@@ -5,7 +5,6 @@ import {
   Image,
   ScrollView,
   TextInput,
-  Platform,
 } from 'react-native';
 import {
   CENTER,
@@ -32,7 +31,6 @@ import GetThemeColors from '../../../../hooks/themeColors';
 import {getImageFromLibrary} from '../../../../functions/imagePickerWrapper';
 import {useGlobalThemeContext} from '../../../../../context-store/theme';
 import {useKeysContext} from '../../../../../context-store/keys';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import CustomSettingsTopBar from '../../../../functions/CustomElements/settingsTopBar';
 import {INSET_WINDOW_WIDTH} from '../../../../constants/theme';
 import useHandleBackPressNew from '../../../../hooks/useHandleBackPressNew';
@@ -46,6 +44,7 @@ import {
   setDatabaseIMG,
 } from '../../../../../db/photoStorage';
 import {useImageCache} from '../../../../../context-store/imageCache';
+import useAppInsets from '../../../../hooks/useAppInsets';
 
 export default function EditMyProfilePage(props) {
   const navigate = useNavigation();
@@ -144,7 +143,6 @@ function InnerContent({
   const selectedAddedContactReceiveAddress =
     selectedAddedContact?.receiveAddress;
 
-  const insets = useSafeAreaInsets();
   const [inputs, setInputs] = useState({
     name: '',
     bio: '',
@@ -153,10 +151,7 @@ function InnerContent({
   });
 
   const [isKeyboardActive, setIsKeyboardActive] = useState(false);
-  const paddingBottom = Platform.select({
-    ios: insets.bottom,
-    android: CONTENT_KEYBOARD_OFFSET,
-  });
+  const {bottomPadding} = useAppInsets();
 
   const navigate = useNavigation();
 
@@ -491,7 +486,7 @@ function InnerContent({
           marginTop: 10,
           marginBottom: isKeyboardActive
             ? CONTENT_KEYBOARD_OFFSET
-            : paddingBottom,
+            : bottomPadding,
         }}
         actionFunction={saveChanges}
         textContent={
