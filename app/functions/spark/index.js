@@ -3,34 +3,39 @@ import {
   ReactNativeSparkSigner,
   getLatestDepositTxId,
 } from '@buildonspark/spark-sdk/native';
-import {retrieveData} from '../secureStore';
 import {getAllSparkTransactions} from './transactions';
 import {SPARK_TO_SPARK_FEE} from '../../constants/math';
 
 export let sparkWallet = null;
 
-export const initializeSparkWallet = async () => {
+export const initializeSparkWallet = async mnemonic => {
   try {
-    const storedMnemoinc = await retrieveData('mnemonic');
+    const {wallet} = await SparkWallet.initialize({
+      signer: new ReactNativeSparkSigner(),
+      mnemonicOrSeed: mnemonic,
+      options: {network: 'MAINNET'},
+    });
+    // const [type, value] = await Promise.race([
+    //   SparkWallet.initialize({
+    //     signer: new ReactNativeSparkSigner(),
+    //     mnemonicOrSeed: mnemonic,
+    //     options: {network: 'MAINNET'},
+    //   }).then(res => ['wallet', res]),
+    //   new Promise(res => setTimeout(() => res(['timeout', false]), 30000)),
+    // ]);
+    sparkWallet = wallet;
 
-    const [type, value] = await Promise.race([
-      SparkWallet.initialize({
-        signer: new ReactNativeSparkSigner(),
-        mnemonicOrSeed: storedMnemoinc,
-        options: {network: 'MAINNET'},
-      }).then(res => ['wallet', res]),
-      new Promise(res => setTimeout(() => res(['timeout', false]), 30000)),
-    ]);
+    return {isConnected: true};
 
-    if (type === 'wallet') {
-      const {wallet} = value;
-      console.log('Wallet initialized:', await wallet.getIdentityPublicKey());
-      sparkWallet = wallet;
+    // if (type === 'wallet') {
+    //   const {wallet} = value;
+    //   console.log('Wallet initialized:', await wallet.getIdentityPublicKey());
+    //   sparkWallet = wallet;
 
-      return {isConnected: true};
-    } else if (type === 'timeout') {
-      return {isConnected: false};
-    }
+    //   return {isConnected: true};
+    // } else if (type === 'timeout') {
+    //   return {isConnected: false};
+    // }
   } catch (err) {
     console.log('Initialize spark wallet error', err);
     return {isConnected: false};
@@ -286,9 +291,11 @@ export const getSparkLightningPaymentStatus = async ({lightningInvoiceId}) => {
 export const sendSparkLightningPayment = async ({invoice, maxFeeSats}) => {
   try {
     if (!sparkWallet) throw new Error('sparkWallet not initialized');
-    return await sparkWallet.payLightningInvoice({invoice});
+    const paymentResponse = await sparkWallet.payLightningInvoice({invoice});
+    return {didWork: true, paymentResponse};
   } catch (err) {
     console.log('Send lightning payment error', err);
+    return {didWork: false, error: err.message};
   }
 };
 export const sendSparkBitcoinPayment = async ({

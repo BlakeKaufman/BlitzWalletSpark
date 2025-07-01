@@ -16,10 +16,12 @@ import {
   getAllMints,
   selectMint,
 } from '../../../../../functions/eCash/db';
+import {useKeysContext} from '../../../../../../context-store/keys';
 
 export default function RestoreProofsPopup(props) {
   const {mintURL} = props?.route?.params;
   const navigate = useNavigation();
+  const {accountMnemoinc} = useKeysContext();
   const {theme, darkModeType} = useGlobalThemeContext();
   const {backgroundColor, backgroundOffset} = GetThemeColors();
   const [restoreProcessText, setRestoreProcessText] = useState('');
@@ -51,15 +53,12 @@ export default function RestoreProofsPopup(props) {
       handleRestoreProofEvents,
     );
     return () =>
-      restoreProofsEventListener.off(
-        RESTORE_PROOFS_EVENT_NAME,
-        handleRestoreProofEvents,
-      );
+      restoreProofsEventListener.removeAllListeners(RESTORE_PROOFS_EVENT_NAME);
   }, []);
 
   useEffect(() => {
     setTimeout(() => {
-      restoreMintProofs(mintURL);
+      restoreMintProofs(mintURL, accountMnemoinc);
     }, 500);
   }, []);
 

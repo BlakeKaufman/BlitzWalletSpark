@@ -13,12 +13,11 @@ export async function initWallet({
   setSparkInformation,
   toggleGlobalContactsInformation,
   globalContactsInformation,
+  mnemonic,
 }) {
-  console.log('HOME RENDER BREEZ EVENT FIRST LOAD');
-
   try {
     crashlyticsLogReport('Trying to connect to nodes');
-    const didConnectToSpark = await initializeSparkWallet();
+    const didConnectToSpark = await initializeSparkWallet(mnemonic);
 
     if (didConnectToSpark.isConnected) {
       crashlyticsLogReport('Loading node balances for session');
@@ -80,7 +79,7 @@ async function initializeSparkSession({
       );
     }
     const storageObject = {
-      balance: balance.balance,
+      balance: Number(balance.balance),
       transactions: transactions,
       identityPubKey,
       sparkAddress,

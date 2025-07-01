@@ -1,6 +1,7 @@
 import {QUICK_PAY_STORAGE_KEY} from '../../constants';
 import {BLITZ_FEE_PERCET, BLITZ_FEE_SATS} from '../../constants/math';
 import {getLocalStorageItem} from '../localStorage';
+import {isNewDaySince} from '../rotateAddressDateChecker';
 
 const keys = [
   'homepageTxPreferance',
@@ -74,3 +75,19 @@ export const fetchLocalStorageItems = async () => {
       parsedResults[11] ?? defaultValues.enabledDeveloperSupport,
   };
 };
+
+export function shouldLoadExploreData(savedExploreRawData) {
+  let shouldFetchUserCount = false;
+  try {
+    if (
+      !savedExploreRawData?.lastUpdated ||
+      isNewDaySince(savedExploreRawData?.lastUpdated)
+    ) {
+      shouldFetchUserCount = true;
+    }
+  } catch (err) {
+    console.log('error in should load explore data', err);
+  }
+
+  return shouldFetchUserCount;
+}

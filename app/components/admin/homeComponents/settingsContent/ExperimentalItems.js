@@ -12,6 +12,7 @@ import {
   ThemeText,
 } from '../../../../functions/CustomElements';
 import {
+  BITCOIN_SAT_TEXT,
   CENTER,
   COLORS,
   CONTENT_KEYBOARD_OFFSET,
@@ -43,7 +44,7 @@ import {INSET_WINDOW_WIDTH} from '../../../../constants/theme';
 import {keyboardGoBack} from '../../../../functions/customNavigation';
 import SettingsItemWithSlider from '../../../../functions/CustomElements/settings/settingsItemWithSlider';
 import {crashlyticsRecordErrorReport} from '../../../../functions/crashlyticsLogs';
-import useAppInsets from '../../../../hooks/useAppInsets';
+import {useGlobalInsets} from '../../../../../context-store/insetsProvider';
 
 export default function ExperimentalItemsPage() {
   const {masterInfoObject, toggleMasterInfoObject} = useGlobalContextProvider();
@@ -56,7 +57,7 @@ export default function ExperimentalItemsPage() {
   const [savedMintList, setSavedMintList] = useState([]);
   const [hasUserMigrated, setHasUserMigrated] = useState(null);
   const [isKeyboardActive, setIsKeyboardActive] = useState(false);
-  const {bottomPadding} = useAppInsets();
+  const {bottomPadding} = useGlobalInsets();
 
   const enabledEcash = masterInfoObject.enabledEcash;
   const currentMintURL = ecashWalletInformation.mintURL;
@@ -122,7 +123,7 @@ export default function ExperimentalItemsPage() {
                     navigate.navigate('ConfirmActionPage', {
                       confirmMessage: `You have a balance of ${proofValue} sat${
                         proofValue === 1 ? '' : 's'
-                      }. If you delete this mint you may lose your sats. Click yes to delete.`,
+                      }. If you delete this mint you may lose your ${BITCOIN_SAT_TEXT} balance. Click yes to delete.`,
                       deleteMint: () => removeMint(mintURL),
                     });
                     return;

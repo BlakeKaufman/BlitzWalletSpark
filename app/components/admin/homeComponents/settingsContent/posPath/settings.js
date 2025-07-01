@@ -27,11 +27,12 @@ import GetThemeColors from '../../../../../hooks/themeColors';
 import {useGlobalThemeContext} from '../../../../../../context-store/theme';
 import CustomSettingsTopBar from '../../../../../functions/CustomElements/settingsTopBar';
 import {useAppStatus} from '../../../../../../context-store/appStatus';
-import {KEYBOARDTIMEOUT} from '../../../../../constants/styles';
 import {INSET_WINDOW_WIDTH} from '../../../../../constants/theme';
 import ThemeImage from '../../../../../functions/CustomElements/themeImage';
 import Icon from '../../../../../functions/CustomElements/Icon';
-import useAppInsets from '../../../../../hooks/useAppInsets';
+import CheckMarkCircle from '../../../../../functions/CustomElements/checkMarkCircle';
+import {keyboardNavigate} from '../../../../../functions/customNavigation';
+import {useGlobalInsets} from '../../../../../../context-store/insetsProvider';
 
 export default function PosSettingsPage() {
   const {masterInfoObject, toggleMasterInfoObject} = useGlobalContextProvider();
@@ -45,8 +46,7 @@ export default function PosSettingsPage() {
     masterInfoObject?.posSettings?.storeName,
   );
   const [isKeyboardActive, setIsKeyboardActive] = useState(false);
-
-  const {bottomPadding} = useAppInsets();
+  const {bottomPadding} = useGlobalInsets();
 
   const savedCurrencies = masterInfoObject.fiatCurrenciesList || [];
   const currentCurrency = masterInfoObject?.posSettings?.storeCurrency;
@@ -117,24 +117,31 @@ export default function PosSettingsPage() {
               setTextInput('');
               savePOSSettings({storeCurrency: item.id}, 'currency');
             }}>
+            <CheckMarkCircle
+              isActive={
+                item.id?.toLowerCase() === currentCurrency?.toLowerCase()
+              }
+              containerSize={25}
+            />
             <ThemeText
               styles={{
                 color: theme
                   ? item.id?.toLowerCase() === currentCurrency?.toLowerCase()
                     ? darkModeType
-                      ? COLORS.opaicityGray
+                      ? COLORS.darkModeText
                       : COLORS.primary
                     : COLORS.darkModeText
                   : item.id?.toLowerCase() === currentCurrency?.toLowerCase()
                   ? COLORS.primary
                   : COLORS.lightModeText,
+                marginLeft: 10,
               }}
               content={`${item.id} - ${item.info.name}`}
             />
           </TouchableOpacity>
         );
       });
-  }, [textInput, currentCurrency, masterInfoObject]);
+  }, [textInput, currentCurrency, masterInfoObject, theme, darkModeType]);
 
   return (
     <CustomKeyboardAvoidingView
@@ -148,19 +155,15 @@ export default function PosSettingsPage() {
         containerStyles={{marginBottom: 0}}
         label={'Point-of-sale'}
         leftImageFunction={() => {
-          Keyboard.dismiss();
-          setTimeout(
-            () => {
-              if (!isConnectedToTheInternet) {
-                navigate.navigate('ErrorScreen', {
-                  errorMessage: 'Please reconnect to the internet',
-                });
-                return;
-              }
-              navigate.navigate('ViewPOSTransactions');
-            },
-            Keyboard.isVisible() ? KEYBOARDTIMEOUT : 0,
-          );
+          keyboardNavigate(() => {
+            if (!isConnectedToTheInternet) {
+              navigate.navigate('ErrorScreen', {
+                errorMessage: 'Please reconnect to the internet',
+              });
+              return;
+            }
+            navigate.navigate('ViewPOSTransactions');
+          });
         }}
       />
       <ScrollView
@@ -327,7 +330,6 @@ const styles = StyleSheet.create({
   currencyContainer: {
     width: '100%',
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     marginRight: 'auto',
     marginLeft: 'auto',

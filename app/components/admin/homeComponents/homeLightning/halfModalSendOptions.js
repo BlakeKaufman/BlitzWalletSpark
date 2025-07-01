@@ -3,21 +3,20 @@ import {CENTER, COLORS, ICONS, SIZES} from '../../../../constants';
 import {useNavigation} from '@react-navigation/native';
 import {navigateToSendUsingClipboard, getQRImage} from '../../../../functions';
 import {ThemeText} from '../../../../functions/CustomElements';
-
 import {useGlobalContacts} from '../../../../../context-store/globalContacts';
 import {useTranslation} from 'react-i18next';
 import ThemeImage from '../../../../functions/CustomElements/themeImage';
 import {crashlyticsLogReport} from '../../../../functions/crashlyticsLogs';
 import Icon from '../../../../functions/CustomElements/Icon';
 import {useGlobalThemeContext} from '../../../../../context-store/theme';
-import useAppInsets from '../../../../hooks/useAppInsets';
+import {useGlobalInsets} from '../../../../../context-store/insetsProvider';
 
 export default function HalfModalSendOptions(props) {
   const navigate = useNavigation();
   const {theme} = useGlobalThemeContext();
-  const {bottomPadding} = useAppInsets();
-  const {t} = useTranslation();
+  const {bottomPadding} = useGlobalInsets();
   const {decodedAddedContacts} = useGlobalContacts();
+  const {t} = useTranslation();
 
   const sendOptionElements = ['img', 'clipboard', 'manual'].map((item, key) => {
     const lightIcon =

@@ -16,7 +16,7 @@ import {useGlobalThemeContext} from '../../../../../context-store/theme';
 import {useNodeContext} from '../../../../../context-store/nodeContext';
 import {INSET_WINDOW_WIDTH} from '../../../../constants/theme';
 import CheckMarkCircle from '../../../../functions/CustomElements/checkMarkCircle';
-import useAppInsets from '../../../../hooks/useAppInsets';
+import {useGlobalInsets} from '../../../../../context-store/insetsProvider';
 
 export default function FiatCurrencyPage() {
   const {masterInfoObject, toggleMasterInfoObject} = useGlobalContextProvider();
@@ -27,7 +27,7 @@ export default function FiatCurrencyPage() {
   const currentCurrency = masterInfoObject?.fiatCurrency;
 
   const [isKeyboardActive, setIsKeyboardActive] = useState(false);
-  const {bottomPadding} = useAppInsets();
+  const {bottomPadding} = useGlobalInsets();
 
   const navigate = useNavigation();
 
@@ -57,27 +57,6 @@ export default function FiatCurrencyPage() {
           saveCurrencySettings(currency.id);
         }}>
         <CheckMarkCircle
-          color={
-            theme
-              ? darkModeType
-                ? COLORS.darkModeText
-                : COLORS.darkModeText
-              : COLORS.lightModeText
-          }
-          backgroundColor={
-            theme
-              ? darkModeType
-                ? COLORS.darkModeText
-                : COLORS.darkModeText
-              : COLORS.primary
-          }
-          checkColor={
-            theme
-              ? darkModeType
-                ? COLORS.lightsOutBackground
-                : COLORS.darkModeBackground
-              : COLORS.lightModeBackground
-          }
           isActive={
             currency.id?.toLowerCase() === currentCurrency?.toLowerCase()
           }
@@ -162,7 +141,7 @@ export default function FiatCurrencyPage() {
         return rate.coin.toLowerCase() === selectedCurrency.toLowerCase();
       });
 
-      toggleFiatStats({...fiatRate});
+      toggleFiatStats(fiatRate);
 
       if (fiatRate) {
         navigate.goBack();

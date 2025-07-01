@@ -2,7 +2,6 @@ import {
   getSparkBitcoinPaymentRequest,
   getSparkLightningPaymentStatus,
   getSparkLightningSendRequest,
-  getSparkPaymentStatus,
   getSparkTransactions,
 } from '.';
 import {LAST_LOADED_BLITZ_LOCAL_STOREAGE_KEY} from '../../constants';
@@ -67,13 +66,30 @@ export const updateSparkTxStatus = async () => {
   try {
     // Get all saved transactions
     const savedTxs = await getAllPendingSparkPayments();
+    console.log(savedTxs);
+    const incluedBitcoin = savedTxs.filter(
+      tx => tx.paymentType !== 'lightning',
+    );
+    let incomingTxs = [];
+    if (incluedBitcoin.length) {
+      incomingTxs = await getSparkTransactions(100);
+    }
 
     console.log('pending tx list', savedTxs);
     let updatedTxs = [];
     for (const txStateUpdate of savedTxs) {
       const details = JSON.parse(txStateUpdate.details);
-      // no need to do spark here since it wont ever be shown as pending
+
       if (txStateUpdate.paymentType === 'lightning') {
+        if (details.isRestore) {
+          const tx = {
+            id: txStateUpdate.sparkID,
+            paymentStatus: 'completed',
+            paymentType: 'lightning',
+            accountId: txStateUpdate.accountId,
+          };
+          updatedTxs.push(tx);
+        }
         let sparkResponse;
         if (details.direction === 'INCOMING') {
           sparkResponse = await getSparkLightningPaymentStatus({
@@ -102,9 +118,21 @@ export const updateSparkTxStatus = async () => {
           },
         };
         updatedTxs.push(tx);
+      } else if (txStateUpdate.paymentType === 'spark') {
+        const sparkTransfer = incomingTxs.transfers.find(
+          tx => tx.id === txStateUpdate.sparkID,
+        );
+        console.log(sparkTransfer, 'spark transfer in pending');
+        if (!sparkTransfer) continue;
+        const tx = {
+          id: txStateUpdate.sparkID,
+          paymentStatus: 'completed',
+          paymentType: 'spark',
+          accountId: txStateUpdate.accountId,
+        };
+        updatedTxs.push(tx);
       } else {
         if (details.direction === 'INCOMING') {
-          const incomingTxs = await getSparkTransactions(999);
           const bitcoinTransfer = incomingTxs.transfers.find(
             tx => tx.id === txStateUpdate.sparkID,
           );

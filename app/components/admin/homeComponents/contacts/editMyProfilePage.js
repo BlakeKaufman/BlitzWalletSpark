@@ -18,13 +18,11 @@ import {
 import {useNavigation} from '@react-navigation/native';
 import {useEffect, useState, useRef} from 'react';
 import {encriptMessage} from '../../../../functions/messaging/encodingAndDecodingMessages';
-
 import {
   CustomKeyboardAvoidingView,
   ThemeText,
 } from '../../../../functions/CustomElements';
 import {isValidUniqueName} from '../../../../../db';
-
 import CustomButton from '../../../../functions/CustomElements/button';
 import {useGlobalContacts} from '../../../../../context-store/globalContacts';
 import GetThemeColors from '../../../../hooks/themeColors';
@@ -44,7 +42,7 @@ import {
   setDatabaseIMG,
 } from '../../../../../db/photoStorage';
 import {useImageCache} from '../../../../../context-store/imageCache';
-import useAppInsets from '../../../../hooks/useAppInsets';
+import {useGlobalInsets} from '../../../../../context-store/insetsProvider';
 
 export default function EditMyProfilePage(props) {
   const navigate = useNavigation();
@@ -151,7 +149,7 @@ function InnerContent({
   });
 
   const [isKeyboardActive, setIsKeyboardActive] = useState(false);
-  const {bottomPadding} = useAppInsets();
+  const {bottomPadding} = useGlobalInsets();
 
   const navigate = useNavigation();
 

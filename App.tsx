@@ -49,6 +49,8 @@ import {COLORS, LOGIN_SECUITY_MODE_KEY} from './app/constants';
 import {LiquidEventProvider} from './context-store/liquidEventContext';
 import {
   EcashNavigationListener,
+  // LightningNavigationListener,
+  // LiquidNavigationListener,
   SparkNavigationListener,
 } from './context-store/SDKNavigation';
 // import {LightningEventProvider} from './context-store/lightningEventContext';
@@ -71,53 +73,68 @@ import {navigationRef} from './navigation/navigationService';
 // import {GlobalConbinedTxContextProvider} from './context-store/combinedTransactionsContext';
 // import BreezTest from './app/screens/breezTest';
 import {ImageCacheProvider} from './context-store/imageCache';
-import {SparkWalletProvider} from './context-store/sparkContext';
+import {
+  runPinAndMnemoicMigration,
+  runSecureStoreMigrationV2,
+} from './app/functions/secureStore';
+import {KeyboardProvider} from 'react-native-keyboard-controller';
 import HandleLNURLPayments from './context-store/lnurl';
 import {SparkConnectionListener} from './context-store/connectToNode';
-import {KeyboardProvider} from 'react-native-keyboard-controller';
+import {SparkWalletProvider} from './context-store/sparkContext';
+import * as NavigationBar from 'expo-navigation-bar';
+import {setStatusBarBackgroundColor, setStatusBarStyle} from 'expo-status-bar';
+import * as SystemUI from 'expo-system-ui';
+import {InsetsProvider} from './context-store/insetsProvider';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
 
 const Stack = createNativeStackNavigator();
 
 function App(): JSX.Element {
   return (
     <GestureHandlerRootView>
-      <KeyboardProvider>
-        <KeysContextProvider>
-          <GlobalContactsList>
-            <GlobalContextProvider>
-              <AppStatusProvider>
-                <GlobalThemeProvider>
-                  <GlobaleCashVariables>
-                    <GLobalNodeContextProider>
-                      <SparkWalletProvider>
-                        {/* <GlobalConbinedTxContextProvider> */}
-                        <GlobalAppDataProvider>
-                          <POSTransactionsProvider>
-                            <WebViewProvider>
-                              <PushNotificationManager>
-                                <LiquidEventProvider>
-                                  <ImageCacheProvider>
-                                    {/* <Suspense
+      <SafeAreaProvider>
+        <InsetsProvider>
+          <KeyboardProvider>
+            <KeysContextProvider>
+              <GlobalContactsList>
+                <GlobalContextProvider>
+                  <AppStatusProvider>
+                    <GlobalThemeProvider>
+                      <GlobaleCashVariables>
+                        <GLobalNodeContextProider>
+                          <SparkWalletProvider>
+                            {/* <GlobalConbinedTxContextProvider> */}
+                            <GlobalAppDataProvider>
+                              <POSTransactionsProvider>
+                                <WebViewProvider>
+                                  <PushNotificationManager>
+                                    <LiquidEventProvider>
+                                      {/* <LightningEventProvider> */}
+                                      <ImageCacheProvider>
+                                        {/* <Suspense
                     fallback={<FullLoadingScreen text={'Loading Page'} />}> */}
-                                    <ResetStack />
-                                    {/* </Suspense> */}
-                                  </ImageCacheProvider>
-                                </LiquidEventProvider>
-                              </PushNotificationManager>
-                            </WebViewProvider>
-                          </POSTransactionsProvider>
-                        </GlobalAppDataProvider>
-                        {/* <BreezTest /> */}
-                        {/* </GlobalConbinedTxContextProvider> */}
-                      </SparkWalletProvider>
-                    </GLobalNodeContextProider>
-                  </GlobaleCashVariables>
-                </GlobalThemeProvider>
-              </AppStatusProvider>
-            </GlobalContextProvider>
-          </GlobalContactsList>
-        </KeysContextProvider>
-      </KeyboardProvider>
+                                        <ResetStack />
+                                        {/* </Suspense> */}
+                                      </ImageCacheProvider>
+                                      {/* </LightningEventProvider> */}
+                                    </LiquidEventProvider>
+                                  </PushNotificationManager>
+                                </WebViewProvider>
+                              </POSTransactionsProvider>
+                            </GlobalAppDataProvider>
+                            {/* <BreezTest /> */}
+                            {/* </GlobalConbinedTxContextProvider> */}
+                          </SparkWalletProvider>
+                        </GLobalNodeContextProider>
+                      </GlobaleCashVariables>
+                    </GlobalThemeProvider>
+                  </AppStatusProvider>
+                </GlobalContextProvider>
+              </GlobalContactsList>
+            </KeysContextProvider>
+          </KeyboardProvider>
+        </InsetsProvider>
+      </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }
@@ -141,7 +158,7 @@ function ResetStack(): JSX.Element | null {
   });
   const {theme, darkModeType} = useGlobalThemeContext();
   const {didGetToHomepage} = useAppStatus();
-  const {publicKey} = useKeysContext();
+  const {publicKey, setAccountMnemonic} = useKeysContext();
   const {backgroundColor} = GetThemeColors();
 
   // Memoize handleDeepLink
@@ -173,6 +190,20 @@ function ResetStack(): JSX.Element | null {
       console.log('Initial deep link stored:', url);
     }
   }, []);
+
+  const setNavigationBar = useCallback(async () => {
+    if (Platform.OS === 'android') {
+      try {
+        await SystemUI.setBackgroundColorAsync(backgroundColor);
+        await NavigationBar.setBackgroundColorAsync(backgroundColor);
+        await NavigationBar.setButtonStyleAsync(theme ? 'light' : 'dark');
+        setStatusBarBackgroundColor(backgroundColor);
+        setStatusBarStyle(theme ? 'light' : 'dark');
+      } catch (error) {
+        console.warn('Failed to set navigation bar:', error);
+      }
+    }
+  }, [backgroundColor, theme]);
 
   useEffect(() => {
     async function handleDeeplink() {
@@ -234,12 +265,14 @@ function ResetStack(): JSX.Element | null {
 
   useEffect(() => {
     async function initWallet() {
+      await runPinAndMnemoicMigration();
+      await runSecureStoreMigrationV2();
       const [initialURL, registerBackground, pin, mnemonic, securitySettings] =
         await Promise.all([
           getInitialURL(),
           registerBackgroundNotificationTask(),
-          retrieveData('pin'),
-          retrieveData('mnemonic'),
+          retrieveData('pinHash'),
+          retrieveData('encryptedMnemonic'),
           getLocalStorageItem(LOGIN_SECUITY_MODE_KEY),
         ]);
 
@@ -255,10 +288,14 @@ function ResetStack(): JSX.Element | null {
           JSON.stringify(parsedSettings),
         );
 
+      if (mnemonic.value && !parsedSettings.isSecurityEnabled) {
+        setAccountMnemonic(mnemonic.value);
+      }
+
       setInitSettings(prev => {
         return {
           ...prev,
-          isLoggedIn: pin && mnemonic,
+          isLoggedIn: !!pin.value && !!mnemonic.value,
           hasSecurityEnabled: parsedSettings.isSecurityEnabled,
         };
       });
@@ -293,27 +330,15 @@ function ResetStack(): JSX.Element | null {
     [theme, backgroundColor],
   );
 
+  useEffect(() => {
+    setNavigationBar();
+  }, [backgroundColor, theme]);
+
   const screenOptions = useMemo(() => {
     return {
       headerShown: false,
-      statusBarBackgroundColor:
-        Platform.OS === 'android' ? backgroundColor : undefined,
-      statusBarStyle:
-        Platform.OS === 'android'
-          ? ((theme ? 'light' : 'dark') as
-              | 'light'
-              | 'dark'
-              | 'inverted'
-              | 'auto'
-              | undefined)
-          : undefined,
-      statusBarAnimation:
-        Platform.OS === 'android'
-          ? ('fade' as 'fade' | 'none' | 'slide' | undefined)
-          : undefined,
-      navigationBarColor: backgroundColor,
     };
-  }, [backgroundColor, theme]);
+  }, []);
 
   const HomeComponent = useMemo(() => {
     if (initSettings.isLoggedIn) {
@@ -330,10 +355,13 @@ function ResetStack(): JSX.Element | null {
 
   return (
     <NavigationContainer theme={navigationTheme} ref={navigationRef}>
+      {/* <StatusBar style={theme ? 'light' : 'dark'} translucent={true} /> */}
       <HandleLNURLPayments />
       <SparkNavigationListener />
       <EcashNavigationListener />
       <SparkConnectionListener />
+      {/* <LiquidNavigationListener /> */}
+      {/* <LightningNavigationListener /> */}
       <Stack.Navigator screenOptions={screenOptions}>
         <Stack.Screen
           name="Home"

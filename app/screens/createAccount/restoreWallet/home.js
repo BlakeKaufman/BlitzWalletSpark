@@ -7,8 +7,7 @@ import {
   Platform,
 } from 'react-native';
 import {Back_BTN} from '../../../components/login';
-import {retrieveData, storeData} from '../../../functions';
-import {CENTER, COLORS, FONT, ICONS, SIZES} from '../../../constants';
+import {CENTER, COLORS, FONT, SIZES} from '../../../constants';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import isValidMnemonic from '../../../functions/isValidMnemonic';
 import {useTranslation} from 'react-i18next';
@@ -24,11 +23,11 @@ import {useGlobalThemeContext} from '../../../../context-store/theme';
 import useHandleBackPressNew from '../../../hooks/useHandleBackPressNew';
 import getClipboardText from '../../../functions/getClipboardText';
 import {useNavigation} from '@react-navigation/native';
-import {
-  crashlyticsLogReport,
-  crashlyticsRecordErrorReport,
-} from '../../../functions/crashlyticsLogs';
-import useAppInsets from '../../../hooks/useAppInsets';
+import {crashlyticsLogReport} from '../../../functions/crashlyticsLogs';
+import {useKeysContext} from '../../../../context-store/keys';
+import {wordlist} from '@scure/bip39/wordlists/english';
+import {handleRestoreFromText} from '../../../functions/seed';
+import {useGlobalInsets} from '../../../../context-store/insetsProvider';
 
 const NUMARRAY = Array.from({length: 12}, (_, i) => i + 1);
 const INITIAL_KEY_STATE = NUMARRAY.reduce((acc, num) => {
@@ -40,8 +39,9 @@ export default function RestoreWallet({navigation: {reset}, route: {params}}) {
   useHandleBackPressNew();
   const navigate = useNavigation();
   const {t} = useTranslation();
+  const {accountMnemoinc, setAccountMnemonic} = useKeysContext();
   const {theme, darkModeType} = useGlobalThemeContext();
-  const {bottomPadding} = useAppInsets();
+  const {bottomPadding} = useGlobalInsets();
   const [isValidating, setIsValidating] = useState(false);
   const [currentFocused, setCurrentFocused] = useState(null);
   const keyRefs = useRef({});
@@ -82,9 +82,21 @@ export default function RestoreWallet({navigation: {reset}, route: {params}}) {
       if (!response.didWork) throw new Error(response.reason);
 
       const data = response.data;
-      const splitSeed = data.split(' ');
+
+      const restoredSeed = handleRestoreFromText(data);
+
+      if (!restoredSeed.didWork || !restoredSeed?.seed?.length) {
+        const QRSeedResponse = handleCameraScan(data);
+        if (QRSeedResponse) return;
+        throw new Error('Unable to find seed in string');
+      }
+
+      const splitSeed = restoredSeed.seed;
+      console.log(splitSeed);
+
       if (!splitSeed.every(word => word.trim().length > 0))
         throw new Error('Not every word is of valid length');
+
       if (splitSeed.length != 12)
         throw new Error('Unable to find 12 words from copied recovery phrase.');
       console.log(Object.entries(inputedKey));
@@ -96,7 +108,6 @@ export default function RestoreWallet({navigation: {reset}, route: {params}}) {
       setInputedKey(newKeys);
     } catch (err) {
       console.log('Error getting data from clipbarod', err);
-      crashlyticsRecordErrorReport(err.message);
       navigateToError(err.message);
     }
   }, [navigateToError]);
@@ -104,7 +115,7 @@ export default function RestoreWallet({navigation: {reset}, route: {params}}) {
   const didEnterCorrectSeed = useCallback(async () => {
     crashlyticsLogReport('Starting seed check');
     try {
-      const keys = await retrieveData('mnemonic');
+      const keys = accountMnemoinc;
       const didEnterAllKeys =
         Object.keys(inputedKey).filter(value => inputedKey[value]).length ===
         12;
@@ -121,7 +132,6 @@ export default function RestoreWallet({navigation: {reset}, route: {params}}) {
       } else throw new Error(t('createAccount.restoreWallet.home.error3'));
     } catch (err) {
       console.log('did enter correct seed error', err);
-      crashlyticsRecordErrorReport(err.message);
       navigateToError(err.message);
     }
   }, [inputedKey, navigateToError]);
@@ -142,35 +152,48 @@ export default function RestoreWallet({navigation: {reset}, route: {params}}) {
       );
 
       const hasAccount = isValidMnemonic(mnemonic);
-      const hasPin = await retrieveData('pin');
 
       if (!hasAccount)
         throw new Error(t('createAccount.restoreWallet.home.error2'));
       else {
-        await storeData('mnemonic', mnemonic.join(' '));
-        if (hasPin) {
-          reset({
-            index: 0,
-            routes: [
-              {
-                name: 'ConnectingToNodeLoadingScreen',
-                params: {
-                  isInitialLoad: true,
-                  didRestoreWallet: true,
-                },
-              },
-            ],
-          });
-        } else navigate.navigate('PinSetup', {didRestoreWallet: true});
+        setAccountMnemonic(mnemonic.join(' '));
+        navigate.navigate('PinSetup', {didRestoreWallet: true});
       }
     } catch (err) {
       console.log('key validation error', err);
-      crashlyticsRecordErrorReport(err.message);
       navigateToError(err.message);
     } finally {
       setIsValidating(false);
     }
   }, [inputedKey, reset, navigate, navigateToError, t]);
+
+  const handleCameraScan = (data, localTry = false) => {
+    try {
+      if (!data) return;
+      let indexMnemonic = [];
+
+      for (let index = 0; index < 12; index++) {
+        const start = index * 4;
+        const end = start + 4;
+        indexMnemonic.push(data.slice(start, end));
+      }
+      const seedMnemoinc = indexMnemonic.map(item => {
+        return wordlist.at(Number(item));
+      });
+      const newKeys = {};
+      NUMARRAY.forEach((num, index) => {
+        newKeys[`key${num}`] = seedMnemoinc[index];
+      });
+      setInputedKey(newKeys);
+      return true;
+    } catch (err) {
+      console.log('error getting seed from camera', err);
+      if (localTry) return false;
+      navigate.navigate('ErrorScreen', {
+        errorMessage: 'Unable to get seed from QR code',
+      });
+    }
+  };
 
   const seedItemBackgroundColor = useMemo(
     () => (theme ? COLORS.darkModeBackgroundOffset : COLORS.darkModeText),
@@ -289,11 +312,19 @@ export default function RestoreWallet({navigation: {reset}, route: {params}}) {
           }}>
           {inputKeys}
         </ScrollView>
-        {params && !currentFocused && (
+        {!currentFocused && (
           <CustomButton
             buttonStyles={styles.pasteButton}
-            textContent={t('constants.paste')}
-            actionFunction={handleSeedFromClipboard}
+            textContent={params ? t('constants.paste') : 'Scan QR'}
+            actionFunction={
+              params
+                ? handleSeedFromClipboard
+                : () =>
+                    navigate.navigate('CameraModal', {
+                      updateBitcoinAdressFunc: handleCameraScan,
+                      fromPage: 'addContact',
+                    })
+            }
           />
         )}
         {!currentFocused && (
